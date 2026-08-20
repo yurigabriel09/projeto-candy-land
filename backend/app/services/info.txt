@@ -1,0 +1,3 @@
+AQUI FICARÃO AS REGRAS DE NEGÓCIO
+
+chamada ViaCEP, validação CPF, etc.

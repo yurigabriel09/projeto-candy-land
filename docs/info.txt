@@ -1,0 +1,3 @@
+AQUI FICARÃO ARQUIVOS DE DOCUMENTAÇÕES ÚTEIS PARA O DESENVOLVIMENTO
+
+exemplo de pastas: arquitetura e requisitos

@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node / React / Vite
+node_modules/
+frontend/dist/
+frontend/.env
+*.local
+
+# Backend
+backend/.env
+backend/instance/
+*.db
+*.sqlite3
