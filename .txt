@@ -1,0 +1,68 @@
+24/08
+H06.22 - Revisar o modelo fisico e verificar os tipos de dados
+
+31/08
+H06.03 — Imagens dos produto
+H06.05 — Implementar cadastro de produto [Alta]
+H06.06 — Implementar consulta de produto [Alta]
+H06.08 — Implementar alteração de produto [Alta]
+H06.09 — Implementar exclusão de produto [Alta]
+H06.03 — Imagens dos restaurante 
+H06.05 — Implementar cadastro de restaurante [Alta]
+H06.06 — Implementar consulta de restaurante [Alta]
+H06.08 — Implementar alteração de restaurante [Alta]
+H06.09 — Implementar exclusão de restaurante [Alta]
+H06.10 - Persistencia de imagem ao cadastrar o restaurante
+H04.02 — Criar endpoint de login [Alta]
+H05.03 - implementar a tabela de categoria no modelo fisico - kauan
+H05.02 — Criar Modelo de categoria [Média]
+H11 — Interface e experiência do usuário
+H11.01 — Definir identidade visual [Alta]
+H11.02 — Definir paleta de cores [Alta]
+H11.03 — Definir tipografia [Média]
+H11.04 — Definir componentes visuais (Figma) [Média]
+H11.05 — Criar protótipo da página inicial [Alta]
+H11.06 — Criar protótipo de login [Alta]
+
+
+09/09
+H03.10 — Validar e-mail único [Alta]
+H04.01 — Autenticação por celular [Alta]
+H04.07 — Criar controle de acesso (JWT) [Alta] - login 
+H04.08 — Diferenciar cliente e administrador [Alta]
+H11.07 — Criar protótipo de cadastro de usuario [Alta]
+H11.08 — Criar protótipo de produtos [Alta]
+H11.09 — Criar protótipo de detalhes do produto [Alta]
+H11.10 — Criar protótipo do carrinho [Alta]
+H11.11 — Criar protótipo de checkout [Alta]
+H11.12 — Criar protótipo de pedidos [Média]
+Implementar tela de cadastro frontend
+
+
+Depois
+
+H06.19 — Implementar filtro por categoria [Média]
+H06.20 — Implementar ordenação de produtos [Baixa]
+H06.21 — Integrar frontend com API [Alta]
+H06.23 - Incluir a tabela de categorias no modelo fisico
+
+H11.13 — Adaptar interface para diferentes tamanhos de tela [Média]
+H11.14 — Validar protótipos [Média]
+
+H16.04 — Configurar variáveis de ambiente [Alta]
+H16.12 — Documentar endpoints [Média] - ANA
+
+H06.14 — Criar tela de cadastro de produto [Alta]
+H06.15 — Criar tela de consulta de produtos [Alta]
+H06.16 — Criar tela de edição de produto [Alta]
+H06.17 — Criar página de detalhes do produto [Alta]
+H03.13 — Criar tela de cadastro [Alta]
+H03.14 — Criar tela de consulta [Alta]
+H03.15 — Criar tela de edição [Alta]
+H03.16 — Implementar exclusão pelo frontend [Alta]
+H04.06 — Implementar logout [Alta] - login
+
+protótipo da dashboard
+Criar dashboard administrativo [Média]
+Integrar frontend com API [Alta]
+Docker
