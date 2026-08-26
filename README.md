@@ -1,4 +1,4 @@
-# projeto-candy-land
+PROJETO CANDYLAND
 
 Este projeto é uma aplicação full-stack composta por uma API Backend em Python (FastAPI/SQLAlchemy) e um Frontend em React.
 
