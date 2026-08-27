@@ -1,10 +1,17 @@
-import Usuarios from "./pages/Usuarios";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import ListaUsuarios from "./pages/ListaUsuarios";
+import UsuarioForm from "./pages/UsuarioForm";
 
 function App() {
   return (
-    <div>
-      <Usuarios />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/usuarios" />} />
+        <Route path="/usuarios" element={<ListaUsuarios />} />
+        <Route path="/usuarios/novo" element={<UsuarioForm />} />
+        <Route path="/usuarios/:id/editar" element={<UsuarioForm />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
