@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { maskCep, maskCpf, maskPhone } from "../utils/masks";
-import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
+import {
+    isValidCep,
+    isValidCpf,
+    isValidEmail,
+    isValidPhone
+} from "../utils/validators";
+import { getAddressByCep } from "../services/addressService";
 
 function PersonalRegister() {
     const navigate = useNavigate();
@@ -21,6 +27,45 @@ function PersonalRegister() {
         state: ""
     });
 
+    const [cepError, setCepError] = useState("");
+    const [loadingCep, setLoadingCep] = useState(false);
+
+    async function handleCepChange(event) {
+        const value = maskCep(event.target.value);
+
+        setForm((currentForm) => ({
+            ...currentForm,
+            cep: value
+        }));
+
+        setCepError("");
+
+        const cleanCep = value.replace(/\D/g, "");
+
+        if (cleanCep.length !== 8) {
+            return;
+        }
+
+        try {
+            setLoadingCep(true);
+
+            const address = await getAddressByCep(cleanCep);
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                cep: value,
+                address: address.address,
+                neighborhood: address.neighborhood,
+                city: address.city,
+                state: address.state
+            }));
+        } catch (error) {
+            setCepError("CEP não encontrado.");
+        } finally {
+            setLoadingCep(false);
+        }
+    }
+
     function handleChange(event) {
         const { name, value } = event.target;
 
@@ -38,10 +83,10 @@ function PersonalRegister() {
             formattedValue = maskCep(value);
         }
 
-        setForm({
-            ...form,
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: formattedValue
-        });
+        }));
     }
 
     function handleSubmit(event) {
@@ -200,10 +245,22 @@ function PersonalRegister() {
                                 name="cep"
                                 type="text"
                                 value={form.cep}
-                                onChange={handleChange}
+                                onChange={handleCepChange}
                                 placeholder="00000-000"
                                 inputMode="numeric"
                             />
+
+                            {loadingCep && (
+                                <small className="field-message">
+                                    Buscando endereço...
+                                </small>
+                            )}
+
+                            {cepError && (
+                                <small className="field-error">
+                                    {cepError}
+                                </small>
+                            )}
                         </div>
 
                         <div className="form-field">
