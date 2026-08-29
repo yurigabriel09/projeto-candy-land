@@ -1,3 +1,0 @@
-AQUI FICARÃO AS ROTAS DE CONTROLLER DA API
-
-criar os endpoints (listar, criar, deletar, atualizar)

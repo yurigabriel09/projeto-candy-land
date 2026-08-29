@@ -7,7 +7,7 @@ function UsuarioForm() {
   const [email, setEmail] = useState("");
   const [erro, setErro] = useState("");
   const navigate = useNavigate();
-  const { id } = useParams(); 
+  const { id } = useParams();
   const editando = Boolean(id);
 
   useEffect(() => {
