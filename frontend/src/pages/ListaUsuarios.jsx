@@ -36,7 +36,7 @@ function ListaUsuarios() {
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
 
-      <button onClick={() => navigate("/usuarios/novo")} style={{ marginBottom: 16 }}>
+      <button onClick={() => navigate("/users/novo")} style={{ marginBottom: 16 }}>
         Novo usuário
       </button>
 
@@ -58,7 +58,7 @@ function ListaUsuarios() {
               <td>{u.email}</td>
               <td>{u.ativo ? "Sim" : "Não"}</td>
               <td>
-                <button onClick={() => navigate(`/usuarios/${u.id}/editar`)}>Editar</button>
+                <button onClick={() => navigate(`/users/${u.id}/editar`)}>Editar</button>
                 <button onClick={() => handleDeletar(u.id)} style={{ marginLeft: 8 }}>
                   Deletar
                 </button>
