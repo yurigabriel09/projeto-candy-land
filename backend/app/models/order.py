@@ -1,23 +1,24 @@
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, ForeignKey
 from app.database import Base
 
 class Order(Base):
     __tablename__ = "orders"
 
-    id_pedido = Column(Integer, primary_key=True, index=True)
-    codigo_pedido = Column(String(20), unique=True, nullable=False)
-    id_cliente = Column(Integer, ForeignKey("clients.id_cliente"), nullable=False)
-    id_doceria = Column(Integer, ForeignKey("restaurants.id_restaurante"), nullable=False)
-    id_endereco_entrega = Column(Integer, ForeignKey("addresses.id_endereco"), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    order_code = Column(String(20), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
+    delivery_address_id = Column(Integer, ForeignKey("addresses.id"), nullable=False)
     subtotal = Column(DECIMAL(10, 2), nullable=False)
-    desconto = Column(DECIMAL(10, 2), default=0)
-    taxa_entrega = Column(DECIMAL(10, 2), default=0)
-    taxa_plataforma = Column(DECIMAL(10, 2), default=0)
+    discount = Column(DECIMAL(10, 2), nullable=False, default=0)
+    delivery_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
+    platform_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
     total = Column(DECIMAL(10, 2), nullable=False)
-    tipo_pedido = Column(String(20), nullable=False)
-    status = Column(String(30), nullable=False)
-    forma_pagamento = Column(String(30), nullable=False)
-    observacao_geral = Column(String(255), nullable=True)
-    data_pedido = Column(DateTime, nullable=False)
-    previsao_entrega = Column(DateTime, nullable=True)
-    data_entrega = Column(DateTime, nullable=True)
+    order_type = Column(String(20), nullable=False)
+    status = Column(String(30), nullable=False, default="CREATED")
+    payment_method = Column(String(30), nullable=False)
+    general_note = Column(String(255), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    estimated_delivery_at = Column(DateTime, nullable=True)
+    delivered_at = Column(DateTime, nullable=True)

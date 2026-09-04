@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from app.database import engine, Base
+from app.models import User, Address, Restaurant, Category, Product, Order, OrderItem
 from app.routes import register_routes
 
 # Criar tabelas no banco SQLite automaticamente
