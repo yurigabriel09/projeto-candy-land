@@ -1,33 +1,78 @@
-from sqlalchemy.orm import Session
-from app.models.user import User
+from datetime import datetime
+from sqlalchemy.exc import SQLAlchemyError
+from app.database.database import db
+from app.models.user import Usuario
 
-def create_user(db: Session, nome: str, email: str):
-    novo_user = User(nome=nome, email=email)
-    db.add(novo_user)
-    db.commit()
-    db.refresh(novo_user)
-    return novo_user
+class UserService:
+    @staticmethod
+    def listar_usuarios():
+        try:
+            usuarios = Usuario.query.all()
+            if not usuarios:
+                return {"success": True, "mensagem": "Nenhum usuário cadastrado!", "dados": []}
+            return {"success": True, "mensagem": "Lista de usuários cadastrados:", "dados": [usuario.to_dict() for usuario in usuarios]}
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
-def get_user(db: Session, user_id: int):
-    return db.query(User).filter(User.id == user_id).first()
+    @staticmethod
+    def buscar_usuario(user_id):
+        try:
+            usuario = Usuario.query.get(user_id)
+            if not usuario:
+                return {"success": False, "erro": "Usuário não encontrado.", "status_code": 404}
+            return {"success": True, "mensagem": "Usuário encontrado:", "dados": usuario.to_dict()}
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
-def get_users(db: Session):
-    return db.query(User).all()
+    @staticmethod
+    def criar_usuario(nome_completo, email, telefone, data_nascimento=None):
+        try:
+            if data_nascimento:
+                data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
+            
+            novo_usuario = Usuario(
+                nome_completo=nome_completo,
+                email=email,
+                telefone=telefone,
+                data_nascimento=data_nascimento
+            )
+            db.session.add(novo_usuario)
+            db.session.commit()
+            return {"success": True, "mensagem": "Usuário criado com sucesso!", "dados": novo_usuario.to_dict()}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao criar usuário.", "status_code": 500}
 
-def update_user(db: Session, user_id: int, nome: str = None, email: str = None):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user: return None
-    if nome is not None: user.nome = nome
-    if email is not None: user.email = email
-        
-    db.commit()
-    db.refresh(user)
-    return user
+    @staticmethod
+    def atualizar_usuario(user_id, nome_completo=None, email=None, telefone=None, data_nascimento=None):
+        try:
+            usuario = Usuario.query.get(user_id)
+            if not usuario:
+                return {"success": False, "erro": "Usuário não encontrado.", "status_code": 404}
+            if nome_completo is not None:
+                usuario.nome_completo = nome_completo
+            if email is not None:
+                usuario.email = email
+            if telefone is not None:
+                usuario.telefone = telefone
+            if data_nascimento is not None:
+                data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
+                usuario.data_nascimento = data_nascimento
+            db.session.commit()
+            return {"success": True, "mensagem": "Usuário atualizado com sucesso!", "dados": usuario.to_dict()}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao atualizar usuário.", "status_code": 500}
 
-def delete_user(db: Session, user_id: int) -> bool:
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user: return False
-    
-    db.delete(user)
-    db.commit()
-    return True
+    @staticmethod
+    def deletar_usuario(user_id):
+        try:
+            usuario = Usuario.query.get(user_id)
+            if not usuario:
+                return {"success": False, "erro": "Usuário não encontrado.", "status_code": 404}
+            db.session.delete(usuario)
+            db.session.commit()
+            return {"success": True, "mensagem": "Usuário removido com sucesso!"}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao remover usuário.", "status_code": 500}

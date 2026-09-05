@@ -41,7 +41,7 @@ function UsuarioForm() {
       } else {
         await createUser(nome, email);
       }
-      navigate("/usuarios");
+      navigate("/users");
     } catch (err) {
       setErro("Erro ao salvar usuário");
     }
@@ -73,7 +73,7 @@ function UsuarioForm() {
           />
         </div>
         <button type="submit">{editando ? "Salvar edição" : "Criar usuário"}</button>
-        <button type="button" onClick={() => navigate("/usuarios")} style={{ marginLeft: 8 }}>
+        <button type="button" onClick={() => navigate("/users")} style={{ marginLeft: 8 }}>
           Cancelar
         </button>
       </form>

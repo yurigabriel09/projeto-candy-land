@@ -3,13 +3,15 @@ const API_URL = "http://127.0.0.1:5000/users";
 export async function getUsers() {
   const response = await fetch(API_URL);
   if (!response.ok) throw new Error("Erro ao buscar usuários");
-  return response.json();
+  const resultado = await response.json();
+  return resultado.dados;
 }
 
 export async function getUser(id) {
   const response = await fetch(`${API_URL}/${id}`);
   if (!response.ok) throw new Error("Usuário não encontrado");
-  return response.json();
+  const resultado = await response.json();
+  return resultado.dados;
 }
 
 export async function createUser(nome, email) {
@@ -19,7 +21,8 @@ export async function createUser(nome, email) {
     body: JSON.stringify({ nome, email }),
   });
   if (!response.ok) throw new Error("Erro ao criar usuário");
-  return response.json();
+  const resultado = await response.json();
+  return resultado.dados;
 }
 
 export async function updateUser(id, nome, email) {
@@ -29,7 +32,8 @@ export async function updateUser(id, nome, email) {
     body: JSON.stringify({ nome, email }),
   });
   if (!response.ok) throw new Error("Erro ao atualizar usuário");
-  return response.json();
+  const resultado = await response.json();
+  return resultado.dados;
 }
 
 export async function deleteUser(id) {

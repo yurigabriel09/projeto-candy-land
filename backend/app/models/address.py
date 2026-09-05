@@ -1,21 +1,20 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DECIMAL
-from app.database import Base
+from app.database.database import db
 
-class Address(Base):
+class Endereco(db.Model):
     __tablename__ = "addresses"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    zip_code = Column(String(10), nullable=False)
-    street = Column(String(150), nullable=False)
-    number = Column(String(20), nullable=False)
-    complement = Column(String(100), nullable=True)
-    neighborhood = Column(String(100), nullable=False)
-    city = Column(String(100), nullable=False)
-    state = Column(String(2), nullable=False)
-    reference = Column(String(150), nullable=True)
-    latitude = Column(DECIMAL(9, 6), nullable=True)
-    longitude = Column(DECIMAL(9, 6), nullable=True)
-    address_type = Column(String(20), nullable=False)
-    is_primary = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    cep = db.Column(db.String(10), nullable=False)
+    rua = db.Column(db.String(150), nullable=False)
+    numero = db.Column(db.String(20), nullable=False)
+    complemento = db.Column(db.String(100), nullable=True)
+    bairro = db.Column(db.String(100), nullable=False)
+    cidade = db.Column(db.String(100), nullable=False)
+    estado = db.Column(db.String(2), nullable=False)
+    referencia = db.Column(db.String(150), nullable=True)
+    latitude = db.Column(db.Numeric(9, 6), nullable=True)
+    longitude = db.Column(db.Numeric(9, 6), nullable=True)
+    tipo_endereco = db.Column(db.String(20), nullable=False)
+    principal = db.Column(db.Boolean, default=False)
+    ativo = db.Column(db.Boolean, default=True)

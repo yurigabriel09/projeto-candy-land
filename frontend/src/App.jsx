@@ -6,10 +6,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/usuarios" />} />
-        <Route path="/usuarios" element={<ListaUsuarios />} />
-        <Route path="/usuarios/novo" element={<UsuarioForm />} />
-        <Route path="/usuarios/:id/editar" element={<UsuarioForm />} />
+        <Route path="/" element={<Navigate to="/users" />} />
+        <Route path="/users" element={<ListaUsuarios />} />
+        <Route path="/users/novo" element={<UsuarioForm />} />
+        <Route path="/users/:id/editar" element={<UsuarioForm />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,18 +1,18 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, UniqueConstraint
-from app.database import Base
+from sqlalchemy import UniqueConstraint
+from app.database.database import db
 
-class Category(Base):
+class Categoria(db.Model):
     __tablename__ = "categories"
-    __table_args__ = (UniqueConstraint("restaurant_id", "name", name="uq_category_restaurant_name"),)
+    __table_args__ = (UniqueConstraint("id_restaurante", "nome", name="uq_categoria_restaurante_nome"),)
 
-    id = Column(Integer, primary_key=True, index=True)
-    restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
-    parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String(255), nullable=True)
-    icon_url = Column(String(255), nullable=True)
-    cover_image_url = Column(String(255), nullable=True)
-    display_order = Column(Integer, nullable=False, default=0)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    id_restaurante = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
+    id_categoria_pai = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.String(255), nullable=True)
+    url_icone = db.Column(db.String(255), nullable=True)
+    url_capa = db.Column(db.String(255), nullable=True)
+    ordem_exibicao = db.Column(db.Integer, nullable=False, default=0)
+    ativa = db.Column(db.Boolean, default=True)
+    criada_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

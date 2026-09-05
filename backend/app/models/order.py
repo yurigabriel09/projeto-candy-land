@@ -1,8 +1,8 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, ForeignKey
-from app.database import Base
+from app.database.database import db
 
-class Order(Base):
+class Pedido(db.Model):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -1,8 +1,8 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DECIMAL, ForeignKey, DateTime
-from app.database import Base
+from app.database.database import db
 
-class Product(Base):
+class Produto(db.Model):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
