@@ -1,7 +1,9 @@
 from flask import Flask
 from flask_cors import CORS
+
 from app.config.config import Config
 from app.database.database import db
+from app.models import Usuario, Endereco, Restaurante, Categoria, Produto, Pedido, ItemPedido
 from app.routes.user_routes import user_bp
 from app.routes.restaurant_routes import restaurante_bp
 

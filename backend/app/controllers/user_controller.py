@@ -18,14 +18,25 @@ class UserController:
 
     @staticmethod
     def criar_usuario(dados):
-        resultado = UserService.criar_usuario(nome=dados.get("nome"), email=dados.get("email"))
+        resultado = UserService.criar_usuario(
+            nome_completo=dados.get("nome_completo"),
+            email=dados.get("email"),
+            telefone=dados.get("telefone"),
+            data_nascimento=dados.get("data_nascimento")
+        )
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 201)
 
     @staticmethod
     def atualizar_usuario(user_id, dados):
-        resultado = UserService.atualizar_usuario(user_id, nome=dados.get("nome"), email=dados.get("email"))
+        resultado = UserService.atualizar_usuario(
+            user_id,
+            nome_completo=dados.get("nome_completo"),
+            email=dados.get("email"),
+            telefone=dados.get("telefone"),
+            data_nascimento=dados.get("data_nascimento")
+        )
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)

@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from app.database.database import db
-from app.models.restaurantes import Restaurante
+from app.models.restaurant import Restaurante
 
 class RestauranteService:
     @staticmethod
@@ -61,4 +61,4 @@ class RestauranteService:
             return {"success": True, "mensagem": "Restaurante removido com sucesso!"}
         except SQLAlchemyError:
             db.session.rollback()
-            return {"success": False, "erro": "Falha ao remover restaurante.", "status_code": 500}
+            return {"success": False, "erro": "Falha ao remover restaurante.", "status_code": 500}  
