@@ -9,7 +9,9 @@ class RestauranteService:
             restaurantes = Restaurante.query.all()
             if not restaurantes:
                 return {"success": True, "mensagem": "Nenhum restaurante cadastrado!", "dados": []}
+            
             return {"success": True, "mensagem": "Lista de restaurantes cadastrados:", "dados": [u.to_dict() for u in restaurantes]}
+        
         except SQLAlchemyError:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
@@ -17,11 +19,18 @@ class RestauranteService:
     def buscar_restaurante(restaurante_id):
         try:
             restaurante = Restaurante.query.get(restaurante_id)
+
             if not restaurante:
                 return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
+            
             return {"success": True, "mensagem": "Restaurante encontrado:", "dados": restaurante.to_dict()}
+        
         except SQLAlchemyError:
-            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
+            return {
+                "success": False, 
+                "erro": "Falha ao consultar o banco de dados.", 
+                "status_code": 500
+                }
 
     @staticmethod
     def criar_restaurante(nome, email):
