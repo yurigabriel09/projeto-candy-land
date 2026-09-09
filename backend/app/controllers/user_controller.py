@@ -22,7 +22,9 @@ class UserController:
             nome_completo=dados.get("nome_completo"),
             email=dados.get("email"),
             telefone=dados.get("telefone"),
-            data_nascimento=dados.get("data_nascimento")
+            cpf=dados.get("cpf"),
+            data_nascimento=dados.get("data_nascimento"),
+            endereco=dados.get("endereco")
         )
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
@@ -46,4 +48,4 @@ class UserController:
         resultado = UserService.deletar_usuario(user_id)
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
-        return make_response('', 204)
+        return make_response(jsonify({"mensagem": resultado["mensagem"]}), 204)

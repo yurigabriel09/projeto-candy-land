@@ -1,9 +1,0 @@
-AQUI FICARÃO OS MODELS (TABELAS) DO NOSSO BANCO DE DADOS
-
-usuario.py
-pedido.py
-restaurante.py
-produto.py
-
-
-etc.
