@@ -6,6 +6,7 @@ from app.models.category import Categoria
 from app.models.product import Produto
 from app.models.order import Pedido
 from app.models.item_order import ItemPedido
+from app.models.auth_code import CodigoAutenticacao
 
 __all__ = [
     "db",

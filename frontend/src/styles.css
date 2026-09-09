@@ -298,3 +298,22 @@ button {
 .field-error {
     color: #b00020;
 }
+
+.auth-back {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111111;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.auth-back:hover {
+    background: #f5f5f5;
+    border-color: #b5b5b5;
+}

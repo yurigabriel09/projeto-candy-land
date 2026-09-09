@@ -1,29 +1,51 @@
-from flask import Blueprint, request, jsonify
-from app.database import SessionLocal
-from app.services import auth_service
+from flask import jsonify, make_response
 
-auth_bp = Blueprint('auth_bp', __name__, url_prefix='/auth')
+from app.services.auth_service import AuthService
 
+class AuthController:
+    @staticmethod
+    def solicitar_codigo(dados):
+        email = dados.get("email", "").strip().lower()
 
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json() or {}
-    tipo = data.get('tipo')
-    valor = data.get('valor')
+        if not email:
+            return make_response(jsonify({"erro": "E-mail é obrigatório."}), 400)
 
-    if tipo not in ['email', 'phone'] or not valor:
-        return jsonify({"detail": "Informe um tipo e um valor válidos"}), 400
+        resultado = AuthService.solicitar_codigo(email)
 
-    db = SessionLocal()
-    try:
-        resultado = auth_service.request_login_code(db, tipo, valor)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}),
+                resultado["status_code"]
+            )
 
-        if not resultado:
-            return jsonify({"detail": "Usuário não encontrado"}), 404
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"]}),
+            200
+        )
 
-        return jsonify({
-            "message": "Código de autenticação gerado",
-            "codigo": resultado["codigo"]
-        }), 200
-    finally:
-        db.close()
+    @staticmethod
+    def verificar_codigo(dados):
+        email = dados.get("email", "").strip().lower()
+        codigo = dados.get("codigo", "").strip()
+
+        if not email or not codigo:
+            return make_response(
+                jsonify({"erro": "E-mail e código são obrigatórios."}),
+                400
+            )
+
+        resultado = AuthService.verificar_codigo(email, codigo)
+
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}),
+                resultado["status_code"]
+            )
+
+        return make_response(
+            jsonify({
+                "mensagem": resultado["mensagem"],
+                "dados": resultado["dados"]
+            }),
+            200
+        )
