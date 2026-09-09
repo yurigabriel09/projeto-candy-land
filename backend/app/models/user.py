@@ -8,9 +8,11 @@ class Usuario(db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     telefone = db.Column(db.String(20), unique=True, nullable=False)
     data_nascimento = db.Column(db.Date, nullable=True)
-    status = db.Column(db.String(20), nullable=False, default="ACTIVE")
+    status = db.Column(db.String(20), nullable=False, default=False)
     criado_em = db.Column(db.DateTime, nullable=False, default=db.func.now())
     atualizado_em = db.Column(db.DateTime, nullable=True, onupdate=db.func.now())
+    codigo_verificacao = db.Column(db.String(6), nullable=True)
+    codigo_expira_em = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {

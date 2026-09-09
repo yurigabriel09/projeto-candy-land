@@ -7,7 +7,7 @@ class Categoria(db.Model):
     __table_args__ = (UniqueConstraint("id_restaurante", "nome", name="uq_categoria_restaurante_nome"),)
 
     id = db.Column(db.Integer, primary_key=True, index=True)
-    id_restaurante = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=False)
+    id_restaurante = db.Column(db.Integer, db.ForeignKey("restaurants.id"), nullable=True)
     id_categoria_pai = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)

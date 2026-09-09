@@ -6,6 +6,7 @@ from app.database.database import db
 from app.models import Usuario, Endereco, Restaurante, Categoria, Produto, Pedido, ItemPedido
 from app.routes.user_routes import user_bp
 from app.routes.restaurant_routes import restaurante_bp
+from app.routes.auth_routes import auth_bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,7 @@ def create_app():
 
     app.register_blueprint(user_bp)
     app.register_blueprint(restaurante_bp)
+    app.register_blueprint(auth_bp)
 
     return app
 

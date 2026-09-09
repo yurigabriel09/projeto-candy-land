@@ -44,11 +44,6 @@ class ProductController:
         current_stock = dados.get("qtd_estoque", 0)
         allows_customization = dados.get("permite_customizacao", False)
 
-        if price < 0 or current_stock < 0:
-            return make_response(jsonify({
-                "erro": "Preço ou Quantidade em Estoque não podem ser menores que 0."
-            }), 400)
-
         campos_obrigatorios = {
             "restaurante_id": restaurant_id,
             "categoria_id": category_id,
@@ -62,6 +57,12 @@ class ProductController:
             return make_response(jsonify({
                 "erro": f"Campos obrigatórios ausentes: {', '.join(faltando)}"
             }), 400)
+        
+        if price < 0 or current_stock < 0:
+            return make_response(jsonify({
+                "erro": "Preço ou Quantidade em Estoque não podem ser menores que 0."
+            }), 400)
+
             
         produto = ProductService.criar_produto(dados)
 
@@ -72,3 +73,38 @@ class ProductController:
             "mensagem": produto["mensagem"],
             "produto": produto["dados"],
         }), 201)
+
+
+    @staticmethod
+    def atualizar_produto(produto_id, dados):
+
+        if "preco" in dados and dados.get("preco") is not None and dados.get("preco") < 0:
+            return make_response(jsonify({
+                "erro": "Preço não pode ser menor que 0."
+            }), 400)
+
+        if "qtd_estoque" in dados and dados.get("qtd_estoque") is not None and dados.get("qtd_estoque") < 0:
+            return make_response(jsonify({
+                "erro": "Quantidade em estoque não pode ser menor que 0."
+            }), 400)
+
+        produto = ProductService.atualizar_produto(produto_id, dados)
+
+        if not produto["success"]:
+            return make_response(jsonify({"erro": produto["erro"]}), produto["status_code"])
+
+        return make_response(jsonify({
+            "mensagem": produto["mensagem"],
+            "produto": produto["dados"]
+        }), 200)
+
+
+    @staticmethod
+    def deletar_produto(produto_id):
+
+        resultado = ProductService.deletar_produto(produto_id)
+
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+
+        return make_response('', 204)
