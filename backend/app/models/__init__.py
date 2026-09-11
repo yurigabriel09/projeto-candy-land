@@ -7,6 +7,7 @@ from app.models.product import Produto
 from app.models.order import Pedido
 from app.models.item_order import ItemPedido
 from app.models.auth_code import CodigoAutenticacao
+from app.models.auth_attempt import TentativaAutenticacao
 
 __all__ = [
     "db",
@@ -16,5 +17,6 @@ __all__ = [
     "Categoria",
     "Produto",
     "Pedido",
-    "ItemPedido"
+    "ItemPedido",
+    "TentativaAutenticacao",
 ]
