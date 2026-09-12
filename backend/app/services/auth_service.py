@@ -12,6 +12,7 @@ from app.models.auth_code import CodigoAutenticacao
 from app.models.auth_attempt import TentativaAutenticacao
 from app.services.email_service import EmailService
 from app.services.whatsapp_service import WhatsAppService
+from app.services.token_service import TokenService
 
 
 class AuthService:
@@ -25,7 +26,7 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Canal de autenticação inválido.",
-                    "status_code": 400
+                    "status_code": 400,
                 }
 
             if canal == "EMAIL":
@@ -35,7 +36,7 @@ class AuthService:
                     return {
                         "success": False,
                         "erro": "E-mail inválido.",
-                        "status_code": 400
+                        "status_code": 400,
                     }
             else:
                 valor = AuthService._normalizar_telefone(valor)
@@ -44,24 +45,20 @@ class AuthService:
                     return {
                         "success": False,
                         "erro": "Celular inválido.",
-                        "status_code": 400
+                        "status_code": 400,
                     }
 
             tentativa = TentativaAutenticacao(
                 canal_inicial=canal,
                 email=valor if canal == "EMAIL" else None,
                 telefone=valor if canal == "WHATSAPP" else None,
-                expira_em=datetime.utcnow() + timedelta(minutes=15)
+                expira_em=datetime.utcnow() + timedelta(minutes=15),
             )
 
             db.session.add(tentativa)
             db.session.flush()
 
-            resultado = AuthService._gerar_e_enviar_codigo(
-                tentativa,
-                canal,
-                valor
-            )
+            resultado = AuthService._gerar_e_enviar_codigo(tentativa, canal, valor)
 
             if not resultado["success"]:
                 db.session.rollback()
@@ -73,9 +70,7 @@ class AuthService:
                 "success": True,
                 "mensagem": resultado["mensagem"],
                 "tentativa_id": tentativa.id,
-                "proximo_canal": (
-                    "WHATSAPP" if canal == "EMAIL" else "EMAIL"
-                )
+                "proximo_canal": ("WHATSAPP" if canal == "EMAIL" else "EMAIL"),
             }
 
         except SQLAlchemyError:
@@ -83,7 +78,7 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Falha ao iniciar autenticação.",
-                "status_code": 500
+                "status_code": 500,
             }
 
     @staticmethod
@@ -95,21 +90,21 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação não encontrada.",
-                    "status_code": 404
+                    "status_code": 404,
                 }
 
             if tentativa.concluida:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação já concluída.",
-                    "status_code": 400
+                    "status_code": 400,
                 }
 
             if datetime.utcnow() > tentativa.expira_em:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação expirada.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             primeiro_canal_validado = (
@@ -122,13 +117,11 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "O primeiro código ainda não foi validado.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             segundo_canal = (
-                "WHATSAPP"
-                if tentativa.canal_inicial == "EMAIL"
-                else "EMAIL"
+                "WHATSAPP" if tentativa.canal_inicial == "EMAIL" else "EMAIL"
             )
 
             valor = valor.strip()
@@ -140,7 +133,7 @@ class AuthService:
                     return {
                         "success": False,
                         "erro": "E-mail inválido.",
-                        "status_code": 400
+                        "status_code": 400,
                     }
 
                 tentativa.email = valor
@@ -151,15 +144,13 @@ class AuthService:
                     return {
                         "success": False,
                         "erro": "Celular inválido.",
-                        "status_code": 400
+                        "status_code": 400,
                     }
 
                 tentativa.telefone = valor
 
             resultado = AuthService._gerar_e_enviar_codigo(
-                tentativa,
-                segundo_canal,
-                valor
+                tentativa, segundo_canal, valor
             )
 
             if not resultado["success"]:
@@ -172,7 +163,7 @@ class AuthService:
                 "success": True,
                 "mensagem": resultado["mensagem"],
                 "tentativa_id": tentativa.id,
-                "canal": segundo_canal
+                "canal": segundo_canal,
             }
 
         except SQLAlchemyError:
@@ -180,7 +171,7 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Falha ao solicitar segundo código.",
-                "status_code": 500
+                "status_code": 500,
             }
 
     @staticmethod
@@ -192,14 +183,14 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação não encontrada.",
-                    "status_code": 404
+                    "status_code": 404,
                 }
 
             if tentativa.concluida:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação já concluída.",
-                    "status_code": 400
+                    "status_code": 400,
                 }
 
             if datetime.utcnow() > tentativa.expira_em:
@@ -209,19 +200,22 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação expirada.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
-            registro = CodigoAutenticacao.query.filter_by(
-                tentativa_id=tentativa.id,
-                usado=False
-            ).order_by(CodigoAutenticacao.id.desc()).first()
+            registro = (
+                CodigoAutenticacao.query.filter_by(
+                    tentativa_id=tentativa.id, usado=False
+                )
+                .order_by(CodigoAutenticacao.id.desc())
+                .first()
+            )
 
             if not registro:
                 return {
                     "success": False,
                     "erro": "Código inválido.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             if datetime.utcnow() > registro.expira_em:
@@ -231,14 +225,14 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Código expirado.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             if not check_password_hash(registro.codigo_hash, codigo):
                 return {
                     "success": False,
                     "erro": "Código inválido.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             registro.usado = True
@@ -255,11 +249,9 @@ class AuthService:
                     "success": True,
                     "mensagem": "Código validado com sucesso.",
                     "proximo_canal": (
-                        "WHATSAPP"
-                        if registro.tipo == "EMAIL"
-                        else "EMAIL"
+                        "WHATSAPP" if registro.tipo == "EMAIL" else "EMAIL"
                     ),
-                    "tentativa_id": tentativa.id
+                    "tentativa_id": tentativa.id,
                 }
 
             resultado = AuthService._finalizar_autenticacao(tentativa)
@@ -279,15 +271,13 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Falha ao validar código.",
-                "status_code": 500
+                "status_code": 500,
             }
 
     @staticmethod
     def _gerar_e_enviar_codigo(tentativa, canal, destino):
         CodigoAutenticacao.query.filter_by(
-            tentativa_id=tentativa.id,
-            tipo=canal,
-            usado=False
+            tentativa_id=tentativa.id, tipo=canal, usado=False
         ).update({"usado": True})
 
         codigo = str(secrets.randbelow(900000) + 100000)
@@ -298,7 +288,7 @@ class AuthService:
             destino=destino,
             codigo_hash=generate_password_hash(codigo),
             expira_em=datetime.utcnow() + timedelta(minutes=10),
-            usado=False
+            usado=False,
         )
 
         db.session.add(novo_codigo)
@@ -311,10 +301,7 @@ class AuthService:
                 WhatsAppService.enviar_codigo(destino, codigo)
                 mensagem = "Código enviado para o WhatsApp informado."
 
-            return {
-                "success": True,
-                "mensagem": mensagem
-            }
+            return {"success": True, "mensagem": mensagem}
 
         except ValueError as erro:
             print("ERRO DE ENVIO:", erro)
@@ -322,30 +309,23 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Não foi possível enviar o código.",
-                "status_code": 502
+                "status_code": 502,
             }
 
     @staticmethod
     def _finalizar_autenticacao(tentativa):
-        usuarios_email = Usuario.query.filter_by(
-            email=tentativa.email
-        ).all()
+        usuarios_email = Usuario.query.filter_by(email=tentativa.email).all()
 
-        usuarios_telefone = Usuario.query.filter_by(
-            telefone=tentativa.telefone
-        ).all()
+        usuarios_telefone = Usuario.query.filter_by(telefone=tentativa.telefone).all()
 
-        restaurantes_email = Restaurante.query.filter_by(
-            email=tentativa.email
-        ).all()
+        restaurantes_email = Restaurante.query.filter_by(email=tentativa.email).all()
 
         restaurantes_telefone = Restaurante.query.filter_by(
             telefone=tentativa.telefone
         ).all()
 
         usuarios = {
-            usuario.id: usuario
-            for usuario in usuarios_email + usuarios_telefone
+            usuario.id: usuario for usuario in usuarios_email + usuarios_telefone
         }
 
         restaurantes = {
@@ -357,14 +337,14 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Os dados informados estão vinculados a contas diferentes.",
-                "status_code": 409
+                "status_code": 409,
             }
 
         if usuarios and restaurantes:
             return {
                 "success": False,
                 "erro": "Os dados informados estão vinculados a contas diferentes.",
-                "status_code": 409
+                "status_code": 409,
             }
 
         if usuarios:
@@ -374,7 +354,7 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Usuário inativo.",
-                    "status_code": 403
+                    "status_code": 403,
                 }
 
             if not usuario.email:
@@ -391,8 +371,11 @@ class AuthService:
                     "id": usuario.id,
                     "email": usuario.email,
                     "telefone": usuario.telefone,
-                    "novo_cadastro": False
-                }
+                    "novo_cadastro": False,
+                    "token": TokenService.gerar_token(
+                        "PERSONAL", usuario.id, usuario.email
+                    ),
+                },
             }
 
         if restaurantes:
@@ -402,7 +385,7 @@ class AuthService:
                 return {
                     "success": False,
                     "erro": "Restaurante inativo.",
-                    "status_code": 403
+                    "status_code": 403,
                 }
 
             if not restaurante.email:
@@ -419,8 +402,11 @@ class AuthService:
                     "id": restaurante.id,
                     "email": restaurante.email,
                     "telefone": restaurante.telefone,
-                    "novo_cadastro": False
-                }
+                    "novo_cadastro": False,
+                    "token": TokenService.gerar_token(
+                        "BUSINESS", restaurante.id, restaurante.email
+                    ),
+                },
             }
 
         return {
@@ -432,17 +418,14 @@ class AuthService:
                 "email": tentativa.email,
                 "telefone": tentativa.telefone,
                 "novo_cadastro": True,
-                "tentativa_id": tentativa.id
-            }
+                "tentativa_id": tentativa.id,
+            },
         }
 
     @staticmethod
     def _email_valido(email):
         return bool(
-            re.match(
-                r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$",
-                email
-            )
+            re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email)
         )
 
     @staticmethod

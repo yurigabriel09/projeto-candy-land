@@ -8,6 +8,7 @@ from app.models.order import Pedido
 from app.models.item_order import ItemPedido
 from app.models.auth_code import CodigoAutenticacao
 from app.models.auth_attempt import TentativaAutenticacao
+from app.models.card import CartaoCliente
 
 __all__ = [
     "db",
@@ -19,4 +20,6 @@ __all__ = [
     "Pedido",
     "ItemPedido",
     "TentativaAutenticacao",
+    "CodigoAutenticacao",
+    "CartaoCliente",
 ]

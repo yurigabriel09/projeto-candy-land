@@ -159,9 +159,11 @@ function BusinessRegister() {
             cnpj: form.cnpj,
             razao_social: form.companyName.trim(),
             nome: form.tradeName.trim(),
+            nome_responsavel: form.responsibleName.trim(),
             email: form.email.trim(),
             telefone: form.phone,
             cpf_responsavel: form.responsibleCpf,
+            tentativa_id: dadosAutenticacao.tentativaId,
             endereco: {
                 cep: form.cep,
                 rua: form.address.trim(),

@@ -79,6 +79,7 @@ function PersonalRegister() {
             telefone: form.phone,
             email: form.email.trim(),
             data_nascimento: form.birthDate,
+            tentativa_id: dadosAutenticacao.tentativaId,
             endereco: {
                 cep: form.cep,
                 rua: form.address.trim(),
