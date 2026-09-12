@@ -1,58 +1,64 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function Register() {
-  const navigate = useNavigate();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const dadosAutenticacao = location.state || {};
+    const veioDaAutenticacao = Boolean(dadosAutenticacao.tentativaId);
 
-  return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <header className="auth-header">
-          <h1>CandyLand</h1>
-          <p>Seu pedido, do seu jeito.</p>
-        </header>
+    return (
+        <main className="auth-page">
+            <section className="auth-card">
+                <header className="auth-header">
+                    <h1>CandyLand</h1>
+                    <p>Seu pedido, do seu jeito.</p>
+                </header>
 
-        <div className="auth-content">
-          <h2>Criar conta</h2>
+                <div className="auth-content">
+                    <h2>Criar conta</h2>
 
-          <p className="auth-description">
-            Escolha o tipo de conta que deseja criar.
-          </p>
+                    <p className="auth-description">
+                        Escolha o tipo de conta que deseja criar.
+                    </p>
 
-          <div className="register-options">
-            <button
-              type="button"
-              onClick={() => navigate("/register/personal")}
-            >
-              <strong>Pessoa Física</strong>
-              <span>
-                Para pedir suas comidas favoritas.
-              </span>
-            </button>
+                    <div className="register-options">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate("/register/personal", {
+                                    state: dadosAutenticacao
+                                })
+                            }
+                        >
+                            <strong>Pessoa Física</strong>
+                            <span>Para pedir suas comidas favoritas.</span>
+                        </button>
 
-            <button
-              type="button"
-              onClick={() => navigate("/register/business")}
-            >
-              <strong>Empresa</strong>
-              <span>
-                Para vender seus produtos e receber pedidos.
-              </span>
-            </button>
-          </div>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate("/register/business", {
+                                    state: dadosAutenticacao
+                                })
+                            }
+                        >
+                            <strong>Empresa</strong>
+                            <span>Para vender seus produtos e receber pedidos.</span>
+                        </button>
+                    </div>
 
-          <p className="auth-footer">
-            Já possui uma conta?
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-            >
-              Entrar
-            </button>
-          </p>
-        </div>
-      </section>
-    </main>
-  );
+                    {!veioDaAutenticacao && (
+                        <p className="auth-footer">
+                            Já possui uma conta?
+                            <button type="button" onClick={() => navigate("/login")}>
+                                Entrar
+                            </button>
+                        </p>
+                    )}
+                </div>
+            </section>
+        </main>
+    );
 }
 
 export default Register;

@@ -9,6 +9,9 @@ function Login() {
     const [valor, setValor] = useState("");
     const [codigo, setCodigo] = useState("");
     const [etapa, setEtapa] = useState("login");
+    const [canalAtual, setCanalAtual] = useState("");
+    const [tentativaId, setTentativaId] = useState("");
+    const [dadosAutenticacao, setDadosAutenticacao] = useState({});
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState("");
     const [mensagem, setMensagem] = useState("");
@@ -20,36 +23,41 @@ function Login() {
         setMensagem("");
 
         if (!valor.trim()) {
-            setErro("Informe seu e-mail.");
-            return;
-        }
-
-        if (tipo !== "email") {
-            setErro("Login por celular ainda não está disponível.");
+            setErro(tipo === "email" ? "Informe seu e-mail." : "Informe seu celular.");
             return;
         }
 
         setLoading(true);
 
         try {
+            const canal = tipo === "email" ? "EMAIL" : "WHATSAPP";
+            const valorFormatado = tipo === "email"
+                ? valor.trim().toLowerCase()
+                : valor.trim();
+
             const response = await fetch(`${API_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    email: valor.trim().toLowerCase()
+                    canal,
+                    valor: valorFormatado
                 })
             });
 
             const resultado = await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    resultado.erro || "Não foi possível enviar o código."
-                );
+                throw new Error(resultado.erro || "Não foi possível enviar o código.");
             }
 
+            setTentativaId(resultado.tentativa_id);
+            setCanalAtual(canal);
+            setDadosAutenticacao({
+                [canal === "EMAIL" ? "email" : "telefone"]: valorFormatado
+            });
+            setCodigo("");
             setMensagem(resultado.mensagem);
             setEtapa("codigo");
         } catch (error) {
@@ -65,7 +73,7 @@ function Login() {
         setMensagem("");
 
         if (!codigo.trim()) {
-            setErro("Informe o código recebido por e-mail.");
+            setErro("Informe o código recebido.");
             return;
         }
 
@@ -78,7 +86,7 @@ function Login() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    email: valor.trim().toLowerCase(),
+                    tentativa_id: tentativaId,
                     codigo: codigo.trim()
                 })
             });
@@ -89,14 +97,36 @@ function Login() {
                 throw new Error(resultado.erro || "Código inválido.");
             }
 
-            const { tipo_conta } = resultado.dados;
+            if (resultado.dados) {
+                setDadosAutenticacao(resultado.dados);
+            }
 
-            if (tipo_conta === "PERSONAL") {
+            if (resultado.proximo_canal) {
+                setCanalAtual(resultado.proximo_canal);
+                setValor("");
+                setCodigo("");
+                setMensagem(resultado.mensagem);
+                setEtapa("segundo-dado");
+                return;
+            }
+
+            if (resultado.dados?.novo_cadastro) {
+                navigate("/register", {
+                    state: {
+                        tentativaId: resultado.dados.tentativa_id || tentativaId,
+                        email: resultado.dados.email,
+                        telefone: resultado.dados.telefone
+                    }
+                });
+                return;
+            }
+
+            if (resultado.dados?.tipo_conta === "PERSONAL") {
                 navigate("/home");
                 return;
             }
 
-            if (tipo_conta === "BUSINESS") {
+            if (resultado.dados?.tipo_conta === "BUSINESS") {
                 navigate("/business");
                 return;
             }
@@ -107,12 +137,76 @@ function Login() {
         }
     }
 
+    async function handleSegundoDado(event) {
+        event.preventDefault();
+        setErro("");
+        setMensagem("");
+
+        if (!valor.trim()) {
+            setErro(
+                canalAtual === "EMAIL"
+                    ? "Informe seu e-mail."
+                    : "Informe seu celular."
+            );
+            return;
+        }
+
+        const valorFormatado = canalAtual === "EMAIL"
+            ? valor.trim().toLowerCase()
+            : valor.trim();
+
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/second-code`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    tentativa_id: tentativaId,
+                    valor: valorFormatado
+                })
+            });
+
+            const resultado = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    resultado.erro || "Não foi possível enviar o código."
+                );
+            }
+
+            setDadosAutenticacao((dados) => ({
+                ...dados,
+                ...(canalAtual === "EMAIL"
+                    ? { email: valorFormatado }
+                    : { telefone: valorFormatado })
+            }));
+
+            setCodigo("");
+            setMensagem(resultado.mensagem);
+            setEtapa("codigo");
+        } catch (error) {
+            setErro(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     function voltarParaLogin() {
         setEtapa("login");
         setCodigo("");
+        setValor("");
+        setTentativaId("");
+        setCanalAtual("");
+        setDadosAutenticacao({});
         setErro("");
         setMensagem("");
     }
+
+    const nomeCanal = canalAtual === "EMAIL" ? "e-mail" : "WhatsApp";
+    const segundoDado = canalAtual === "EMAIL" ? "seu e-mail" : "seu celular";
 
     return (
         <main className="auth-page">
@@ -123,7 +217,7 @@ function Login() {
                 </header>
 
                 <div className="auth-content">
-                    {etapa === "login" ? (
+                    {etapa === "login" && (
                         <>
                             <h2>Entrar</h2>
 
@@ -139,6 +233,7 @@ function Login() {
                                         setTipo("email");
                                         setValor("");
                                         setErro("");
+                                        setMensagem("");
                                     }}
                                 >
                                     E-mail
@@ -151,6 +246,7 @@ function Login() {
                                         setTipo("phone");
                                         setValor("");
                                         setErro("");
+                                        setMensagem("");
                                     }}
                                 >
                                     Celular
@@ -172,10 +268,9 @@ function Login() {
                                     }
                                     value={valor}
                                     onChange={(event) => {
-                                        const value =
-                                            tipo === "phone"
-                                                ? maskPhone(event.target.value)
-                                                : event.target.value;
+                                        const value = tipo === "phone"
+                                            ? maskPhone(event.target.value)
+                                            : event.target.value;
 
                                         setValor(value);
                                     }}
@@ -218,14 +313,74 @@ function Login() {
                                 </button>
                             </p>
                         </>
-                    ) : (
+                    )}
+
+                    {etapa === "segundo-dado" && (
                         <>
-                            <h2>Verifique seu e-mail</h2>
+                            <h2>Agora vamos validar {segundoDado}</h2>
+
+                            <p className="auth-description">
+                                {mensagem}
+                            </p>
+
+                            <form onSubmit={handleSegundoDado}>
+                                <label htmlFor="second-value">
+                                    {canalAtual === "EMAIL" ? "E-mail" : "Celular"}
+                                </label>
+
+                                <input
+                                    id="second-value"
+                                    type={canalAtual === "EMAIL" ? "email" : "tel"}
+                                    placeholder={
+                                        canalAtual === "EMAIL"
+                                            ? "seu@email.com"
+                                            : "(11) 91234-5678"
+                                    }
+                                    value={valor}
+                                    onChange={(event) => {
+                                        const value = canalAtual === "EMAIL"
+                                            ? event.target.value
+                                            : maskPhone(event.target.value);
+
+                                        setValor(value);
+                                    }}
+                                />
+
+                                {erro && (
+                                    <p className="auth-error">{erro}</p>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="primary-button"
+                                    disabled={loading}
+                                >
+                                    {loading ? "Enviando..." : "Enviar código"}
+                                </button>
+                            </form>
+
+                            <button
+                                type="button"
+                                className="auth-back"
+                                onClick={voltarParaLogin}
+                            >
+                                Voltar
+                            </button>
+                        </>
+                    )}
+
+                    {etapa === "codigo" && (
+                        <>
+                            <h2>Verifique seu {nomeCanal}</h2>
 
                             <p className="auth-description">
                                 Digite o código que enviamos para:
                                 <br />
-                                <strong>{valor}</strong>
+                                <strong>
+                                    {canalAtual === "EMAIL"
+                                        ? dadosAutenticacao.email
+                                        : dadosAutenticacao.telefone}
+                                </strong>
                             </p>
 
                             {mensagem && (
@@ -258,9 +413,7 @@ function Login() {
                                     className="primary-button"
                                     disabled={loading}
                                 >
-                                    {loading
-                                        ? "Validando..."
-                                        : "Validar código"}
+                                    {loading ? "Validando..." : "Validar código"}
                                 </button>
                             </form>
 

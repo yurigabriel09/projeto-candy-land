@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { maskCep, maskCpf, maskCnpj, maskPhone } from "../utils/masks";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
@@ -7,6 +7,8 @@ import { createRestaurant } from "../services/restaurantService";
 
 function BusinessRegister() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
         cnpj: "",
@@ -14,8 +16,8 @@ function BusinessRegister() {
         tradeName: "",
         responsibleName: "",
         responsibleCpf: "",
-        phone: "",
-        email: "",
+        email: dadosAutenticacao.email || "",
+        phone: dadosAutenticacao.telefone || "",
         cep: "",
         address: "",
         number: "",
@@ -198,8 +200,7 @@ function BusinessRegister() {
                     <button
                         type="button"
                         className="back-button"
-                        onClick={() => navigate("/register")}
-                    >
+                        onClick={() => navigate("/register", { state: dadosAutenticacao })}>
                         ← Voltar
                     </button>
 
@@ -284,27 +285,12 @@ function BusinessRegister() {
 
                         <div className="form-field">
                             <label htmlFor="phone">Celular</label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                value={form.phone}
-                                onChange={handleChange}
-                                placeholder="(11) 91234-5678"
-                                inputMode="numeric"
-                            />
+                            <input id="phone" name="phone" type="tel" value={form.phone} disabled />
                         </div>
 
                         <div className="form-field">
                             <label htmlFor="email">E-mail</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                placeholder="empresa@email.com"
-                            />
+                            <input id="email" name="email" type="email" value={form.email} disabled />
                         </div>
                     </div>
 

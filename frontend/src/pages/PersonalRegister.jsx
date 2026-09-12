@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { maskCep, maskCpf, maskPhone } from "../utils/masks";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
@@ -7,13 +7,15 @@ import { createUser } from "../services/userService";
 
 function PersonalRegister() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
         name: "",
         birthDate: "",
         cpf: "",
-        phone: "",
-        email: "",
+        email: dadosAutenticacao.email || "",
+        phone: dadosAutenticacao.telefone || "",
         cep: "",
         address: "",
         number: "",
@@ -104,7 +106,7 @@ function PersonalRegister() {
         <main className="auth-page">
             <section className="form-card">
                 <header className="form-header">
-                    <button type="button" className="back-button" onClick={() => navigate("/register")}>
+                    <button type="button" className="back-button" onClick={() => navigate("/register", { state: dadosAutenticacao })}>
                         ← Voltar
                     </button>
 
@@ -135,13 +137,13 @@ function PersonalRegister() {
 
                             <div className="form-field">
                                 <label htmlFor="phone">Celular</label>
-                                <input id="phone" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="(DDD) 00000-0000" inputMode="numeric" />
+                                <input id="phone" name="phone" type="tel" value={form.phone} disabled />
                             </div>
                         </div>
 
                         <div className="form-field">
                             <label htmlFor="email">E-mail</label>
-                            <input id="email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="seu@email.com" />
+                            <input id="email" name="email" type="email" value={form.email} disabled />
                         </div>
                     </div>
 
