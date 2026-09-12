@@ -1,5 +1,4 @@
 from flask import Blueprint, request
-
 from app.controllers.auth_controller import AuthController
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -7,6 +6,10 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 @auth_bp.route("/login", methods=["POST"])
 def solicitar_codigo():
     return AuthController.solicitar_codigo(request.get_json() or {})
+
+@auth_bp.route("/second-code", methods=["POST"])
+def solicitar_segundo_codigo():
+    return AuthController.solicitar_segundo_codigo(request.get_json() or {})
 
 @auth_bp.route("/verify", methods=["POST"])
 def verificar_codigo():
