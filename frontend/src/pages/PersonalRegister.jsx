@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { maskCep, maskCpf, maskPhone } from "../utils/masks";
+import { maskCep, maskCpf } from "../utils/masks";
+import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createUser } from "../services/userService";
@@ -52,7 +53,6 @@ function PersonalRegister() {
         let formattedValue = value;
 
         if (name === "cpf") { formattedValue = maskCpf(value); }
-        if (name === "phone") { formattedValue = maskPhone(value); }
         if (name === "cep") { formattedValue = maskCep(value); }
 
         setForm((currentForm) => ({ ...currentForm, [name]: formattedValue }));
@@ -137,7 +137,7 @@ function PersonalRegister() {
 
                             <div className="form-field">
                                 <label htmlFor="phone">Celular</label>
-                                <input id="phone" name="phone" type="tel" value={form.phone} disabled />
+                                <VerifiedPhoneInput value={form.phone} />
                             </div>
                         </div>
 

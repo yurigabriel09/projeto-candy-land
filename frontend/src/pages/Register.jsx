@@ -24,11 +24,7 @@ function Register() {
                     <div className="register-options">
                         <button
                             type="button"
-                            onClick={() =>
-                                navigate("/register/personal", {
-                                    state: dadosAutenticacao
-                                })
-                            }
+                            onClick={() => navigate("/register/personal", { state: dadosAutenticacao })}
                         >
                             <strong>Pessoa Física</strong>
                             <span>Para pedir suas comidas favoritas.</span>
@@ -36,11 +32,7 @@ function Register() {
 
                         <button
                             type="button"
-                            onClick={() =>
-                                navigate("/register/business", {
-                                    state: dadosAutenticacao
-                                })
-                            }
+                            onClick={() => navigate("/register/business", { state: dadosAutenticacao })}
                         >
                             <strong>Empresa</strong>
                             <span>Para vender seus produtos e receber pedidos.</span>
@@ -50,7 +42,10 @@ function Register() {
                     {!veioDaAutenticacao && (
                         <p className="auth-footer">
                             Já possui uma conta?
-                            <button type="button" onClick={() => navigate("/login")}>
+                            <button
+                                type="button"
+                                onClick={() => navigate("/login")}
+                            >
                                 Entrar
                             </button>
                         </p>

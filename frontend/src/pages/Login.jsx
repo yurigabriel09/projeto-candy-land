@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { maskPhone } from "../utils/masks";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+import PhoneInput from "../components/PhoneInput";
+import { countries } from "../utils/countries";
 
 const API_URL = "http://127.0.0.1:5000/auth";
 
@@ -15,6 +18,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState("");
     const [mensagem, setMensagem] = useState("");
+    const [pais, setPais] = useState("BR");
     const navigate = useNavigate();
 
     async function handleSubmit(event) {
@@ -31,9 +35,25 @@ function Login() {
 
         try {
             const canal = tipo === "email" ? "EMAIL" : "WHATSAPP";
-            const valorFormatado = tipo === "email"
-                ? valor.trim().toLowerCase()
-                : valor.trim();
+            let valorFormatado = valor.trim().toLowerCase();
+
+            if (tipo === "phone") {
+                const country = countries.find((item) => item.code === pais);
+
+                if (!country) {
+                    setErro("Selecione um país.");
+                    return;
+                }
+
+                const phone = parsePhoneNumberFromString(valor, country.code);
+
+                if (!phone || !phone.isValid()) {
+                    setErro("Informe um celular válido.");
+                    return;
+                }
+
+                valorFormatado = phone.number;
+            }
 
             const response = await fetch(`${API_URL}/login`, {
                 method: "POST",
@@ -151,9 +171,25 @@ function Login() {
             return;
         }
 
-        const valorFormatado = canalAtual === "EMAIL"
-            ? valor.trim().toLowerCase()
-            : valor.trim();
+        let valorFormatado = valor.trim().toLowerCase();
+
+        if (canalAtual === "WHATSAPP") {
+            const country = countries.find((item) => item.code === pais);
+
+            if (!country) {
+                setErro("Selecione um país.");
+                return;
+            }
+
+            const phone = parsePhoneNumberFromString(valor, country.code);
+
+            if (!phone || !phone.isValid()) {
+                setErro("Informe um celular válido.");
+                return;
+            }
+
+            valorFormatado = phone.number;
+        }
 
         setLoading(true);
 
@@ -258,23 +294,22 @@ function Login() {
                                     {tipo === "email" ? "E-mail" : "Celular"}
                                 </label>
 
-                                <input
-                                    id="login-value"
-                                    type={tipo === "email" ? "email" : "tel"}
-                                    placeholder={
-                                        tipo === "email"
-                                            ? "seu@email.com"
-                                            : "(11) 91234-5678"
-                                    }
-                                    value={valor}
-                                    onChange={(event) => {
-                                        const value = tipo === "phone"
-                                            ? maskPhone(event.target.value)
-                                            : event.target.value;
-
-                                        setValor(value);
-                                    }}
-                                />
+                                {tipo === "email" ? (
+                                    <input
+                                        id="login-value"
+                                        type="email"
+                                        placeholder="seu@email.com"
+                                        value={valor}
+                                        onChange={(event) => setValor(event.target.value)}
+                                    />
+                                ) : (
+                                    <PhoneInput
+                                        value={valor}
+                                        countryCode={pais}
+                                        onChange={setValor}
+                                        onCountryChange={setPais}
+                                    />
+                                )}
 
                                 {erro && (
                                     <p className="auth-error">{erro}</p>
@@ -328,23 +363,22 @@ function Login() {
                                     {canalAtual === "EMAIL" ? "E-mail" : "Celular"}
                                 </label>
 
-                                <input
-                                    id="second-value"
-                                    type={canalAtual === "EMAIL" ? "email" : "tel"}
-                                    placeholder={
-                                        canalAtual === "EMAIL"
-                                            ? "seu@email.com"
-                                            : "(11) 91234-5678"
-                                    }
-                                    value={valor}
-                                    onChange={(event) => {
-                                        const value = canalAtual === "EMAIL"
-                                            ? event.target.value
-                                            : maskPhone(event.target.value);
-
-                                        setValor(value);
-                                    }}
-                                />
+                                {canalAtual === "EMAIL" ? (
+                                    <input
+                                        id="second-value"
+                                        type="email"
+                                        placeholder="seu@email.com"
+                                        value={valor}
+                                        onChange={(event) => setValor(event.target.value)}
+                                    />
+                                ) : (
+                                    <PhoneInput
+                                        value={valor}
+                                        countryCode={pais}
+                                        onChange={setValor}
+                                        onCountryChange={setPais}
+                                    />
+                                )}
 
                                 {erro && (
                                     <p className="auth-error">{erro}</p>

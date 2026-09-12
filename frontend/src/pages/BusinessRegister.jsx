@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { maskCep, maskCpf, maskCnpj, maskPhone } from "../utils/masks";
+import { maskCep, maskCpf, maskCnpj } from "../utils/masks";
+import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createRestaurant } from "../services/restaurantService";
@@ -78,10 +79,6 @@ function BusinessRegister() {
 
         if (name === "responsibleCpf") {
             formattedValue = maskCpf(value);
-        }
-
-        if (name === "phone") {
-            formattedValue = maskPhone(value);
         }
 
         setForm((currentForm) => ({
@@ -285,7 +282,7 @@ function BusinessRegister() {
 
                         <div className="form-field">
                             <label htmlFor="phone">Celular</label>
-                            <input id="phone" name="phone" type="tel" value={form.phone} disabled />
+                            <VerifiedPhoneInput value={form.phone} />
                         </div>
 
                         <div className="form-field">

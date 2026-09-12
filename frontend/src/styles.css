@@ -317,3 +317,30 @@ button {
     background: #f5f5f5;
     border-color: #b5b5b5;
 }
+
+.phone-input {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+}
+
+.phone-country {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 46px;
+    padding: 0 12px;
+    border: 1px solid #ccc;
+    border-radius: 9px;
+    background: #f5f5f5;
+    white-space: nowrap;
+}
+
+.phone-input input {
+    min-width: 0;
+}
+
+.phone-input input:disabled {
+    background: #f5f5f5;
+    color: #555;
+}
