@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { maskPhone } from "../utils/masks";
+import { useAuth } from "../context/AuthContext";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import PhoneInput from "../components/PhoneInput";
 import { countries } from "../utils/countries";
@@ -8,6 +8,7 @@ import { countries } from "../utils/countries";
 const API_URL = "http://127.0.0.1:5000/auth";
 
 function Login() {
+    const { entrar } = useAuth();
     const [tipo, setTipo] = useState("email");
     const [valor, setValor] = useState("");
     const [codigo, setCodigo] = useState("");
@@ -119,6 +120,10 @@ function Login() {
 
             if (resultado.dados) {
                 setDadosAutenticacao(resultado.dados);
+
+                if (resultado.dados.token) {
+                    entrar(resultado.dados);
+                }
             }
 
             if (resultado.proximo_canal) {
