@@ -5,10 +5,12 @@ import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createUser } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
 
 function PersonalRegister() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { entrar } = useAuth();
     const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
@@ -93,10 +95,21 @@ function PersonalRegister() {
 
         try {
             setLoading(true);
+
             const resultado = await createUser(dados);
+
             console.log("Cadastro realizado:", resultado);
+
+            if (resultado.dados?.token) {
+                entrar({
+                    ...resultado.dados.usuario,
+                    ...resultado.dados,
+                    token: resultado.dados.token
+                });
+            }
+
             alert("Cadastro realizado com sucesso!");
-            navigate("/login");
+            navigate("/home");
         } catch (error) {
             console.error("Erro no cadastro:", error);
             alert(error.message || "Erro ao realizar cadastro.");

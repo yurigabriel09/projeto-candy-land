@@ -5,10 +5,12 @@ import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createRestaurant } from "../services/restaurantService";
+import { useAuth } from "../context/AuthContext";
 
 function BusinessRegister() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { entrar } = useAuth();
     const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
@@ -182,8 +184,16 @@ function BusinessRegister() {
 
             console.log("Cadastro empresarial realizado:", resultado);
 
+            if (resultado.dados?.token) {
+                entrar({
+                    ...resultado.dados.restaurante,
+                    ...resultado.dados,
+                    token: resultado.dados.token
+                });
+            }
+
             alert("Cadastro empresarial realizado com sucesso!");
-            navigate("/login");
+            navigate("/business");
         } catch (error) {
             console.error("Erro no cadastro empresarial:", error);
             alert(error.message || "Erro ao realizar cadastro empresarial.");
