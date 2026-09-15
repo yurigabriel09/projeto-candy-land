@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.database.database import db
 from app.models.user import Usuario
 from app.models.address import Endereco
-
+from app.utils.formatter import normalizar_telefone
 class UserService:
     @staticmethod
     def listar_usuarios():
@@ -34,7 +34,7 @@ class UserService:
             novo_usuario = Usuario(
                 nome_completo=nome_completo,
                 email=email,
-                telefone=telefone,
+                telefone=normalizar_telefone(telefone),
                 cpf=cpf,
                 data_nascimento=data_nascimento
             )
@@ -94,7 +94,7 @@ class UserService:
             if email is not None:
                 usuario.email = email
             if telefone is not None:
-                usuario.telefone = telefone
+                usuario.telefone = normalizar_telefone(telefone)
             if data_nascimento is not None:
                 data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
                 usuario.data_nascimento = data_nascimento

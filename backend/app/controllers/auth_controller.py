@@ -5,12 +5,18 @@ from app.services.auth_service import AuthService
 class AuthController:
     @staticmethod
     def solicitar_codigo(dados):
-        email = dados.get("email", "").strip().lower()
+        tipo = dados.get("tipo", "EMAIL").upper()
 
-        if not email:
-            return make_response(jsonify({"erro": "E-mail é obrigatório."}), 400)
+        if tipo == "WHATSAPP":
+            destino = dados.get("telefone", "").strip()
+        else:
+            destino = dados.get("email", "").strip().lower()
 
-        resultado = AuthService.solicitar_codigo(email)
+        if not destino:
+            campo = "Telefone" if tipo == "WHATSAPP" else "E-mail"
+            return make_response(jsonify({"erro": f"{campo} é obrigatório."}), 400)
+
+        resultado = AuthService.solicitar_codigo(destino, tipo=tipo)
 
         if not resultado["success"]:
             return make_response(
@@ -25,16 +31,22 @@ class AuthController:
 
     @staticmethod
     def verificar_codigo(dados):
-        email = dados.get("email", "").strip().lower()
+        tipo = dados.get("tipo", "EMAIL").upper()
         codigo = dados.get("codigo", "").strip()
 
-        if not email or not codigo:
+        if tipo == "WHATSAPP":
+            destino = dados.get("telefone", "").strip()
+        else:
+            destino = dados.get("email", "").strip().lower()
+
+        if not destino or not codigo:
+            campo = "Telefone" if tipo == "WHATSAPP" else "E-mail"
             return make_response(
-                jsonify({"erro": "E-mail e código são obrigatórios."}),
+                jsonify({"erro": f"{campo} e código são obrigatórios."}),
                 400
             )
 
-        resultado = AuthService.verificar_codigo(email, codigo)
+        resultado = AuthService.verificar_codigo(destino, codigo, tipo=tipo)
 
         if not resultado["success"]:
             return make_response(
