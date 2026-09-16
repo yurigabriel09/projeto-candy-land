@@ -90,6 +90,8 @@ function Login() {
             }
 
             const { tipo_conta } = resultado.dados;
+            localStorage.setItem("tipoConta", tipo_conta);
+            localStorage.setItem("contaId", id);
 
             if (tipo_conta === "PERSONAL") {
                 navigate("/home");
