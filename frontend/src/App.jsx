@@ -5,6 +5,7 @@ import PersonalRegister from "./pages/PersonalRegister";
 import BusinessRegister from "./pages/BusinessRegister";
 import Home from "./pages/Home";
 import BusinessHome from "./pages/BusinessHome";
+import ProductForm from "./pages/ProductForm";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/register/business" element={<BusinessRegister />} />
         <Route path="/home" element={<Home />} />
         <Route path="/business" element={<BusinessHome />} />
+        <Route path="/business/products/new" element={<ProductForm />} />
       </Routes>
     </BrowserRouter>
   );
