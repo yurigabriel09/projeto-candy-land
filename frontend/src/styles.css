@@ -957,3 +957,197 @@ select:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================
+   Painel de parceiro (dashboard de produtos) — telas do colega
+   ========================================================== */
+
+:root {
+    --color-primary: #F8467A;
+    --color-secondary: #FF7A3D;
+    --color-tertiary: #FFD3A8;
+    --color-bg: #FFEDE3;
+    --color-dark: #4B1E1E;
+}
+
+.dashboard-page {
+    min-height: 100vh;
+    background: var(--color-bg);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.dashboard-layout {
+    min-height: 100vh;
+    display: flex;
+    background: var(--color-bg);
+}
+
+.dashboard-sidebar {
+    width: 220px;
+    background: var(--color-dark);
+    color: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 18px;
+}
+
+.dashboard-logo {
+    font-size: 22px;
+    margin: 0 0 32px;
+    color: var(--color-tertiary);
+}
+
+.dashboard-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.dashboard-nav-item {
+    text-align: left;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-bg);
+    font-weight: 500;
+}
+
+.dashboard-nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-nav-item.active {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.dashboard-logout {
+    margin-top: auto;
+    color: var(--color-tertiary);
+}
+
+.dashboard-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: #fff;
+    border-bottom: 2px solid var(--color-secondary);
+}
+
+.dashboard-header h2 {
+    margin: 0;
+    color: var(--color-dark);
+}
+
+.dashboard-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.icon-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--color-tertiary);
+    background: #fff;
+    font-size: 16px;
+}
+
+.icon-button:hover {
+    background: var(--color-tertiary);
+}
+
+.dashboard-body {
+    padding: 32px;
+    flex: 1;
+}
+
+.dashboard-body-top {
+    margin-bottom: 24px;
+}
+
+.dashboard-cta {
+    width: auto;
+    padding: 0 24px;
+    background: var(--color-primary);
+}
+
+.dashboard-cta:hover {
+    background: var(--color-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-dark);
+    background: #fff;
+    border: 1px dashed var(--color-tertiary);
+    border-radius: 14px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.product-card {
+    background: #fff;
+    border: 1px solid var(--color-tertiary);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.product-card h3 {
+    margin: 0 0 8px;
+    color: var(--color-dark);
+}
+
+.product-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin: 0 0 10px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-available {
+    background: #e3f7e8;
+    color: #1a7a3c;
+}
+
+.badge-unavailable {
+    background: #fde3e3;
+    color: #b00020;
+}
+
+.form-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.form-checkbox input {
+    width: auto;
+    height: auto;
+}
