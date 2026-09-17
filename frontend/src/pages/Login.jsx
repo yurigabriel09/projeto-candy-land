@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { maskPhone } from "../utils/masks";
+import { iniciarSessao } from "../services/authService";
 
 const API_URL = "http://127.0.0.1:5000/auth";
 
@@ -89,7 +90,11 @@ function Login() {
                 throw new Error(resultado.erro || "Código inválido.");
             }
 
-            const { tipo_conta } = resultado.dados;
+            const { tipo_conta, id } = resultado.dados;
+
+            // Busca os dados completos (nome incluso) e guarda a sessão
+            // antes de navegar, para a tela seguinte saber quem entrou.
+            await iniciarSessao(tipo_conta, id);
 
             if (tipo_conta === "PERSONAL") {
                 navigate("/home");
