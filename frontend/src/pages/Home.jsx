@@ -1,112 +1,34 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import { getSessao } from "../services/authService";
-import { getRestaurants } from "../services/restaurantService";
-
-const ATALHOS = [
-  { emoji: "🍰", nome: "Bolos", busca: "bolo" },
-  { emoji: "🍫", nome: "Chocolates", busca: "chocolate" },
-  { emoji: "🍭", nome: "Pirulitos", busca: "pirulito" },
-  { emoji: "🧁", nome: "Cupcakes", busca: "cupcake" },
-  { emoji: "🍮", nome: "Pudins", busca: "pudim" },
-  { emoji: "🍬", nome: "Balas", busca: "bala" },
-  { emoji: "🍩", nome: "Donuts", busca: "donut" },
-  { emoji: "🍪", nome: "Cookies", busca: "cookie" },
-];
-
-const EMOJIS_LOJA = ["🍰", "🍫", "🍭", "🧁", "🍮", "🍪"];
 
 function Home() {
-  const [lojas, setLojas] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
-  const sessao = getSessao();
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!sessao || sessao.tipo !== "PERSONAL") {
-      navigate("/login");
-      return;
-    }
-    carregarLojas();
-  }, []);
+    return (
+        <main className="auth-page">
+            <section className="auth-card">
+                <header className="auth-header">
+                    <h1>CandyLand</h1>
+                    <p>Seu pedido, do seu jeito.</p>
+                </header>
 
-  async function carregarLojas() {
-    setCarregando(true);
-    setErro("");
-    try {
-      const dados = await getRestaurants();
-      setLojas(dados.filter((loja) => loja.ativo));
-    } catch {
-      setErro("Não foi possível carregar as lojas agora.");
-    } finally {
-      setCarregando(false);
-    }
-  }
+                <div className="auth-content">
+                    <h2>Login realizado! 🎉</h2>
 
-  if (!sessao) return null;
+                    <p className="auth-description">
+                        Você entrou como <strong>cliente</strong>.
+                    </p>
 
-  const primeiroNome = sessao.nome_completo.split(" ")[0];
-
-  return (
-    <>
-      <Header />
-
-      <section className="topo-saudacao">
-        <div className="container">
-          <h1>Oi, {primeiroNome}! O que você quer comer hoje? 🍰</h1>
-        </div>
-      </section>
-
-      <section className="container secao">
-        <div className="atalhos">
-          {ATALHOS.map((atalho) => (
-            <button
-              key={atalho.nome}
-              className="atalho"
-              onClick={() => navigate(`/itens?busca=${atalho.busca}`)}
-            >
-              <span className="atalho-emoji">{atalho.emoji}</span>
-              <span className="atalho-nome">{atalho.nome}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="container secao">
-        <h2 className="titulo-secao">Lojas perto de você 🍭</h2>
-
-        {carregando ? (
-          <p className="mensagem-carregando">Carregando lojas...</p>
-        ) : erro ? (
-          <p className="mensagem-erro">{erro}</p>
-        ) : lojas.length === 0 ? (
-          <p className="mensagem-vazia">
-            Ainda não temos lojas cadastradas por aqui.
-          </p>
-        ) : (
-          <div className="grade-lojas">
-            {lojas.map((loja, i) => (
-              <article
-                key={loja.id}
-                className="card-loja"
-                onClick={() => navigate(`/itens?loja=${loja.id}`)}
-              >
-                <div className="card-loja-capa">
-                  {EMOJIS_LOJA[i % EMOJIS_LOJA.length]}
+                    <button
+                        type="button"
+                        className="primary-button"
+                        onClick={() => navigate("/login")}
+                    >
+                        Voltar para o login
+                    </button>
                 </div>
-                <div className="card-loja-corpo">
-                  <h3>{loja.nome}</h3>
-                  <p className="card-loja-tipo">Loja parceira Candyland</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-    </>
-  );
+            </section>
+        </main>
+    );
 }
 
 export default Home;
