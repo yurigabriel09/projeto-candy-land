@@ -3,7 +3,9 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.database.database import db
 from app.models.user import Usuario
 from app.models.address import Endereco
-from app.utils.formatter import normalizar_telefone
+from app.models.auth_attempt import TentativaAutenticacao
+from app.services.token_service import TokenService
+
 class UserService:
     @staticmethod
     def listar_usuarios():
@@ -26,8 +28,36 @@ class UserService:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
     @staticmethod
-    def criar_usuario(nome_completo, email, telefone, cpf, data_nascimento=None, endereco=None):
+    def criar_usuario(nome_completo, email, telefone, cpf, tentativa_id, data_nascimento=None, endereco=None):
         try:
+            if not tentativa_id:
+                return {
+                    "success": False,
+                    "erro": "Verificação de segurança (tentativa_id) é obrigatória.",
+                    "status_code": 400
+                }
+
+            tentativa = TentativaAutenticacao.query.get(tentativa_id)
+
+            if not tentativa:
+                return {
+                    "success": False,
+                    "erro": "Verificação de segurança não encontrada.",
+                    "status_code": 404
+                }
+
+            if not tentativa.concluida or not tentativa.email_validado or not tentativa.telefone_validado:
+                return {
+                    "success": False,
+                    "erro": "Verificação por e-mail e WhatsApp ainda não foi concluída.",
+                    "status_code": 401
+                }
+
+            # usa os dados já validados na tentativa como fonte de verdade,
+            # em vez de confiar cegamente no que o front-end mandou
+            email = tentativa.email or email
+            telefone = tentativa.telefone or telefone
+
             if data_nascimento:
                 data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
 
@@ -67,7 +97,10 @@ class UserService:
                 "mensagem": "Usuário e endereço criados com sucesso!",
                 "dados": {
                     "usuario": novo_usuario.to_dict(),
-                    "endereco": novo_endereco.to_dict()
+                    "endereco": novo_endereco.to_dict(),
+                    "token": TokenService.gerar_token(
+                        "PERSONAL", novo_usuario.id, novo_usuario.email
+                    )
                 }
             }
 

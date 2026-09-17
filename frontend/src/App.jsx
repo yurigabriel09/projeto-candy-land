@@ -5,27 +5,44 @@ import PersonalRegister from "./pages/PersonalRegister";
 import BusinessRegister from "./pages/BusinessRegister";
 import Home from "./pages/Home";
 import BusinessHome from "./pages/BusinessHome";
-import Landing from "./pages/Landing";
-import Itens from "./pages/Itens";
-import ProductForm from "./pages/ProductForm";
+import AuthProvider from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/itens" element={<Itens />} />
+    return (
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/register/personal" element={<PersonalRegister />} />
+                        <Route path="/register/business" element={<BusinessRegister />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/register/personal" element={<PersonalRegister />} />
-        <Route path="/register/business" element={<BusinessRegister />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/business" element={<BusinessHome />} />
-        <Route path="/business/products/new" element={<ProductForm />} />
-      </Routes>
-    </BrowserRouter>
-  );
+                        <Route
+                            path="/home"
+                            element={
+                                <ProtectedRoute tipoConta="PERSONAL">
+                                    <Home />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <BusinessHome />
+                                </ProtectedRoute>
+                            }
+                        />
+                    </Routes>
+                </BrowserRouter>
+            </AuthProvider>
+        </GoogleOAuthProvider>
+    );
 }
 
 export default App;

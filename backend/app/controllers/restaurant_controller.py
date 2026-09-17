@@ -27,7 +27,14 @@ class RestaurantController:
             email=dados.get("email"),
             telefone=dados.get("telefone"),
             cpf_responsavel=dados.get("cpf_responsavel"),
-            endereco=dados.get("endereco")
+            tentativa_id=dados.get("tentativa_id"),
+            endereco=dados.get("endereco"),
+            nome_responsavel=dados.get("nome_responsavel"),
+            descricao=dados.get("descricao"),
+            valor_minimo_pedido=dados.get("valor_minimo_pedido"),
+            taxa_entrega_base=dados.get("taxa_entrega_base"),
+            raio_entrega_km=dados.get("raio_entrega_km"),
+            horario_funcionamento=dados.get("horario_funcionamento")
     )   
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])

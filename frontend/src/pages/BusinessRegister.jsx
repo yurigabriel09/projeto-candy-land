@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { maskCep, maskCpf, maskCnpj, maskPhone } from "../utils/masks";
+import { useLocation, useNavigate } from "react-router-dom";
+import { maskCep, maskCpf, maskCnpj } from "../utils/masks";
+import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createRestaurant } from "../services/restaurantService";
+import { useAuth } from "../context/AuthContext";
 
 function BusinessRegister() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { entrar } = useAuth();
+    const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
         cnpj: "",
@@ -14,8 +19,8 @@ function BusinessRegister() {
         tradeName: "",
         responsibleName: "",
         responsibleCpf: "",
-        phone: "",
-        email: "",
+        email: dadosAutenticacao.email || "",
+        phone: dadosAutenticacao.telefone || "",
         cep: "",
         address: "",
         number: "",
@@ -76,10 +81,6 @@ function BusinessRegister() {
 
         if (name === "responsibleCpf") {
             formattedValue = maskCpf(value);
-        }
-
-        if (name === "phone") {
-            formattedValue = maskPhone(value);
         }
 
         setForm((currentForm) => ({
@@ -160,9 +161,11 @@ function BusinessRegister() {
             cnpj: form.cnpj,
             razao_social: form.companyName.trim(),
             nome: form.tradeName.trim(),
+            nome_responsavel: form.responsibleName.trim(),
             email: form.email.trim(),
             telefone: form.phone,
             cpf_responsavel: form.responsibleCpf,
+            tentativa_id: dadosAutenticacao.tentativaId,
             endereco: {
                 cep: form.cep,
                 rua: form.address.trim(),
@@ -181,8 +184,16 @@ function BusinessRegister() {
 
             console.log("Cadastro empresarial realizado:", resultado);
 
+            if (resultado.dados?.token) {
+                entrar({
+                    ...resultado.dados.restaurante,
+                    ...resultado.dados,
+                    token: resultado.dados.token
+                });
+            }
+
             alert("Cadastro empresarial realizado com sucesso!");
-            navigate("/login");
+            navigate("/business");
         } catch (error) {
             console.error("Erro no cadastro empresarial:", error);
             alert(error.message || "Erro ao realizar cadastro empresarial.");
@@ -198,8 +209,7 @@ function BusinessRegister() {
                     <button
                         type="button"
                         className="back-button"
-                        onClick={() => navigate("/register")}
-                    >
+                        onClick={() => navigate("/register", { state: dadosAutenticacao })}>
                         ← Voltar
                     </button>
 
@@ -284,27 +294,12 @@ function BusinessRegister() {
 
                         <div className="form-field">
                             <label htmlFor="phone">Celular</label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                value={form.phone}
-                                onChange={handleChange}
-                                placeholder="(11) 91234-5678"
-                                inputMode="numeric"
-                            />
+                            <VerifiedPhoneInput value={form.phone} />
                         </div>
 
                         <div className="form-field">
                             <label htmlFor="email">E-mail</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                placeholder="empresa@email.com"
-                            />
+                            <input id="email" name="email" type="email" value={form.email} disabled />
                         </div>
                     </div>
 
