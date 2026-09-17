@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
+import os
 import re
 import secrets
 
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -271,6 +274,356 @@ class AuthService:
             return {
                 "success": False,
                 "erro": "Falha ao validar código.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def autenticar_google(credential, telefone=None):
+        try:
+            client_id = os.getenv("GOOGLE_CLIENT_ID")
+
+            if not client_id:
+                return {
+                    "success": False,
+                    "erro": "GOOGLE_CLIENT_ID não configurado.",
+                    "status_code": 500,
+                }
+
+            if not credential:
+                return {
+                    "success": False,
+                    "erro": "Credencial do Google não informada.",
+                    "status_code": 400,
+                }
+
+            try:
+                dados_google = id_token.verify_oauth2_token(
+                    credential, requests.Request(), client_id
+                )
+            except ValueError:
+                return {
+                    "success": False,
+                    "erro": "Credencial do Google inválida.",
+                    "status_code": 401,
+                }
+
+            email = dados_google.get("email", "").strip().lower()
+
+            if not email or not dados_google.get("email_verified"):
+                return {
+                    "success": False,
+                    "erro": "O e-mail do Google não foi verificado.",
+                    "status_code": 401,
+                }
+
+            usuarios = Usuario.query.filter_by(email=email).all()
+            restaurantes = Restaurante.query.filter_by(email=email).all()
+
+            if (
+                len(usuarios) > 1
+                or len(restaurantes) > 1
+                or (usuarios and restaurantes)
+            ):
+                return {
+                    "success": False,
+                    "erro": "O e-mail está vinculado a contas diferentes.",
+                    "status_code": 409,
+                }
+
+            telefone_normalizado = None
+
+            if usuarios:
+                usuario = usuarios[0]
+
+                if getattr(usuario, "status", "ACTIVE") != "ACTIVE":
+                    return {
+                        "success": False,
+                        "erro": "Usuário inativo.",
+                        "status_code": 403,
+                    }
+
+                telefone_normalizado = AuthService._normalizar_telefone(
+                    usuario.telefone
+                )
+
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": "A conta não possui um celular válido cadastrado.",
+                        "status_code": 409,
+                    }
+
+            elif restaurantes:
+                restaurante = restaurantes[0]
+
+                if not restaurante.ativo:
+                    return {
+                        "success": False,
+                        "erro": "Restaurante inativo.",
+                        "status_code": 403,
+                    }
+
+                telefone_normalizado = AuthService._normalizar_telefone(
+                    restaurante.telefone
+                )
+
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": "A conta não possui um celular válido cadastrado.",
+                        "status_code": 409,
+                    }
+
+            else:
+                if not telefone:
+                    return {
+                        "success": False,
+                        "erro": "Celular é necessário para concluir o cadastro.",
+                        "status_code": 400,
+                        "precisa_telefone": True,
+                        "email": email,
+                    }
+
+                telefone_normalizado = AuthService._normalizar_telefone(telefone)
+
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": "Celular inválido.",
+                        "status_code": 400,
+                    }
+
+            tentativa = TentativaAutenticacao(
+                canal_inicial="EMAIL",
+                email=email,
+                telefone=telefone_normalizado,
+                email_validado=True,
+                telefone_validado=False,
+                expira_em=datetime.utcnow() + timedelta(minutes=15),
+            )
+
+            db.session.add(tentativa)
+            db.session.flush()
+
+            resultado = AuthService._gerar_e_enviar_codigo(
+                tentativa, "WHATSAPP", telefone_normalizado
+            )
+
+            if not resultado["success"]:
+                db.session.rollback()
+                return resultado
+
+            db.session.commit()
+
+            return {
+                "success": True,
+                "mensagem": "Código enviado para o WhatsApp.",
+                "tentativa_id": tentativa.id,
+                "proximo_canal": "WHATSAPP",
+                "email": email,
+                "telefone": telefone_normalizado,
+                "novo_cadastro": not usuarios and not restaurantes,
+            }
+
+        except SQLAlchemyError:
+            db.session.rollback()
+
+            return {
+                "success": False,
+                "erro": "Falha ao autenticar com o Google.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def autenticar_facebook(dados_facebook, telefone=None):
+        try:
+            if not dados_facebook:
+                return {
+                    "success": False,
+                    "erro": "Dados do Facebook não informados.",
+                    "status_code": 400,
+                }
+    
+            facebook_id = dados_facebook.get("id")
+    
+            if not facebook_id:
+                return {
+                    "success": False,
+                    "erro": "Identificador do Facebook não informado.",
+                    "status_code": 401,
+                }
+    
+            email = (dados_facebook.get("email") or "").strip().lower()
+    
+            # ---------------------------------------------------------
+            # 1. Primeiro tentamos localizar a conta pelo e-mail.
+            # ---------------------------------------------------------
+            usuarios = []
+            restaurantes = []
+    
+            if email:
+                usuarios = Usuario.query.filter_by(email=email).all()
+                restaurantes = Restaurante.query.filter_by(email=email).all()
+    
+            if (
+                len(usuarios) > 1
+                or len(restaurantes) > 1
+                or (usuarios and restaurantes)
+            ):
+                return {
+                    "success": False,
+                    "erro": "O e-mail está vinculado a contas diferentes.",
+                    "status_code": 409,
+                }
+    
+            telefone_normalizado = None
+    
+            # ---------------------------------------------------------
+            # 2. Conta pessoal encontrada pelo e-mail.
+            # ---------------------------------------------------------
+            if usuarios:
+                usuario = usuarios[0]
+    
+                if getattr(usuario, "status", "ACTIVE") != "ACTIVE":
+                    return {
+                        "success": False,
+                        "erro": "Usuário inativo.",
+                        "status_code": 403,
+                    }
+    
+                telefone_normalizado = AuthService._normalizar_telefone(
+                    usuario.telefone
+                )
+    
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": (
+                            "A conta não possui um celular válido "
+                            "cadastrado."
+                        ),
+                        "status_code": 409,
+                    }
+    
+            # ---------------------------------------------------------
+            # 3. Conta empresarial encontrada pelo e-mail.
+            # ---------------------------------------------------------
+            elif restaurantes:
+                restaurante = restaurantes[0]
+    
+                if not restaurante.ativo:
+                    return {
+                        "success": False,
+                        "erro": "Restaurante inativo.",
+                        "status_code": 403,
+                    }
+    
+                telefone_normalizado = AuthService._normalizar_telefone(
+                    restaurante.telefone
+                )
+    
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": (
+                            "A conta não possui um celular válido "
+                            "cadastrado."
+                        ),
+                        "status_code": 409,
+                    }
+    
+            # ---------------------------------------------------------
+            # 4. Conta ainda não encontrada.
+            #    O celular será o próximo fator.
+            # ---------------------------------------------------------
+            else:
+                if not telefone:
+                    return {
+                        "success": False,
+                        "erro": (
+                            "Celular é necessário para concluir "
+                            "o cadastro."
+                        ),
+                        "status_code": 400,
+                        "precisa_telefone": True,
+                        "email": email or None,
+                    }
+    
+                telefone_normalizado = (
+                    AuthService._normalizar_telefone(telefone)
+                )
+    
+                if not telefone_normalizado:
+                    return {
+                        "success": False,
+                        "erro": "Celular inválido.",
+                        "status_code": 400,
+                    }
+    
+                usuario_existente = Usuario.query.filter_by(
+                    telefone=telefone_normalizado
+                ).first()
+    
+                restaurante_existente = Restaurante.query.filter_by(
+                    telefone=telefone_normalizado
+                ).first()
+    
+                if usuario_existente or restaurante_existente:
+                    return {
+                        "success": False,
+                        "erro": (
+                            "Este celular já está vinculado "
+                            "a outra conta."
+                        ),
+                        "status_code": 409,
+                    }
+    
+            # ---------------------------------------------------------
+            # 5. Criamos a tentativa de autenticação.
+            #
+            # O Facebook já foi validado.
+            # Portanto, o próximo fator é o WhatsApp.
+            # ---------------------------------------------------------
+            tentativa = TentativaAutenticacao(
+                canal_inicial="EMAIL",
+                email=email or None,
+                telefone=telefone_normalizado,
+                email_validado=True,
+                telefone_validado=False,
+                expira_em=datetime.utcnow() + timedelta(minutes=15),
+            )
+    
+            db.session.add(tentativa)
+            db.session.flush()
+    
+            resultado = AuthService._gerar_e_enviar_codigo(
+                tentativa,
+                "WHATSAPP",
+                telefone_normalizado
+            )
+    
+            if not resultado["success"]:
+                db.session.rollback()
+                return resultado
+    
+            db.session.commit()
+    
+            return {
+                "success": True,
+                "mensagem": "Código enviado para o WhatsApp.",
+                "tentativa_id": tentativa.id,
+                "proximo_canal": "WHATSAPP",
+                "email": email or None,
+                "telefone": telefone_normalizado,
+                "novo_cadastro": not usuarios and not restaurantes,
+            }
+    
+        except SQLAlchemyError:
+            db.session.rollback()
+    
+            return {
+                "success": False,
+                "erro": "Falha ao autenticar com o Facebook.",
                 "status_code": 500,
             }
 

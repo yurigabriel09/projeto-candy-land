@@ -7,38 +7,41 @@ import Home from "./pages/Home";
 import BusinessHome from "./pages/BusinessHome";
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<Navigate to="/login" replace />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/register/personal" element={<PersonalRegister />} />
-                    <Route path="/register/business" element={<BusinessRegister />} />
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/register/personal" element={<PersonalRegister />} />
+                        <Route path="/register/business" element={<BusinessRegister />} />
 
-                    <Route
-                        path="/home"
-                        element={
-                            <ProtectedRoute tipoConta="PERSONAL">
-                                <Home />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/home"
+                            element={
+                                <ProtectedRoute tipoConta="PERSONAL">
+                                    <Home />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/business"
-                        element={
-                            <ProtectedRoute tipoConta="BUSINESS">
-                                <BusinessHome />
-                            </ProtectedRoute>
-                        }
-                    />
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+                        <Route
+                            path="/business"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <BusinessHome />
+                                </ProtectedRoute>
+                            }
+                        />
+                    </Routes>
+                </BrowserRouter>
+            </AuthProvider>
+        </GoogleOAuthProvider>
     );
 }
 

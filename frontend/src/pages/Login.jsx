@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import PhoneInput from "../components/PhoneInput";
 import { countries } from "../utils/countries";
@@ -20,7 +21,28 @@ function Login() {
     const [erro, setErro] = useState("");
     const [mensagem, setMensagem] = useState("");
     const [pais, setPais] = useState("BR");
+    const [socialProvider, setSocialProvider] = useState("");
+    const [socialCredential, setSocialCredential] = useState("");
+    const [socialTicket, setSocialTicket] = useState("");
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const parametros = new URLSearchParams(window.location.search);
+
+        const facebookTicket = parametros.get("facebook_ticket");
+        const facebookError = parametros.get("facebook_error");
+
+        if (facebookError) {
+            setErro(facebookError);
+            window.history.replaceState({}, document.title, "/login");
+            return;
+        }
+
+        if (facebookTicket) {
+            window.history.replaceState({}, document.title, "/login");
+            handleFacebookLogin(facebookTicket);
+        }
+    }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -162,8 +184,194 @@ function Login() {
         }
     }
 
+    async function handleGoogleLogin(credential, telefone = null) {
+        setErro("");
+        setMensagem("");
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/google`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    credential,
+                    ...(telefone ? { telefone } : {})
+                })
+            });
+
+            const resultado = await response.json();
+
+            /*
+             * O Google validou a identidade, mas ainda precisamos
+             * do celular para continuar o fluxo.
+             */
+            if (resultado.precisa_telefone) {
+                setSocialProvider("GOOGLE");
+                setSocialCredential(credential);
+
+                setDadosAutenticacao(resultado);
+                setEtapa("segundo-dado");
+                setCanalAtual("WHATSAPP");
+                setTentativaId(resultado.tentativa_id || "");
+                setValor("");
+                setMensagem("Informe seu celular para continuar.");
+
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    resultado.erro ||
+                    "Não foi possível entrar com o Google."
+                );
+            }
+
+            setSocialProvider("GOOGLE");
+            setSocialCredential(credential);
+
+            setDadosAutenticacao(resultado);
+            setTentativaId(resultado.tentativa_id || "");
+
+            if (resultado.mensagem) {
+                setMensagem(resultado.mensagem);
+            }
+
+            if (resultado.dados?.token) {
+                entrar(resultado.dados);
+            }
+
+            /*
+             * Depois que o celular foi informado, o backend
+             * criou a tentativa e enviou o código.
+             */
+            if (resultado.proximo_canal === "WHATSAPP") {
+                setCanalAtual("WHATSAPP");
+                setValor(resultado.telefone || telefone || "");
+                setEtapa("codigo");
+                return;
+            }
+
+            if (resultado.dados?.novo_cadastro) {
+                navigate("/register", {
+                    state: {
+                        tentativaId:
+                            resultado.dados.tentativa_id ||
+                            resultado.tentativa_id,
+                        email: resultado.dados.email,
+                        telefone: resultado.dados.telefone
+                    }
+                });
+                return;
+            }
+
+            if (resultado.dados?.tipo_conta === "PERSONAL") {
+                navigate("/home");
+                return;
+            }
+
+            if (resultado.dados?.tipo_conta === "BUSINESS") {
+                navigate("/business");
+            }
+
+        } catch (error) {
+            setErro(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleFacebookLogin(ticket, telefone = null) {
+        setErro("");
+        setMensagem("");
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/facebook/complete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ticket,
+                    ...(telefone ? { telefone } : {})
+                })
+            });
+
+            const resultado = await response.json();
+
+            if (resultado.precisa_telefone) {
+                setSocialProvider("FACEBOOK");
+                setSocialTicket(ticket);
+                setDadosAutenticacao(resultado);
+                setEtapa("segundo-dado");
+                setCanalAtual("WHATSAPP");
+                setTentativaId("");
+                setValor("");
+                setMensagem(
+                    "Informe seu celular para continuar."
+                );
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    resultado.erro ||
+                    "Não foi possível entrar com o Facebook."
+                );
+            }
+
+            setDadosAutenticacao(resultado);
+            setTentativaId(resultado.tentativa_id || "");
+
+            if (resultado.mensagem) {
+                setMensagem(resultado.mensagem);
+            }
+
+            if (resultado.proximo_canal === "WHATSAPP") {
+                setCanalAtual("WHATSAPP");
+                setValor(resultado.telefone || "");
+                setEtapa("codigo");
+                return;
+            }
+
+            if (resultado.dados?.token) {
+                entrar(resultado.dados);
+            }
+
+            if (resultado.dados?.novo_cadastro) {
+                navigate("/register", {
+                    state: {
+                        tentativaId:
+                            resultado.dados.tentativa_id ||
+                            resultado.tentativa_id,
+                        email: resultado.dados.email,
+                        telefone: resultado.dados.telefone
+                    }
+                });
+                return;
+            }
+
+            if (resultado.dados?.tipo_conta === "PERSONAL") {
+                navigate("/home");
+                return;
+            }
+
+            if (resultado.dados?.tipo_conta === "BUSINESS") {
+                navigate("/business");
+            }
+
+        } catch (error) {
+            setErro(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function handleSegundoDado(event) {
         event.preventDefault();
+
         setErro("");
         setMensagem("");
 
@@ -179,14 +387,19 @@ function Login() {
         let valorFormatado = valor.trim().toLowerCase();
 
         if (canalAtual === "WHATSAPP") {
-            const country = countries.find((item) => item.code === pais);
+            const country = countries.find(
+                (item) => item.code === pais
+            );
 
             if (!country) {
                 setErro("Selecione um país.");
                 return;
             }
 
-            const phone = parsePhoneNumberFromString(valor, country.code);
+            const phone = parsePhoneNumberFromString(
+                valor,
+                country.code
+            );
 
             if (!phone || !phone.isValid()) {
                 setErro("Informe um celular válido.");
@@ -194,6 +407,42 @@ function Login() {
             }
 
             valorFormatado = phone.number;
+        }
+
+        /*
+         * Fluxo social:
+         *
+         * Google -> celular -> código
+         * Facebook -> celular -> código
+         *
+         * O segundo dado NÃO usa /second-code.
+         * Ele precisa voltar ao endpoint do provedor
+         * para criar a tentativa de autenticação.
+         */
+        if (socialProvider === "GOOGLE") {
+            await handleGoogleLogin(
+                socialCredential,
+                valorFormatado
+            );
+            return;
+        }
+
+        if (socialProvider === "FACEBOOK") {
+            await handleFacebookLogin(
+                socialTicket,
+                valorFormatado
+            );
+            return;
+        }
+
+        /*
+         * Fluxo normal:
+         *
+         * E-mail/celular -> primeiro código -> segundo canal.
+         */
+        if (!tentativaId) {
+            setErro("Não foi possível continuar a autenticação.");
+            return;
         }
 
         setLoading(true);
@@ -214,20 +463,23 @@ function Login() {
 
             if (!response.ok) {
                 throw new Error(
-                    resultado.erro || "Não foi possível enviar o código."
+                    resultado.erro ||
+                    "Não foi possível enviar o código."
                 );
             }
 
-            setDadosAutenticacao((dados) => ({
-                ...dados,
-                ...(canalAtual === "EMAIL"
-                    ? { email: valorFormatado }
-                    : { telefone: valorFormatado })
-            }));
-
+            setTentativaId(resultado.tentativa_id || tentativaId);
+            setDadosAutenticacao(resultado);
+            setCanalAtual(resultado.proximo_canal || canalAtual);
+            setValor(
+                resultado.telefone ||
+                resultado.email ||
+                valorFormatado
+            );
             setCodigo("");
             setMensagem(resultado.mensagem);
             setEtapa("codigo");
+
         } catch (error) {
             setErro(error.message);
         } finally {
@@ -242,6 +494,9 @@ function Login() {
         setTentativaId("");
         setCanalAtual("");
         setDadosAutenticacao({});
+        setSocialProvider("");
+        setSocialCredential("");
+        setSocialTicket("");
         setErro("");
         setMensagem("");
     }
@@ -334,24 +589,40 @@ function Login() {
                             </div>
 
                             <div className="social-login">
-                                <button type="button" disabled>
-                                    Continuar com Google
-                                </button>
+                                <div className="social-button google-button">
+                                    <div className="google-login">
+                                        <GoogleLogin
+                                            onSuccess={(credentialResponse) =>
+                                                handleGoogleLogin(credentialResponse.credential)
+                                            }
+                                            onError={() => setErro("Não foi possível entrar com o Google.")}
+                                            size="large"
+                                            shape="pill"
+                                            width="358"
+                                        />
+                                    </div>
+                                </div>
 
-                                <button type="button" disabled>
-                                    Continuar com Facebook
-                                </button>
-                            </div>
-
-                            <p className="auth-footer">
-                                Ainda não possui uma conta?
                                 <button
                                     type="button"
-                                    onClick={() => navigate("/register")}
+                                    className="facebook-button"
+                                    onClick={() => window.location.assign(`${API_URL}/facebook`)}
+                                    disabled={loading}
                                 >
-                                    Criar conta
+                                    <svg
+                                        className="facebook-icon"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
+                                            fill="currentColor"
+                                        />
+                                    </svg>
+
+                                    <span>Continuar com Facebook</span>
                                 </button>
-                            </p>
+                            </div>
                         </>
                     )}
 
