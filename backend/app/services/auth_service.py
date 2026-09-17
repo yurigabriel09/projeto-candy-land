@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import os
 import re
 import secrets
+from datetime import datetime, timedelta
 
 from google.auth.transport import requests
 from google.oauth2 import id_token
@@ -18,7 +19,16 @@ from app.services.whatsapp_service import WhatsAppService
 from app.services.token_service import TokenService
 
 
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
+TWILIO_CONTENT_SID_VERIFICATION = os.getenv("TWILIO_CONTENT_SID_VERIFICATION")
+
+twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+
+
 class AuthService:
+
     @staticmethod
     def iniciar_autenticacao(canal, valor):
         try:

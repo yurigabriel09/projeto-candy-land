@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { getSessao } from "../services/authService";
 import { getRestaurants } from "../services/restaurantService";
 
 const ATALHOS = [
@@ -17,18 +16,14 @@ const ATALHOS = [
 
 const EMOJIS_LOJA = ["🍰", "🍫", "🍭", "🧁", "🍮", "🍪"];
 
-function Home() {
+function Landing() {
+  const [endereco, setEndereco] = useState("");
   const [lojas, setLojas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
-  const sessao = getSessao();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!sessao || sessao.tipo !== "PERSONAL") {
-      navigate("/login");
-      return;
-    }
     carregarLojas();
   }, []);
 
@@ -45,17 +40,45 @@ function Home() {
     }
   }
 
-  if (!sessao) return null;
-
-  const primeiroNome = sessao.nome_completo.split(" ")[0];
+  function handleBuscar(e) {
+    e.preventDefault();
+    navigate("/itens");
+  }
 
   return (
     <>
       <Header />
 
-      <section className="topo-saudacao">
-        <div className="container">
-          <h1>Oi, {primeiroNome}! O que você quer comer hoje? 🍰</h1>
+      <section className="hero">
+        <div className="container hero-conteudo">
+          <span className="selo">🍭 Doces de Todos os Mundos</span>
+
+          <h1 className="hero-titulo">
+            Um universo
+            <br />
+            <span className="hero-titulo-destaque">mais doce</span>
+            <br />
+            te espera
+          </h1>
+
+          <p className="hero-subtitulo">
+            Descubra confeitarias, docerias e muito mais perto de você.
+            <br />
+            Peça e receba onde estiver.
+          </p>
+
+          <form onSubmit={handleBuscar} className="busca-endereco">
+            <span>📍</span>
+            <input
+              type="text"
+              placeholder="Seu endereço de entrega e número"
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+            />
+            <button type="submit" className="btn-principal">
+              Buscar 🔍
+            </button>
+          </form>
         </div>
       </section>
 
@@ -105,8 +128,30 @@ function Home() {
           </div>
         )}
       </section>
+
+      <section className="container secao">
+        <div className="banners">
+          <div className="banner banner-rosa">
+            <span className="banner-emoji">🍰</span>
+            <h3>Sua doceria no Candyland</h3>
+            <p>
+              Cadastre sua confeitaria ou doceria e alcance milhares de
+              amantes de doce.
+            </p>
+            <button onClick={() => navigate("/register/business")} className="btn-branco">
+              Saiba mais
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="rodape">
+        <div className="container rodape-conteudo">
+          <span>🍭 Candyland — Doces de todos os mundos</span>
+        </div>
+      </footer>
     </>
   );
 }
 
-export default Home;
+export default Landing;
