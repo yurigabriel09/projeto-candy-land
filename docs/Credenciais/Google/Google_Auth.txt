@@ -1,0 +1,68 @@
+CANDYLAND - CREDENCIAIS GOOGLE
+==============================
+
+O projeto usa Google em dois contextos diferentes:
+1. Google OAuth/Login: Client ID.
+2. Google Maps Platform: API Key para Maps/Places/Geocoding conforme as APIs que o CandyLand utilizar.
+
+IMPORTANTE
+----------
+O Google Client ID do OAuth nao e o mesmo que a chave do Google Maps.
+Nao confunda os dois.
+
+A) GOOGLE OAUTH - FRONTEND
+--------------------------
+Variavel:
+VITE_GOOGLE_CLIENT_ID=
+
+Passos:
+1. Entre no Google Cloud Console.
+2. Selecione o projeto do CandyLand.
+3. Abra APIs e servicos > Credenciais.
+4. Em IDs do cliente OAuth 2.0, localize o cliente Web usado pelo CandyLand.
+5. Copie o ID do cliente.
+6. Coloque no arquivo local frontend/.env:
+
+VITE_GOOGLE_CLIENT_ID=SEU_CLIENT_ID
+
+Nao precisa criar um novo cliente se o integrante estiver apenas rodando o mesmo ambiente de desenvolvimento do grupo e a configuracao do projeto ja for compartilhada.
+
+B) GOOGLE MAPS - FRONTEND
+-------------------------
+Variavel:
+VITE_GOOGLE_MAPS_API_KEY=
+
+Passos:
+1. No Google Cloud Console, selecione o projeto do CandyLand.
+2. Abra APIs e servicos > Credenciais.
+3. Clique em Criar credenciais > Chave de API.
+4. Dê um nome identificando a chave, por exemplo:
+   CandyLand Frontend Maps Dev
+5. Restrinja a chave por aplicativo usando Sites/HTTP referrers.
+6. Para desenvolvimento local, adicione o endereco usado pelo frontend, por exemplo:
+   http://localhost:5173/*
+7. Em Restricoes de API, escolha Restringir chave.
+8. Selecione somente as APIs que o CandyLand realmente usar.
+9. Salve.
+10. Copie a chave e coloque no frontend/.env:
+
+VITE_GOOGLE_MAPS_API_KEY=SUA_CHAVE_AQUI
+
+NAO coloque essa chave diretamente em arquivos .jsx/.js.
+
+ATENCAO SOBRE BILLING
+---------------------
+A conta/projeto do Google Maps pode exigir faturamento habilitado para os servicos usados. O integrante deve usar a propria conta/credencial autorizada pelo grupo e respeitar as quotas configuradas.
+
+A chave deve ser restrita. Uma chave sem restricao pode ser abusada e gerar consumo indevido.
+
+REFERENCIAS OFICIAIS
+--------------------
+Google Maps - Getting Started:
+https://developers.google.com/maps/get-started
+
+Google Maps - Security best practices:
+https://developers.google.com/maps/api-security-best-practices
+
+Google Maps - FAQ:
+https://developers.google.com/maps/faq

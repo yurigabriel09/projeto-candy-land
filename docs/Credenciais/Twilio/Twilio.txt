@@ -1,0 +1,42 @@
+CANDYLAND - CREDENCIAIS TWILIO
+==============================
+
+Variaveis no backend/.env:
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_WHATSAPP_NUMBER=
+TWILIO_WHATSAPP_CONTENT_SID=
+
+O projeto usa Twilio para o fluxo de WhatsApp/validacao. Os valores exatos de numero e Content SID dependem da configuracao aprovada do ambiente.
+
+PASSOS
+------
+1. Entre no Twilio Console:
+   https://console.twilio.com/
+2. Abra Account / Account management.
+3. Localize o Account SID.
+4. Localize o Auth Token. Trate-o como segredo.
+5. Para API Keys, o Twilio permite criar chaves no Console. Use uma chave apropriada quando o fluxo do projeto utilizar API Key.
+6. Para WhatsApp, confira o sender/numero configurado no ambiente.
+7. Para templates/content, localize o Content SID correspondente ao template usado pelo CandyLand.
+8. Preencha somente o backend/.env.
+
+EXEMPLO
+-------
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=SEU_AUTH_TOKEN
+TWILIO_WHATSAPP_NUMBER=whatsapp:+SEU_NUMERO
+TWILIO_WHATSAPP_CONTENT_SID=HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+SEGURANCA
+---------
+Nunca coloque Auth Token ou outras credenciais privadas no frontend.
+Se uma credencial for exposta, rotacione/revogue no Twilio Console.
+
+REFERENCIA OFICIAL
+------------------
+Twilio - Create API keys in Console:
+https://www.twilio.com/docs/iam/api-keys/keys-in-console
+
+Twilio - Auth Token:
+https://www.twilio.com/docs/iam/api/authtoken

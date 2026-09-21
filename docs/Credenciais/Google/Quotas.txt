@@ -1,0 +1,44 @@
+CANDYLAND - GOOGLE MAPS: QUOTAS E CONTROLE DE CONSUMO
+====================================================
+
+Este arquivo documenta a regra de seguranca de consumo. Ele NAO cria nem altera o modelo fisico do banco.
+
+OBJETIVO
+--------
+Impedir que o CandyLand dependa somente de um contador local para controlar consumo.
+
+REGRA
+-----
+1. Google Cloud e a barreira externa de quota.
+2. CandyLand mantem um controle interno de uso.
+3. O controle interno deve ser reconciliavel com as metricas do Google.
+4. Nao usar um unico limite de 10.000 para todas as APIs.
+5. Tratar cada SKU/API conforme a regra de faturamento aplicavel.
+6. Trabalhar com margem de seguranca abaixo do limite gratuito.
+
+EXEMPLO DE PLANEJAMENTO
+-----------------------
+Limite gratuito de referencia de um SKU: 10.000 eventos/mensais.
+Margem de seguranca CandyLand: 1.000.
+Orcamento operacional: 9.000.
+
+O valor real deve ser confirmado para cada SKU no momento da implementacao.
+
+CALCULO DIARIO
+--------------
+saldo = orcamento_operacional - consumo
+
+limite_base_do_dia = piso(saldo / dias_restantes)
+
+Se houver sobra de dias anteriores, ela pode ser adicionada de forma controlada, mas deve existir um teto para impedir acumulacao ilimitada.
+
+RECUPERACAO
+-----------
+Se o banco do CandyLand for perdido, o sistema nao deve considerar o contador antigo como fonte absoluta da verdade.
+Ele deve conseguir reconstruir o controle a partir das metricas/relatorios do Google e iniciar um novo periodo de contagem interno.
+
+IMPORTANTE SOBRE MODELO FISICO
+------------------------------
+Se durante a implementacao decidirmos criar novas tabelas persistentes para uso/quota do Maps, isso sera uma alteracao do modelo fisico e devera entrar em Revisar para discussao com o grupo.
+
+Apenas criar servicos, arquivos de configuracao ou mecanismos que nao alterem o modelo fisico nao entra em Revisar.

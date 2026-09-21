@@ -1,0 +1,31 @@
+CANDYLAND - CREDENCIAL BREVO
+============================
+
+Variaveis no backend/.env:
+BREVO_API_KEY=
+BREVO_SENDER_EMAIL=
+BREVO_SENDER_NAME=CandyLand
+
+PASSOS
+------
+1. Entre na conta Brevo:
+   https://app.brevo.com/
+2. Abra as configuracoes da conta.
+3. Procure SMTP & API / SMTP & API settings.
+4. Abra a aba API Keys.
+5. Clique em Generate a new API key.
+6. Dê um nome, por exemplo:
+   CandyLand Dev - <seu nome>
+7. Gere a chave.
+8. Copie a chave imediatamente e guarde com seguranca.
+9. Coloque a chave somente no backend/.env:
+
+BREVO_API_KEY=SUA_CHAVE_AQUI
+BREVO_SENDER_EMAIL=SEU_EMAIL_AUTORIZADO
+BREVO_SENDER_NAME=CandyLand
+
+IMPORTANTE
+----------
+A Brevo informa que a chave e exibida na geracao e deve ser armazenada com seguranca. Nao coloque a chave em codigo ou repositorio.
+
+Se a chave for perdida ou exposta, gere outra.

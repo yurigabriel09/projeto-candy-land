@@ -1,0 +1,38 @@
+CANDYLAND - CREDENCIAIS FACEBOOK / META
+========================================
+
+Variaveis no backend/.env:
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=
+FACEBOOK_REDIRECT_URI=http://localhost:5000/auth/facebook/callback
+
+O App ID/Client ID pode ser usado pelo aplicativo, mas o App Secret e segredo e deve ficar somente no backend/.env.
+
+PASSOS
+------
+1. Entre no Meta for Developers:
+   https://developers.facebook.com/
+2. Acesse Meus Apps.
+3. Selecione o aplicativo do CandyLand ou crie um aplicativo de desenvolvimento autorizado pelo grupo.
+4. Abra as configuracoes do aplicativo.
+5. Localize o App ID.
+6. Localize o App Secret e revele/copie somente quando for preencher o backend/.env.
+7. Configure o Facebook Login de acordo com o fluxo usado pelo CandyLand.
+8. Confira as URLs de redirecionamento OAuth cadastradas no aplicativo.
+9. Para desenvolvimento local, mantenha a URL de callback exatamente igual a usada pelo backend.
+
+EXEMPLO LOCAL
+-------------
+FACEBOOK_CLIENT_ID=SEU_APP_ID
+FACEBOOK_CLIENT_SECRET=SEU_APP_SECRET
+FACEBOOK_REDIRECT_URI=http://localhost:5000/auth/facebook/callback
+
+SEGURANCA
+---------
+Nunca coloque FACEBOOK_CLIENT_SECRET no frontend.
+Nunca envie o App Secret pelo Git.
+Se o Secret aparecer em commit, print ou conversa publica, gere/rotacione uma nova credencial no Meta for Developers.
+
+OBSERVACAO
+----------
+Dependendo da configuracao atual da Meta, os nomes das telas e menus podem mudar. Se a interface estiver diferente, procure as areas App Dashboard, Settings/Basic e Facebook Login.

@@ -1,0 +1,10 @@
+CANDYLAND - INDICE DE CREDENCIAIS
+=================================
+
+01_GOOGLE.txt  -> Google OAuth + Google Maps API Key
+02_FACEBOOK.txt -> Meta/Facebook Login
+03_BREVO.txt -> chave de API para envio de e-mail
+04_TWILIO.txt -> WhatsApp/OTP e credenciais Twilio
+05_MAPS_QUOTAS.txt -> regra de controle de consumo do Google Maps
+
+Importante: os arquivos deste diretorio contem somente instrucoes e placeholders. Nenhuma credencial real deve ser adicionada aqui.

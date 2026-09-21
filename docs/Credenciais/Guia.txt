@@ -1,0 +1,56 @@
+CANDYLAND - GUIA DE CONFIGURACAO DO .ENV
+===========================================
+
+OBJETIVO
+--------
+Cada integrante deve criar as proprias credenciais nos servicos externos e manter os valores somente no computador local.
+
+NUNCA FAZER
+-----------
+1. Nao colocar valores reais de API key, secret, token ou senha neste repositorio.
+2. Nao enviar .env real para o GitHub.
+3. Nao copiar credenciais de outro integrante.
+4. Nao colocar secrets diretamente no codigo-fonte.
+5. Nao mandar secrets em prints, Discord, WhatsApp ou commits.
+
+COMO FUNCIONA
+-------------
+O repositorio guarda apenas:
+- arquivos .env.example com os NOMES das variaveis;
+- tutoriais mostrando onde cada integrante cria a propria credencial.
+
+Cada integrante cria localmente:
+- frontend/.env
+- backend/.env
+
+Depois de clonar/puxar o projeto:
+
+1. Copie frontend/.env.example para frontend/.env.
+2. Copie backend/.env.example para backend/.env.
+3. Preencha os valores usando os tutoriais em docs/CREDENCIAIS/.
+4. Nunca faça commit dos arquivos .env reais.
+5. Rode o projeto normalmente.
+
+OBSERVACAO SOBRE O GOOGLE MAPS
+------------------------------
+A chave do Google Maps usada pelo frontend pode aparecer nas requisicoes do navegador. Isso NAO significa que devemos deixar a chave sem protecao.
+Ela deve ser restrita por site (HTTP referrer) e por APIs permitidas no Google Cloud.
+
+Para desenvolvimento local, a restricao deve aceitar o endereco local usado pelo projeto, por exemplo:
+http://localhost:5173/*
+
+Em producao, trocar/adicionar o dominio oficial do projeto.
+
+A chave do Google Maps deve ser diferente de qualquer credencial secreta do backend.
+
+FLUXO RESUMIDO
+--------------
+CLONAR/PULL
+   |
+   +--> frontend/.env.example --> frontend/.env --> credenciais do integrante
+   |
+   +--> backend/.env.example  --> backend/.env  --> credenciais do integrante
+   |
+   +--> docs/CREDENCIAIS/      --> tutorial para criar cada credencial
+
+Se uma credencial vazar, revogue/rotacione a credencial no respectivo provedor e substitua o valor local.
