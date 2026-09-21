@@ -46,7 +46,7 @@ function Landing() {
   }
 
   return (
-    <>
+    <div className="pagina-inicial">
       <Header />
 
       <section className="hero">
@@ -138,7 +138,7 @@ function Landing() {
               Cadastre sua confeitaria ou doceria e alcance milhares de
               amantes de doce.
             </p>
-            <button onClick={() => navigate("/register/business")} className="btn-branco">
+            <button onClick={() => navigate("/login")} className="btn-branco">
               Saiba mais
             </button>
           </div>
@@ -150,7 +150,7 @@ function Landing() {
           <span>🍭 Candyland — Doces de todos os mundos</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 

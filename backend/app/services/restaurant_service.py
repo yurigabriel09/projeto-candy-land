@@ -2,6 +2,8 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.database.database import db
 from app.models.restaurant import Restaurante
 from app.models.address import Endereco
+from app.models.auth_attempt import TentativaAutenticacao
+from app.services.token_service import TokenService
 
 class RestauranteService:
     @staticmethod
@@ -25,15 +27,50 @@ class RestauranteService:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
     @staticmethod
-    def criar_restaurante(cnpj, razao_social, nome, email, telefone, cpf_responsavel, endereco):
+    def criar_restaurante(cnpj, razao_social, nome, email, telefone, cpf_responsavel,
+                           tentativa_id, endereco, nome_responsavel=None, descricao=None,
+                           valor_minimo_pedido=None, taxa_entrega_base=None,
+                           raio_entrega_km=None, horario_funcionamento=None):
         try:
+            if not tentativa_id:
+                return {
+                    "success": False,
+                    "erro": "Verificação de segurança (tentativa_id) é obrigatória.",
+                    "status_code": 400
+                }
+
+            tentativa = TentativaAutenticacao.query.get(tentativa_id)
+
+            if not tentativa:
+                return {
+                    "success": False,
+                    "erro": "Verificação de segurança não encontrada.",
+                    "status_code": 404
+                }
+
+            if not tentativa.concluida or not tentativa.email_validado or not tentativa.telefone_validado:
+                return {
+                    "success": False,
+                    "erro": "Verificação por e-mail e WhatsApp ainda não foi concluída.",
+                    "status_code": 401
+                }
+
+            email = tentativa.email or email
+            telefone = tentativa.telefone or telefone
+
             novo_restaurante = Restaurante(
                 cnpj=cnpj,
                 razao_social=razao_social,
                 nome=nome,
+                nome_responsavel=nome_responsavel,
                 email=email,
                 telefone=telefone,
-                cpf_responsavel=cpf_responsavel
+                cpf_responsavel=cpf_responsavel,
+                descricao=descricao,
+                valor_minimo_pedido=valor_minimo_pedido or 0,
+                taxa_entrega_base=taxa_entrega_base or 0,
+                raio_entrega_km=raio_entrega_km,
+                horario_funcionamento=horario_funcionamento
             )
 
             db.session.add(novo_restaurante)
@@ -68,7 +105,10 @@ class RestauranteService:
                 "mensagem": "Empresa e endereço criados com sucesso!",
                 "dados": {
                     "restaurante": novo_restaurante.to_dict(),
-                    "endereco": novo_endereco.to_dict()
+                    "endereco": novo_endereco.to_dict(),
+                    "token": TokenService.gerar_token(
+                        "BUSINESS", novo_restaurante.id, novo_restaurante.email
+                    )
                 }
             }
 

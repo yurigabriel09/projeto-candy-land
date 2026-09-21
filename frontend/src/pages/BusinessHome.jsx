@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { getProductsByRestaurant } from "../services/productService";
 
 const menuItems = [
@@ -11,7 +12,8 @@ const menuItems = [
 
 function BusinessHome() {
     const navigate = useNavigate();
-    const restauranteId = Number(localStorage.getItem("contaId"));
+    const { dadosAutenticacao, autenticado, sair } = useAuth();
+    const restauranteId = Number(dadosAutenticacao?.id);
 
     const [produtos, setProdutos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,18 +32,21 @@ function BusinessHome() {
         }
 
         carregarProdutos();
-    }, [restauranteId]);
+    }, [autenticado, dadosAutenticacao?.tipo_conta, navigate, restauranteId]);
 
     function handleLogout() {
-        localStorage.removeItem("tipoConta");
-        localStorage.removeItem("contaId");
-        navigate("/login");
+        // Limpa a sessão e força a navegação para a área pública.
+        window.localStorage.removeItem("candyland_auth");
+        sair();
+        window.location.replace("/");
     }
 
     return (
         <div className="dashboard-layout">
             <aside className="dashboard-sidebar">
-                <h1 className="dashboard-logo">CandyLand</h1>
+                <Link to="/business" className="dashboard-logo dashboard-logo-link">
+                    CandyLand
+                </Link>
 
                 <nav className="dashboard-nav">
                     {menuItems.map((item) => (

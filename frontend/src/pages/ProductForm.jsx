@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProduct } from "../services/productService";
+import { useAuth } from "../context/AuthContext";
 
 function ProductForm() {
     const navigate = useNavigate();
-    const restauranteId = localStorage.getItem("contaId");
+    const { dadosAutenticacao, autenticado } = useAuth();
+    const restauranteId = Number(dadosAutenticacao?.id);
 
     const [form, setForm] = useState({
         nome: "",
@@ -27,6 +29,11 @@ function ProductForm() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+
+        if (!autenticado || dadosAutenticacao?.tipo_conta !== "BUSINESS" || !Number.isInteger(restauranteId) || restauranteId <= 0) {
+            navigate("/business", { replace: true });
+            return;
+        }
         setErro("");
 
         if (!form.nome.trim()) { setErro("Informe o nome do produto."); return; }
@@ -34,7 +41,7 @@ function ProductForm() {
         if (!form.categoria_id) { setErro("Informe o ID da categoria."); return; }
 
         const dados = {
-            restaurante_id: Number(restauranteId),
+            restaurante_id: restauranteId,
             categoria_id: Number(form.categoria_id),
             nome: form.nome.trim(),
             descricao: form.descricao.trim(),

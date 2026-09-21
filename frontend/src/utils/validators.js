@@ -4,8 +4,9 @@ export function isValidEmail(email) {
 
 export function isValidPhone(phone) {
   const numbers = phone.replace(/\D/g, "");
+  const nacional = numbers.startsWith("55") ? numbers.slice(2) : numbers;
 
-  return numbers.length === 11;
+  return nacional.length === 11;
 }
 
 export function isValidCpf(cpf) {

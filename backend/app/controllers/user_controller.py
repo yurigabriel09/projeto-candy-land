@@ -23,6 +23,7 @@ class UserController:
             email=dados.get("email"),
             telefone=dados.get("telefone"),
             cpf=dados.get("cpf"),
+            tentativa_id=dados.get("tentativa_id"),
             data_nascimento=dados.get("data_nascimento"),
             endereco=dados.get("endereco")
         )

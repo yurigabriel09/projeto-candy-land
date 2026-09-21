@@ -1,19 +1,24 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { maskCep, maskCpf, maskPhone } from "../utils/masks";
+import { useLocation, useNavigate } from "react-router-dom";
+import { maskCep, maskCpf } from "../utils/masks";
+import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createUser } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
 
 function PersonalRegister() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { entrar } = useAuth();
+    const dadosAutenticacao = location.state || {};
 
     const [form, setForm] = useState({
         name: "",
         birthDate: "",
         cpf: "",
-        phone: "",
-        email: "",
+        email: dadosAutenticacao.email || "",
+        phone: dadosAutenticacao.telefone || "",
         cep: "",
         address: "",
         number: "",
@@ -50,7 +55,6 @@ function PersonalRegister() {
         let formattedValue = value;
 
         if (name === "cpf") { formattedValue = maskCpf(value); }
-        if (name === "phone") { formattedValue = maskPhone(value); }
         if (name === "cep") { formattedValue = maskCep(value); }
 
         setForm((currentForm) => ({ ...currentForm, [name]: formattedValue }));
@@ -77,6 +81,7 @@ function PersonalRegister() {
             telefone: form.phone,
             email: form.email.trim(),
             data_nascimento: form.birthDate,
+            tentativa_id: dadosAutenticacao.tentativaId,
             endereco: {
                 cep: form.cep,
                 rua: form.address.trim(),
@@ -90,10 +95,22 @@ function PersonalRegister() {
 
         try {
             setLoading(true);
+
             const resultado = await createUser(dados);
+
             console.log("Cadastro realizado:", resultado);
+
+            if (resultado.dados?.token) {
+                entrar({
+                    ...resultado.dados.usuario,
+                    ...resultado.dados,
+                    tipo_conta: "PERSONAL",
+                    token: resultado.dados.token
+                });
+            }
+
             alert("Cadastro realizado com sucesso!");
-            navigate("/login");
+            navigate("/home");
         } catch (error) {
             console.error("Erro no cadastro:", error);
             alert(error.message || "Erro ao realizar cadastro.");
@@ -104,7 +121,7 @@ function PersonalRegister() {
         <main className="auth-page">
             <section className="form-card">
                 <header className="form-header">
-                    <button type="button" className="back-button" onClick={() => navigate("/register")}>
+                    <button type="button" className="back-button" onClick={() => navigate("/register", { state: dadosAutenticacao })}>
                         ← Voltar
                     </button>
 
@@ -135,13 +152,13 @@ function PersonalRegister() {
 
                             <div className="form-field">
                                 <label htmlFor="phone">Celular</label>
-                                <input id="phone" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="(DDD) 00000-0000" inputMode="numeric" />
+                                <VerifiedPhoneInput value={form.phone} />
                             </div>
                         </div>
 
                         <div className="form-field">
                             <label htmlFor="email">E-mail</label>
-                            <input id="email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="seu@email.com" />
+                            <input id="email" name="email" type="email" value={form.email} disabled />
                         </div>
                     </div>
 
