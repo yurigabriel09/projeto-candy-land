@@ -1323,3 +1323,164 @@ select:focus-visible {
     max-width: none;
   }
 }
+/* ---------- Google Maps / Endereço ---------- */
+.address-autocomplete {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Campo do Google Maps */
+.address-autocomplete gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color-scheme: light;
+}
+
+/* Integração visual com a barra de busca */
+.busca-endereco .address-autocomplete {
+  display: flex;
+  align-items: center;
+}
+
+.busca-endereco .address-autocomplete gmp-place-autocomplete {
+  width: 100%;
+}
+
+.busca-endereco .address-autocomplete .field-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 8px;
+  white-space: nowrap;
+}
+
+.busca-endereco .btn-principal:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pac-container {
+  z-index: 3000;
+  border-radius: 12px;
+  margin-top: 6px;
+  box-shadow: var(--sombra-forte);
+  font-family: inherit;
+}
+
+.address-map-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borda);
+}
+
+.address-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.address-map-header strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.address-map-header p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.address-map {
+  width: 100%;
+  height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--borda);
+  background: #f2f2f2;
+}
+
+.secondary-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-pill);
+  background: #fff;
+  color: var(--texto);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--rosa);
+  color: var(--rosa);
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .address-map-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .secondary-button {
+    width: 100%;
+  }
+
+  .address-map {
+    height: 280px;
+  }
+}
+
+.localizacao-selecionada {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  margin: 18px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.localizacao-selecionada > span {
+  font-size: 20px;
+}
+
+.localizacao-selecionada > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.localizacao-selecionada small {
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+
+.localizacao-selecionada strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.localizacao-selecionada button {
+  border: 0;
+  background: transparent;
+  color: var(--rosa);
+  font-weight: 700;
+  cursor: pointer;
+}

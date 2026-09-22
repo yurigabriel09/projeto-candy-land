@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { getRestaurants } from "../services/restaurantService";
+import AddressAutocomplete from "../components/AddressAutocomplete";
+import { saveSelectedLocation } from "../services/locationService";
 
 const ATALHOS = [
   { emoji: "🍰", nome: "Bolos", busca: "bolo" },
@@ -18,6 +20,7 @@ const EMOJIS_LOJA = ["🍰", "🍫", "🍭", "🧁", "🍮", "🍪"];
 
 function Landing() {
   const [endereco, setEndereco] = useState("");
+  const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState(null);
   const [lojas, setLojas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -40,9 +43,26 @@ function Landing() {
     }
   }
 
+  const handleSelecionarEndereco = useCallback((localizacao) => {
+    setEndereco(localizacao.address);
+    setLocalizacaoSelecionada(localizacao);
+  }, []);
+
+  function handleEnderecoChange(e) {
+    setEndereco(e.target.value);
+    setLocalizacaoSelecionada(null);
+  }
+
   function handleBuscar(e) {
     e.preventDefault();
-    navigate("/itens");
+
+    if (!localizacaoSelecionada) {
+      alert("Selecione um endereço entre as sugestões para continuar.");
+      return;
+    }
+
+    saveSelectedLocation(localizacaoSelecionada);
+    navigate("/itens", { state: { localizacao: localizacaoSelecionada } });
   }
 
   return (
@@ -69,13 +89,13 @@ function Landing() {
 
           <form onSubmit={handleBuscar} className="busca-endereco">
             <span>📍</span>
-            <input
-              type="text"
-              placeholder="Seu endereço de entrega e número"
+            <AddressAutocomplete
               value={endereco}
-              onChange={(e) => setEndereco(e.target.value)}
+              onChange={handleEnderecoChange}
+              onSelect={handleSelecionarEndereco}
+              placeholder="Digite seu endereço de entrega e número"
             />
-            <button type="submit" className="btn-principal">
+            <button type="submit" className="btn-principal" disabled={!localizacaoSelecionada}>
               Buscar 🔍
             </button>
           </form>

@@ -4,6 +4,7 @@ import { maskCep, maskCpf, maskCnpj } from "../utils/masks";
 import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
+import AddressMap from "../components/AddressMap";
 import { createRestaurant } from "../services/restaurantService";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,12 +28,15 @@ function BusinessRegister() {
         complement: "",
         neighborhood: "",
         city: "",
-        state: ""
+        state: "",
+        latitude: null,
+        longitude: null
     });
 
     const [cepError, setCepError] = useState("");
     const [loadingCep, setLoadingCep] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [mapLocationKey, setMapLocationKey] = useState("");
 
     async function handleCepChange(event) {
         const value = maskCep(event.target.value);
@@ -61,8 +65,11 @@ function BusinessRegister() {
                 address: address.address,
                 neighborhood: address.neighborhood,
                 city: address.city,
-                state: address.state
+                state: address.state,
+                latitude: null,
+                longitude: null
             }));
+            setMapLocationKey(`${cleanCep}-${Date.now()}`);
         } catch (error) {
             setCepError("CEP não encontrado.");
         } finally {
@@ -86,6 +93,20 @@ function BusinessRegister() {
         setForm((currentForm) => ({
             ...currentForm,
             [name]: formattedValue
+        }));
+    }
+
+    function handleMapLocationChange(location) {
+        setForm((currentForm) => ({
+            ...currentForm,
+            ...(location.address !== undefined ? { address: location.address } : {}),
+            ...(location.number !== undefined && location.number ? { number: location.number } : {}),
+            ...(location.cep !== undefined && location.cep ? { cep: location.cep } : {}),
+            ...(location.neighborhood !== undefined && location.neighborhood ? { neighborhood: location.neighborhood } : {}),
+            ...(location.city !== undefined && location.city ? { city: location.city } : {}),
+            ...(location.state !== undefined && location.state ? { state: location.state } : {}),
+            latitude: location.latitude,
+            longitude: location.longitude
         }));
     }
 
@@ -173,7 +194,9 @@ function BusinessRegister() {
                 complemento: form.complement.trim() || null,
                 bairro: form.neighborhood.trim(),
                 cidade: form.city.trim(),
-                estado: form.state.trim().toUpperCase()
+                estado: form.state.trim().toUpperCase(),
+                latitude: form.latitude,
+                longitude: form.longitude
             }
         };
 
@@ -408,6 +431,16 @@ function BusinessRegister() {
                                 />
                             </div>
                         </div>
+
+                        {form.address && (
+                            <AddressMap
+                                address={[form.address, form.number, form.neighborhood, form.city, form.state, form.cep].filter(Boolean).join(", ")}
+                                latitude={form.latitude}
+                                longitude={form.longitude}
+                                autoLocateKey={mapLocationKey}
+                                onLocationChange={handleMapLocationChange}
+                            />
+                        )}
                     </div>
 
                     <button type="submit" className="primary-button" disabled={loading}>

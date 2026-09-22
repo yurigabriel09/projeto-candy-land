@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { getProducts } from "../services/productService";
 import { getRestaurants } from "../services/restaurantService";
+import { getSelectedLocation } from "../services/locationService";
 
 const EMOJIS_PRODUTO = ["🍰", "🍫", "🍭", "🧁", "🍮", "🍪", "🍩", "🍬"];
 
@@ -14,6 +15,8 @@ function Itens() {
   const [parametros, setParametros] = useSearchParams();
   const lojaAtiva = parametros.get("loja");
   const buscaInicial = parametros.get("busca") || "";
+  const localizacao = getSelectedLocation();
+  const navigate = useNavigate();
 
   const [produtos, setProdutos] = useState([]);
   const [lojas, setLojas] = useState([]);
@@ -94,6 +97,17 @@ function Itens() {
         <div className="container">
           <h1>Todos os doces 🍬</h1>
           <p>Busque pelo nome do doce ou filtre por loja</p>
+
+          {localizacao?.address && (
+            <div className="localizacao-selecionada">
+              <span>📍</span>
+              <div>
+                <small>Entregando para</small>
+                <strong>{localizacao.address}</strong>
+              </div>
+              <button type="button" onClick={() => navigate("/")}>Alterar</button>
+            </div>
+          )}
 
           <div className="busca-endereco busca-itens">
             <span>🔍</span>
