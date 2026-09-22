@@ -100,13 +100,8 @@ function PersonalRegister() {
 
             console.log("Cadastro realizado:", resultado);
 
-            if (resultado.dados?.token) {
-                entrar({
-                    ...resultado.dados.usuario,
-                    ...resultado.dados,
-                    tipo_conta: "PERSONAL",
-                    token: resultado.dados.token
-                });
+            if (resultado.token) {
+                entrar({ ...resultado.usuario, ...resultado, tipo_conta: "PERSONAL", token: resultado.token });
             }
 
             alert("Cadastro realizado com sucesso!");
