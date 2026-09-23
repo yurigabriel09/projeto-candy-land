@@ -16,20 +16,21 @@ class CategoryController:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         return make_response(jsonify({"mensagem": resultado["mensagem"], "categoria": resultado["dados"]}), 200)
 
+    TIPOS_VALIDOS = {"Bolos", "Chocolates", "Pirulitos", "Cupcakes", "Pudins", "Balas", "Donuts", "Cookies"}
+
     @staticmethod
     def criar_categoria(dados, restaurant_id, tipo_conta):
         if tipo_conta != "BUSINESS":
             return make_response(jsonify({"erro": "Apenas contas de restaurante podem cadastrar categorias."}), 403)
 
         nome = dados.get("nome")
-        if not nome or not isinstance(nome, str) or not nome.strip():
-            return make_response(jsonify({"erro": "Nome da categoria é obrigatório."}), 400)
+        if not nome or nome not in CategoryController.TIPOS_VALIDOS:
+            return make_response(jsonify({"erro": f"Categoria inválida. Escolha entre: {', '.join(CategoryController.TIPOS_VALIDOS)}"}), 400)
 
         resultado = CategoryService.criar_categoria(restaurant_id, dados)
         if not resultado["success"]:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         return make_response(jsonify({"mensagem": resultado["mensagem"], "categoria": resultado["dados"]}), 201)
-
     @staticmethod
     def atualizar_categoria(categoria_id, dados, restaurant_id, tipo_conta):
         if tipo_conta != "BUSINESS":

@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createProduct } from "../services/productService";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { createProduct, getProduct, updateProduct } from "../services/productService";
+import { getCategories } from "../services/categoryService";
 
 function ProductForm() {
     const navigate = useNavigate();
-    const { dadosAutenticacao, autenticado } = useAuth();
-    const restauranteId = Number(dadosAutenticacao?.id);
+    const { produtoId } = useParams();
+    const modoEdicao = Boolean(produtoId);
+
+    const [categorias, setCategorias] = useState([]);
+    const [loadingCategorias, setLoadingCategorias] = useState(true);
+    const [loadingProduto, setLoadingProduto] = useState(modoEdicao);
 
     const [form, setForm] = useState({
         nome: "",
@@ -19,6 +23,43 @@ function ProductForm() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState("");
 
+    useEffect(() => {
+        async function carregarCategorias() {
+            try {
+                const dados = await getCategories();
+                setCategorias(dados.filter((c) => c.ativa));
+            } catch (error) {
+                setErro("Não foi possível carregar as categorias.");
+            } finally {
+                setLoadingCategorias(false);
+            }
+        }
+        carregarCategorias();
+    }, []);
+
+    useEffect(() => {
+        if (!modoEdicao) return;
+
+        async function carregarProduto() {
+            try {
+                const produto = await getProduct(produtoId);
+                setForm({
+                    nome: produto.nome_produto || "",
+                    descricao: produto.descricao_produto || "",
+                    preco: String(produto.preco_produto ?? ""),
+                    qtd_estoque: String(produto.qtd_estoque ?? "0"),
+                    categoria_id: String(produto.id_categoria || ""),
+                    disponivel: Boolean(produto.produto_disponivel)
+                });
+            } catch (error) {
+                setErro("Não foi possível carregar o produto.");
+            } finally {
+                setLoadingProduto(false);
+            }
+        }
+        carregarProduto();
+    }, [modoEdicao, produtoId]);
+
     function handleChange(event) {
         const { name, value, type, checked } = event.target;
         setForm((current) => ({
@@ -29,19 +70,13 @@ function ProductForm() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-
-        if (!autenticado || dadosAutenticacao?.tipo_conta !== "BUSINESS" || !Number.isInteger(restauranteId) || restauranteId <= 0) {
-            navigate("/business", { replace: true });
-            return;
-        }
         setErro("");
 
         if (!form.nome.trim()) { setErro("Informe o nome do produto."); return; }
         if (!form.preco || Number(form.preco) <= 0) { setErro("Informe um preço válido."); return; }
-        if (!form.categoria_id) { setErro("Informe o ID da categoria."); return; }
+        if (!form.categoria_id) { setErro("Selecione uma categoria."); return; }
 
         const dados = {
-            restaurante_id: restauranteId,
             categoria_id: Number(form.categoria_id),
             nome: form.nome.trim(),
             descricao: form.descricao.trim(),
@@ -52,13 +87,46 @@ function ProductForm() {
 
         try {
             setLoading(true);
-            await createProduct(dados);
+            if (modoEdicao) {
+                await updateProduct(produtoId, dados);
+            } else {
+                await createProduct(dados);
+            }
             navigate("/business");
         } catch (error) {
-            setErro(error.message || "Erro ao cadastrar produto.");
+            setErro(error.message || "Erro ao salvar produto.");
         } finally {
             setLoading(false);
         }
+    }
+
+    if (!loadingCategorias && categorias.length === 0) {
+        return (
+            <main className="dashboard-page">
+                <section className="form-card">
+                    <header className="form-header">
+                        <button type="button" className="back-button" onClick={() => navigate("/business")}>
+                            ← Voltar
+                        </button>
+                        <h2>Cadastrar produto</h2>
+                    </header>
+                    <p className="field-error">Você ainda não tem categorias ativas.</p>
+                    <button type="button" className="primary-button" onClick={() => navigate("/business/categories")}>
+                        Criar categoria primeiro
+                    </button>
+                </section>
+            </main>
+        );
+    }
+
+    if (loadingProduto) {
+        return (
+            <main className="dashboard-page">
+                <section className="form-card">
+                    <p>Carregando produto...</p>
+                </section>
+            </main>
+        );
     }
 
     return (
@@ -68,8 +136,8 @@ function ProductForm() {
                     <button type="button" className="back-button" onClick={() => navigate("/business")}>
                         ← Voltar
                     </button>
-                    <h2>Cadastrar produto</h2>
-                    <p>Adicione um novo item ao seu cardápio.</p>
+                    <h2>{modoEdicao ? "Editar produto" : "Cadastrar produto"}</h2>
+                    <p>{modoEdicao ? "Atualize as informações do item." : "Adicione um novo item ao seu cardápio."}</p>
                 </header>
 
                 <form onSubmit={handleSubmit}>
@@ -96,9 +164,13 @@ function ProductForm() {
                     </div>
 
                     <div className="form-field">
-                        <label htmlFor="categoria_id">ID da categoria</label>
-                        <input id="categoria_id" name="categoria_id" type="number" value={form.categoria_id} onChange={handleChange} placeholder="Ex: 1" />
-                        <small className="field-message">Provisório até existir uma tela de categorias.</small>
+                        <label htmlFor="categoria_id">Categoria</label>
+                        <select id="categoria_id" name="categoria_id" value={form.categoria_id} onChange={handleChange}>
+                            <option value="">Selecione...</option>
+                            {categorias.map((c) => (
+                                <option key={c.id} value={c.id}>{c.nome}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="form-field form-checkbox">
@@ -111,7 +183,7 @@ function ProductForm() {
                     {erro && <p className="field-error">{erro}</p>}
 
                     <button type="submit" className="primary-button" disabled={loading}>
-                        {loading ? "Cadastrando..." : "Cadastrar produto"}
+                        {loading ? "Salvando..." : modoEdicao ? "Salvar alterações" : "Cadastrar produto"}
                     </button>
                 </form>
             </section>
