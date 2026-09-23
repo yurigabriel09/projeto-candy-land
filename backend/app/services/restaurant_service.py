@@ -156,3 +156,19 @@ class RestauranteService:
         except SQLAlchemyError:
             db.session.rollback()
             return {"success": False, "erro": "Falha ao remover restaurante.", "status_code": 500}
+    @staticmethod
+    def listar_produtos_restaurante(restaurante_id):
+        from app.models.product import Produto
+
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
+            produtos = Produto.query.filter_by(restaurant_id=restaurante_id).order_by(Produto.id).all()
+            return {
+                "success": True,
+                "mensagem": "Produtos do restaurante:",
+                "dados": [produto.to_dict() for produto in produtos]
+            }
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}

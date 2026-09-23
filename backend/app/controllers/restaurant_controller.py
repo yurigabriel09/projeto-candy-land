@@ -59,3 +59,9 @@ class RestaurantController:
             return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         
         return make_response('', 204)
+    @staticmethod
+    def listar_produtos_restaurante(restaurante_id):
+        resultado = RestauranteService.listar_produtos_restaurante(restaurante_id)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)

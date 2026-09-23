@@ -30,3 +30,9 @@ export async function getRestaurant(id) {
   if (!response.ok) throw new Error(resultado.erro || "Loja não encontrada");
   return resultado.dados;
 }
+export async function getRestaurantProducts(id) {
+  const response = await fetch(`${API_URL}/${id}/produtos`);
+  const resultado = await response.json();
+  if (!response.ok) throw new Error(resultado.erro || "Erro ao buscar produtos do restaurante");
+  return resultado.dados;
+}

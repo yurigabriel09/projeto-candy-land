@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import PersonalRegister from "./pages/PersonalRegister";
 import BusinessRegister from "./pages/BusinessRegister";
 import Home from "./pages/Home";
+import Restaurant from "./pages/Restaurant";
 import BusinessHome from "./pages/BusinessHome";
 import Landing from "./pages/Landing";
 import Itens from "./pages/Itens";
@@ -29,6 +30,14 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Landing />} />
                         <Route path="/itens" element={<Itens />} />
+                        <Route
+                            path="/restaurantes/:restauranteId"
+                            element={
+                                <ProtectedRoute tipoConta="PERSONAL">
+                                    <Restaurant />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/login" element={<Login />} />
 
                         <Route
