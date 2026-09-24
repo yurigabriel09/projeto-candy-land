@@ -3,9 +3,11 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.utils.formatter import normalizar_telefone
 from app.database.database import db
 from app.models.user import Usuario
+from app.models.restaurant import Restaurante
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.services.token_service import TokenService
+from flask import current_app
 
 
 class UserService:
@@ -64,6 +66,16 @@ class UserService:
         endereco=None,
     ):
         try:
+            telefone_normalizado = normalizar_telefone(telefone)
+
+            if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
+                telefone_em_uso = (
+                    Usuario.query.filter_by(telefone=telefone_normalizado).first()
+                    or Restaurante.query.filter_by(telefone=telefone_normalizado).first()
+                )
+                if telefone_em_uso:
+                    return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
+                
             if not tentativa_id:
                 return {
                     "success": False,
