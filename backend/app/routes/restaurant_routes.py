@@ -28,3 +28,6 @@ def atualizar_restaurante(restaurante_id):
 @restaurante_bp.route("/<int:restaurante_id>", methods=["DELETE"])
 def deletar_restaurante(restaurante_id):
     return RestaurantController.deletar_restaurante(restaurante_id)
+@restaurante_bp.route("/<int:restaurante_id>/produtos", methods=["GET"])
+def listar_produtos_restaurante(restaurante_id):
+    return RestaurantController.listar_produtos_restaurante(restaurante_id)

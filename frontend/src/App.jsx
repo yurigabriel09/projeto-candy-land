@@ -6,10 +6,12 @@ import Register from "./pages/Register";
 import PersonalRegister from "./pages/PersonalRegister";
 import BusinessRegister from "./pages/BusinessRegister";
 import Home from "./pages/Home";
+import Restaurant from "./pages/Restaurant";
 import BusinessHome from "./pages/BusinessHome";
 import Landing from "./pages/Landing";
 import Itens from "./pages/Itens";
 import ProductForm from "./pages/ProductForm";
+import CategoryManager from "./pages/CategoryManager";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,6 +31,14 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Landing />} />
                         <Route path="/itens" element={<Itens />} />
+                        <Route
+                            path="/restaurantes/:restauranteId"
+                            element={
+                                <ProtectedRoute tipoConta="PERSONAL">
+                                    <Restaurant />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/login" element={<Login />} />
 
                         <Route
@@ -81,6 +91,24 @@ function App() {
                             element={
                                 <ProtectedRoute tipoConta="BUSINESS">
                                     <ProductForm />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business/products/:produtoId/edit"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <ProductForm />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business/categories"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <CategoryManager />
                                 </ProtectedRoute>
                             }
                         />

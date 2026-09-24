@@ -76,13 +76,14 @@ function BusinessHome() {
                 </header>
 
                 <main className="dashboard-body">
-                    <div className="dashboard-body-top">
-                        <button
-                            type="button"
-                            className="primary-button dashboard-cta"
-                            onClick={() => navigate("/business/products/new")}
-                        >
+
+                    <div className="dashboard-body-top" style={{ display: "flex", gap: 12 }}>
+                        <button type="button" className="primary-button dashboard-cta" onClick={() => navigate("/business/products/new")}>
                             + Cadastrar produto
+                        </button>
+
+                        <button type="button" className="auth-back" style={{ width: "auto", marginTop: 0, padding: "0 24px" }} onClick={() => navigate("/business/categories")}>
+                            Gerenciar categorias
                         </button>
                     </div>
 
@@ -99,16 +100,24 @@ function BusinessHome() {
                     {!loading && produtos.length > 0 && (
                         <div className="product-grid">
                             {produtos.map((produto) => (
-                                <div key={produto.id} className="product-card">
-                                    <h3>{produto.nome}</h3>
-                                    <p className="product-price">R$ {Number(produto.preco).toFixed(2)}</p>
-                                    <span className={produto.disponivel ? "badge badge-available" : "badge badge-unavailable"}>
-                                        {produto.disponivel ? "Disponível" : "Indisponível"}
+                                <div key={produto.id_produto} className="product-card">
+                                    <h3>{produto.nome_produto}</h3>
+                                    <p className="product-price">R$ {Number(produto.preco_produto).toFixed(2)}</p>
+                                    <span className={produto.produto_disponivel ? "badge badge-available" : "badge badge-unavailable"}>
+                                        {produto.produto_disponivel ? "Disponível" : "Indisponível"}
                                     </span>
+
+                                    <button
+                                        type="button"
+                                        className="product-edit-button"
+                                        onClick={() => navigate(`/business/products/${produto.id_produto}/edit`)}
+                                    >
+                                        Editar
+                                    </button>
                                 </div>
                             ))}
                         </div>
-                    )}
+                    )}                    
                 </main>
             </div>
         </div>

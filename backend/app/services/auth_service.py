@@ -5,6 +5,7 @@ import secrets
 
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import current_app
 
 from app.database.database import db
 from app.models.user import Usuario
@@ -626,24 +627,21 @@ class AuthService:
 
     @staticmethod
     def _finalizar_autenticacao(tentativa):
-        usuarios_email = Usuario.query.filter_by(email=tentativa.email).all()
 
-        usuarios_telefone = Usuario.query.filter_by(telefone=tentativa.telefone).all()
+        if current_app.config.get("ALLOW_DUPLICATE_PHONE"):
+            # Modo desenvolvimento: telefone pode se repetir entre contas,
+            # então só o e-mail identifica de forma confiável qual conta é.
+            usuarios = {u.id: u for u in Usuario.query.filter_by(email=tentativa.email).all()} if tentativa.email else {}
+            restaurantes = {r.id: r for r in Restaurante.query.filter_by(email=tentativa.email).all()} if tentativa.email else {}
+        else:
+            # Comportamento original: e-mail e telefone juntos identificam a conta.
+            usuarios_email = Usuario.query.filter_by(email=tentativa.email).all()
+            usuarios_telefone = Usuario.query.filter_by(telefone=tentativa.telefone).all()
+            restaurantes_email = Restaurante.query.filter_by(email=tentativa.email).all()
+            restaurantes_telefone = Restaurante.query.filter_by(telefone=tentativa.telefone).all()
 
-        restaurantes_email = Restaurante.query.filter_by(email=tentativa.email).all()
-
-        restaurantes_telefone = Restaurante.query.filter_by(
-            telefone=tentativa.telefone
-        ).all()
-
-        usuarios = {
-            usuario.id: usuario for usuario in usuarios_email + usuarios_telefone
-        }
-
-        restaurantes = {
-            restaurante.id: restaurante
-            for restaurante in restaurantes_email + restaurantes_telefone
-        }
+            usuarios = {u.id: u for u in usuarios_email + usuarios_telefone}
+            restaurantes = {r.id: r for r in restaurantes_email + restaurantes_telefone}
 
         if len(usuarios) > 1 or len(restaurantes) > 1:
             return {

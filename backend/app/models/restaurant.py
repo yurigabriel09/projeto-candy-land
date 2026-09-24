@@ -16,7 +16,7 @@ class Restaurante(db.Model):
     nome_responsavel = db.Column(db.String(150), nullable=True)
     cpf_responsavel = db.Column(db.String(14), nullable=False)
     email = db.Column(db.String(150), unique=True, index=True, nullable=False)
-    telefone = db.Column(db.String(20), unique=True, nullable=False)
+    telefone = db.Column(db.String(20), nullable=False)
 
     descricao = db.Column(db.String(255), nullable=True)
     valor_minimo_pedido = db.Column(db.Numeric(10, 2), nullable=False, default=0)
