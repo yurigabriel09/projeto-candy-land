@@ -4,6 +4,8 @@ from app.models.restaurant import Restaurante
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.services.token_service import TokenService
+from flask import current_app
+from app.models.user import Usuario
 
 class RestauranteService:
     @staticmethod
@@ -32,6 +34,15 @@ class RestauranteService:
                            valor_minimo_pedido=None, taxa_entrega_base=None,
                            raio_entrega_km=None, horario_funcionamento=None):
         try:
+            telefone_normalizado = telefone
+
+            if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
+                telefone_em_uso = (
+                    Usuario.query.filter_by(telefone=telefone_normalizado).first()
+                    or Restaurante.query.filter_by(telefone=telefone_normalizado).first()
+                )
+                if telefone_em_uso:
+                    return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
             if not tentativa_id:
                 return {
                     "success": False,
@@ -156,3 +167,19 @@ class RestauranteService:
         except SQLAlchemyError:
             db.session.rollback()
             return {"success": False, "erro": "Falha ao remover restaurante.", "status_code": 500}
+    @staticmethod
+    def listar_produtos_restaurante(restaurante_id):
+        from app.models.product import Produto
+
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
+            produtos = Produto.query.filter_by(restaurant_id=restaurante_id).order_by(Produto.id).all()
+            return {
+                "success": True,
+                "mensagem": "Produtos do restaurante:",
+                "dados": [produto.to_dict() for produto in produtos]
+            }
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}

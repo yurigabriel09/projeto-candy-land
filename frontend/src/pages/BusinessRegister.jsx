@@ -207,13 +207,8 @@ function BusinessRegister() {
 
             console.log("Cadastro empresarial realizado:", resultado);
 
-            if (resultado.dados?.token) {
-                entrar({
-                    ...resultado.dados.restaurante,
-                    ...resultado.dados,
-                    tipo_conta: "BUSINESS",
-                    token: resultado.dados.token
-                });
+            if (resultado.token) {
+                entrar({ ...resultado.restaurante, ...resultado, tipo_conta: "BUSINESS", token: resultado.token });
             }
 
             alert("Cadastro empresarial realizado com sucesso!");

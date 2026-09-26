@@ -87,7 +87,13 @@ function Home() {
                             <article
                                 key={loja.id}
                                 className="card-loja"
-                                onClick={() => navigate(`/itens?loja=${loja.id}`)}
+                                role="link"
+                                tabIndex={0}
+                                aria-label={`Ver produtos de ${loja.nome}`}
+                                onClick={() => navigate(`/restaurantes/${loja.id}`)}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter") navigate(`/restaurantes/${loja.id}`);
+                                }}
                             >
                                 <div className="card-loja-capa">
                                     {EMOJIS_LOJA[i % EMOJIS_LOJA.length]}
