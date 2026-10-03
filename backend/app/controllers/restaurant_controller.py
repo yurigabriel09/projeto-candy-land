@@ -53,6 +53,34 @@ class RestaurantController:
     
 
     @staticmethod
+    def buscar_configuracao(restaurant_id):
+        resultado = RestauranteService.buscar_configuracao(restaurant_id)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+
+        return make_response(
+            jsonify({
+                "mensagem": resultado["mensagem"],
+                "dados": resultado["dados"],
+            }),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_configuracao(restaurant_id, dados):
+        resultado = RestauranteService.atualizar_configuracao(restaurant_id, dados)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+
+        return make_response(
+            jsonify({
+                "mensagem": resultado["mensagem"],
+                "dados": resultado["dados"],
+            }),
+            200,
+        )
+
+    @staticmethod
     def deletar_restaurante(restaurant_id):
         resultado = RestauranteService.deletar_restaurante(restaurant_id)
         if not resultado["success"]:

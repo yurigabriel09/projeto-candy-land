@@ -156,6 +156,129 @@ class RestauranteService:
             return {"success": False, "erro": "Falha ao atualizar restaurante.", "status_code": 500}
 
     @staticmethod
+    def buscar_configuracao(restaurante_id):
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+
+            endereco = None
+            if restaurante.address_id:
+                endereco = db.session.get(Endereco, restaurante.address_id)
+
+            return {
+                "success": True,
+                "mensagem": "Configuração do restaurante carregada.",
+                "dados": {
+                    "restaurante": restaurante.to_dict(),
+                    "endereco": endereco.to_dict() if endereco else None,
+                },
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao consultar a configuração do restaurante.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def atualizar_configuracao(restaurante_id, dados):
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+
+            campos_restaurante = (
+                "nome",
+                "razao_social",
+                "nome_responsavel",
+                "descricao",
+                "valor_minimo_pedido",
+                "taxa_entrega_base",
+                "raio_entrega_km",
+                "horario_funcionamento",
+            )
+
+            for campo in campos_restaurante:
+                if campo in dados:
+                    setattr(restaurante, campo, dados[campo])
+
+            endereco_dados = dados.get("endereco")
+            endereco = None
+
+            if restaurante.address_id:
+                endereco = db.session.get(Endereco, restaurante.address_id)
+
+            if endereco_dados is not None:
+                if endereco is None:
+                    endereco = Endereco(
+                        id_restaurante=restaurante.id,
+                        tipo_endereco="COMERCIAL",
+                        principal=True,
+                        ativo=True,
+                    )
+                    db.session.add(endereco)
+                    db.session.flush()
+                    restaurante.address_id = endereco.id
+
+                campos_endereco = (
+                    "cep",
+                    "rua",
+                    "numero",
+                    "complemento",
+                    "bairro",
+                    "cidade",
+                    "estado",
+                    "referencia",
+                    "latitude",
+                    "longitude",
+                )
+
+                for campo in campos_endereco:
+                    if campo in endereco_dados:
+                        setattr(endereco, campo, endereco_dados[campo])
+
+            db.session.commit()
+
+            return {
+                "success": True,
+                "mensagem": "Configuração do restaurante atualizada com sucesso!",
+                "dados": {
+                    "restaurante": restaurante.to_dict(),
+                    "endereco": endereco.to_dict() if endereco else None,
+                },
+            }
+        except IntegrityError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Os dados informados já estão em uso.",
+                "status_code": 409,
+            }
+        except (TypeError, ValueError):
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Existem dados inválidos na configuração.",
+                "status_code": 400,
+            }
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao atualizar a configuração do restaurante.",
+                "status_code": 500,
+            }
+
+    @staticmethod
     def deletar_restaurante(restaurante_id):
         try:
             restaurante = Restaurante.query.get(restaurante_id)

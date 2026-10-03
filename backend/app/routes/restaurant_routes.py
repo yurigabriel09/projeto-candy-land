@@ -1,4 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, g
+from app.utils.auth_decorator import token_required
 from app.controllers.restaurant_controller import RestaurantController
 
 restaurante_bp = Blueprint(
@@ -24,6 +25,23 @@ def criar_restaurante():
 def atualizar_restaurante(restaurante_id):
     dados = request.get_json() or {}
     return RestaurantController.atualizar_restaurante(restaurante_id, dados)
+
+@restaurante_bp.route("/<int:restaurante_id>/configuracao", methods=["GET"])
+@token_required
+def buscar_configuracao(restaurante_id):
+    if g.current_account_type != "BUSINESS" or int(g.current_account_id) != restaurante_id:
+        from flask import jsonify, make_response
+        return make_response(jsonify({"erro": "Acesso não autorizado."}), 403)
+    return RestaurantController.buscar_configuracao(restaurante_id)
+
+@restaurante_bp.route("/<int:restaurante_id>/configuracao", methods=["PUT"])
+@token_required
+def atualizar_configuracao(restaurante_id):
+    if g.current_account_type != "BUSINESS" or int(g.current_account_id) != restaurante_id:
+        from flask import jsonify, make_response
+        return make_response(jsonify({"erro": "Acesso não autorizado."}), 403)
+    dados = request.get_json() or {}
+    return RestaurantController.atualizar_configuracao(restaurante_id, dados)
 
 @restaurante_bp.route("/<int:restaurante_id>", methods=["DELETE"])
 def deletar_restaurante(restaurante_id):
