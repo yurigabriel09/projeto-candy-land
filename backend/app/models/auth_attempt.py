@@ -1,5 +1,7 @@
 import uuid
+
 from app.database.database import db
+
 
 class TentativaAutenticacao(db.Model):
     __tablename__ = "auth_attempts"
@@ -24,5 +26,5 @@ class TentativaAutenticacao(db.Model):
             "telefone_validado": self.telefone_validado,
             "concluida": self.concluida,
             "expira_em": self.expira_em.isoformat() if self.expira_em else None,
-            "criado_em": self.criado_em.isoformat() if self.criado_em else None
+            "criado_em": self.criado_em.isoformat() if self.criado_em else None,
         }

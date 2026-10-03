@@ -1,15 +1,14 @@
+from app.config.config import Config
+from app.database.database import db
+from app.routes.auth_routes import auth_bp
+from app.routes.category_routes import categoria_bp
+from app.routes.order_routes import pedido_bp
+from app.routes.product_routes import produto_bp
+from app.routes.restaurant_routes import restaurante_bp
+from app.routes.user_routes import user_bp
 from flask import Flask
 from flask_cors import CORS
 
-from app.config.config import Config
-from app.database.database import db
-from app.models import Usuario, Endereco, Restaurante, Categoria, Produto, Pedido, ItemPedido
-from app.routes.user_routes import user_bp
-from app.routes.restaurant_routes import restaurante_bp
-from app.routes.auth_routes import auth_bp
-from app.routes.product_routes import produto_bp
-from app.routes.category_routes import categoria_bp
-from app.routes.order_routes import pedido_bp
 
 def create_app():
     app = Flask(__name__)
@@ -25,6 +24,7 @@ def create_app():
     app.register_blueprint(categoria_bp)
     app.register_blueprint(pedido_bp)
     return app
+
 
 app = create_app()
 

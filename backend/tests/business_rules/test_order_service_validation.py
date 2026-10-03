@@ -1,4 +1,4 @@
-from app.services.order_service import OrderService, PAYMENT_METHODS
+from app.services.order_service import PAYMENT_METHODS, OrderService
 
 
 def test_pagamento_suporta_apenas_pix_e_cartao():

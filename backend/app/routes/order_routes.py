@@ -1,7 +1,6 @@
-from flask import Blueprint, g, request
-
 from app.controllers.order_controller import OrderController
 from app.utils.auth_decorator import token_required
+from flask import Blueprint, g, request
 
 pedido_bp = Blueprint("order", __name__, url_prefix="/pedidos")
 

@@ -1,8 +1,6 @@
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 
-from sqlalchemy.exc import SQLAlchemyError
-
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.item_order import ItemPedido
@@ -12,6 +10,7 @@ from app.services.order_workflow_service import (
     OrderTransitionError,
     validar_transicao_pedido,
 )
+from sqlalchemy.exc import SQLAlchemyError
 
 PAYMENT_METHODS = {"PIX", "CARTAO_CREDITO"}
 ORDER_TYPES = {"DELIVERY"}
@@ -31,9 +30,7 @@ class OrderService:
     @staticmethod
     def _validate_payment_method(method):
         if method not in PAYMENT_METHODS:
-            raise ValueError(
-                "payment_method deve ser PIX ou CARTAO_CREDITO."
-            )
+            raise ValueError("payment_method deve ser PIX ou CARTAO_CREDITO.")
 
     @staticmethod
     def _validate_order_type(order_type):
@@ -60,7 +57,7 @@ class OrderService:
             quantity = item.get("quantidade")
 
             if not isinstance(product_id, int) or not isinstance(quantity, int):
-                raise ValueError("produto_id e quantidade devem ser inteiros.")
+                raise TypeError("produto_id e quantidade devem ser inteiros.")
             if quantity <= 0:
                 raise ValueError("A quantidade deve ser maior que zero.")
 
@@ -92,13 +89,13 @@ class OrderService:
             address_id = dados.get("delivery_address_id")
 
             if not isinstance(restaurant_id, int):
-                raise ValueError("restaurant_id é obrigatório e deve ser inteiro.")
+                raise TypeError("restaurant_id é obrigatório e deve ser inteiro.")
 
             OrderService._validate_order_type(order_type)
             OrderService._validate_payment_method(payment_method)
 
             if not isinstance(address_id, int):
-                raise ValueError("delivery_address_id é obrigatório para o pedido.")
+                raise TypeError("delivery_address_id é obrigatório para o pedido.")
             OrderService._validate_address(user_id, address_id)
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
@@ -133,7 +130,6 @@ class OrderService:
             db.session.flush()
 
             for product, item, unit_price, quantity in snapshots:
-                product.current_stock -= quantity
                 db.session.add(
                     ItemPedido(
                         id_pedido=pedido.id,
@@ -146,48 +142,148 @@ class OrderService:
                 )
 
             db.session.commit()
-            return {"success": True, "mensagem": "Pedido criado com sucesso!", "dados": OrderService._to_dict(pedido)}
-        except (ValueError, SQLAlchemyError) as exc:
+            return {
+                "success": True,
+                "mensagem": "Pedido criado com sucesso!",
+                "dados": OrderService._to_dict(pedido),
+            }
+        except (TypeError, ValueError, SQLAlchemyError) as exc:
             db.session.rollback()
-            if isinstance(exc, ValueError):
+            if isinstance(exc, (TypeError, ValueError)):
                 return {"success": False, "erro": str(exc), "status_code": 400}
-            return {"success": False, "erro": "Falha ao criar pedido.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao criar pedido.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def listar_pedidos(account_id, account_type):
         try:
             if account_type == "PERSONAL":
-                pedidos = Pedido.query.filter_by(user_id=account_id).order_by(Pedido.created_at.desc()).all()
+                pedidos = (
+                    Pedido.query.filter_by(user_id=account_id)
+                    .order_by(Pedido.created_at.desc())
+                    .all()
+                )
             elif account_type == "BUSINESS":
-                pedidos = Pedido.query.filter_by(restaurant_id=account_id).order_by(Pedido.created_at.desc()).all()
+                pedidos = (
+                    Pedido.query.filter_by(restaurant_id=account_id)
+                    .order_by(Pedido.created_at.desc())
+                    .all()
+                )
             else:
-                return {"success": False, "erro": "Tipo de conta não autorizado.", "status_code": 403}
+                return {
+                    "success": False,
+                    "erro": "Tipo de conta não autorizado.",
+                    "status_code": 403,
+                }
 
-            return {"success": True, "mensagem": "Pedidos consultados.", "dados": [OrderService._to_dict(p) for p in pedidos]}
+            return {
+                "success": True,
+                "mensagem": "Pedidos consultados.",
+                "dados": [OrderService._to_dict(p) for p in pedidos],
+            }
         except SQLAlchemyError:
-            return {"success": False, "erro": "Falha ao consultar pedidos.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao consultar pedidos.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def buscar_pedido(pedido_id, account_id, account_type):
         pedido = Pedido.query.filter_by(id=pedido_id).first()
         if not pedido:
-            return {"success": False, "erro": "Pedido não encontrado.", "status_code": 404}
+            return {
+                "success": False,
+                "erro": "Pedido não encontrado.",
+                "status_code": 404,
+            }
 
         if (account_type == "PERSONAL" and pedido.user_id != account_id) or (
             account_type == "BUSINESS" and pedido.restaurant_id != account_id
         ):
-            return {"success": False, "erro": "Você não tem acesso a este pedido.", "status_code": 403}
+            return {
+                "success": False,
+                "erro": "Você não tem acesso a este pedido.",
+                "status_code": 403,
+            }
 
-        return {"success": True, "mensagem": "Pedido encontrado.", "dados": OrderService._to_dict(pedido)}
+        return {
+            "success": True,
+            "mensagem": "Pedido encontrado.",
+            "dados": OrderService._to_dict(pedido),
+        }
+
+    @staticmethod
+    def confirmar_pagamento(pedido_id):
+        pedido = Pedido.query.filter_by(id=pedido_id).first()
+        if not pedido:
+            return {
+                "success": False,
+                "erro": "Pedido não encontrado.",
+                "status_code": 404,
+            }
+
+        try:
+            validar_transicao_pedido(pedido.status, "PAGAMENTO_CONFIRMADO")
+
+            itens = ItemPedido.query.filter_by(id_pedido=pedido.id).all()
+            produtos = []
+            for item in itens:
+                product = Produto.query.filter_by(id=item.id_produto).first()
+                if not product:
+                    raise ValueError(
+                        f"Produto {item.id_produto} não encontrado para o pedido."
+                    )
+                if product.current_stock < item.quantidade:
+                    return {
+                        "success": False,
+                        "erro": f"Estoque insuficiente para o produto {product.id}.",
+                        "status_code": 409,
+                    }
+                produtos.append((product, item.quantidade))
+
+            for product, quantity in produtos:
+                product.current_stock -= quantity
+
+            pedido.status = "PAGAMENTO_CONFIRMADO"
+            db.session.commit()
+            return {
+                "success": True,
+                "mensagem": "Pagamento confirmado e estoque atualizado.",
+                "dados": OrderService._to_dict(pedido),
+            }
+        except OrderTransitionError as exc:
+            db.session.rollback()
+            return {"success": False, "erro": str(exc), "status_code": 409}
+        except (ValueError, SQLAlchemyError) as exc:
+            db.session.rollback()
+            if isinstance(exc, ValueError):
+                return {"success": False, "erro": str(exc), "status_code": 400}
+            return {
+                "success": False,
+                "erro": "Falha ao confirmar pagamento.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def atualizar_status(pedido_id, novo_status, account_id, account_type):
         pedido = Pedido.query.filter_by(id=pedido_id).first()
         if not pedido:
-            return {"success": False, "erro": "Pedido não encontrado.", "status_code": 404}
+            return {
+                "success": False,
+                "erro": "Pedido não encontrado.",
+                "status_code": 404,
+            }
 
         if account_type != "BUSINESS" or pedido.restaurant_id != account_id:
-            return {"success": False, "erro": "Apenas o restaurante responsável pode atualizar o status.", "status_code": 403}
+            return {
+                "success": False,
+                "erro": "Apenas o restaurante responsável pode atualizar o status.",
+                "status_code": 403,
+            }
 
         status_permitidos_restaurante = {
             "RESTAURANTE_RECEBEU",
@@ -208,7 +304,7 @@ class OrderService:
         except OrderTransitionError as exc:
             return {"success": False, "erro": str(exc), "status_code": 409}
 
-        if novo_status == "CANCELADO":
+        if novo_status == "CANCELADO" and pedido.status != "PENDENTE_PAGAMENTO":
             for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
                 product = Produto.query.filter_by(id=item.id_produto).first()
                 if product:
@@ -216,23 +312,32 @@ class OrderService:
 
         pedido.status = novo_status
         db.session.commit()
-        return {"success": True, "mensagem": "Status atualizado com sucesso.", "dados": OrderService._to_dict(pedido)}
+        return {
+            "success": True,
+            "mensagem": "Status atualizado com sucesso.",
+            "dados": OrderService._to_dict(pedido),
+        }
 
     @staticmethod
     def cancelar_pedido(pedido_id, user_id):
         pedido = Pedido.query.filter_by(id=pedido_id, user_id=user_id).first()
         if not pedido:
-            return {"success": False, "erro": "Pedido não encontrado.", "status_code": 404}
+            return {
+                "success": False,
+                "erro": "Pedido não encontrado.",
+                "status_code": 404,
+            }
 
         try:
             validar_transicao_pedido(pedido.status, "CANCELADO")
         except OrderTransitionError as exc:
             return {"success": False, "erro": str(exc), "status_code": 409}
 
-        for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
-            product = Produto.query.filter_by(id=item.id_produto).first()
-            if product:
-                product.current_stock += item.quantidade
+        if pedido.status != "PENDENTE_PAGAMENTO":
+            for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
+                product = Produto.query.filter_by(id=item.id_produto).first()
+                if product:
+                    product.current_stock += item.quantidade
 
         pedido.status = "CANCELADO"
         db.session.commit()
@@ -256,8 +361,12 @@ class OrderService:
             "payment_method": pedido.payment_method,
             "general_note": pedido.general_note,
             "created_at": pedido.created_at.isoformat() if pedido.created_at else None,
-            "estimated_delivery_at": pedido.estimated_delivery_at.isoformat() if pedido.estimated_delivery_at else None,
-            "delivered_at": pedido.delivered_at.isoformat() if pedido.delivered_at else None,
+            "estimated_delivery_at": pedido.estimated_delivery_at.isoformat()
+            if pedido.estimated_delivery_at
+            else None,
+            "delivered_at": pedido.delivered_at.isoformat()
+            if pedido.delivered_at
+            else None,
             "items": [
                 {
                     "id": item.id,
