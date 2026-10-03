@@ -59,3 +59,17 @@ def test_motorista_cancelado_retorna_para_busca():
 def test_transicao_de_entrega_invalida_e_rejeitada():
     with pytest.raises(OrderTransitionError):
         validar_transicao_entrega("PROCURANDO", "ENTREGA_CONCLUIDA")
+
+
+def test_entrega_inicia_apos_solicitacao():
+    assert validar_transicao_entrega("NAO_SOLICITADO", "PROCURANDO") is True
+
+
+def test_entrega_concluida_e_um_estado_final():
+    with pytest.raises(OrderTransitionError):
+        validar_transicao_entrega("ENTREGA_CONCLUIDA", "PROCURANDO")
+
+
+def test_entrega_cancelada_nao_pode_ser_retomada():
+    with pytest.raises(OrderTransitionError):
+        validar_transicao_entrega("CANCELADO", "PROCURANDO")

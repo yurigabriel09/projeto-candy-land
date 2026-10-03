@@ -25,3 +25,10 @@ class Pedido(db.Model):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     estimated_delivery_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
+
+    entrega = db.relationship(
+        "EntregaPedido",
+        back_populates="pedido",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

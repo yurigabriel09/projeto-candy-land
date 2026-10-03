@@ -3,11 +3,13 @@ from uuid import uuid4
 
 from app.database.database import db
 from app.models.address import Endereco
+from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.product import Produto
 from app.services.order_workflow_service import (
     OrderTransitionError,
+    validar_transicao_entrega,
     validar_transicao_pedido,
 )
 from sqlalchemy.exc import SQLAlchemyError
@@ -128,6 +130,7 @@ class OrderService:
             )
             db.session.add(pedido)
             db.session.flush()
+            db.session.add(EntregaPedido(pedido_id=pedido.id))
 
             for product, item, unit_price, quantity in snapshots:
                 db.session.add(
@@ -309,6 +312,7 @@ class OrderService:
                 product = Produto.query.filter_by(id=item.id_produto).first()
                 if product:
                     product.current_stock += item.quantidade
+            OrderService._cancelar_entrega(pedido.id)
 
         pedido.status = novo_status
         db.session.commit()
@@ -338,10 +342,69 @@ class OrderService:
                 product = Produto.query.filter_by(id=item.id_produto).first()
                 if product:
                     product.current_stock += item.quantidade
+            OrderService._cancelar_entrega(pedido.id)
 
         pedido.status = "CANCELADO"
         db.session.commit()
         return {"success": True, "mensagem": "Pedido cancelado com sucesso."}
+
+    @staticmethod
+    def _cancelar_entrega(pedido_id):
+        entrega = EntregaPedido.query.filter_by(pedido_id=pedido_id).first()
+        if not entrega:
+            entrega = EntregaPedido(pedido_id=pedido_id)
+            db.session.add(entrega)
+        entrega.status = "CANCELADO"
+        entrega.cancelada_em = db.func.now()
+
+    @staticmethod
+    def atualizar_status_entrega(pedido_id, novo_status):
+        pedido = Pedido.query.filter_by(id=pedido_id).first()
+        if not pedido:
+            return {
+                "success": False,
+                "erro": "Pedido não encontrado.",
+                "status_code": 404,
+            }
+
+        entrega = EntregaPedido.query.filter_by(pedido_id=pedido.id).first()
+        if not entrega:
+            entrega = EntregaPedido(pedido_id=pedido.id)
+            db.session.add(entrega)
+            db.session.flush()
+
+        try:
+            validar_transicao_entrega(entrega.status, novo_status)
+            if pedido.status == "CANCELADO" and novo_status != "CANCELADO":
+                raise OrderTransitionError(
+                    "Um pedido cancelado não pode retomar a entrega."
+                )
+
+            entrega.status = novo_status
+            if novo_status == "PROCURANDO" and not entrega.iniciado_em:
+                entrega.iniciado_em = db.func.now()
+            elif novo_status == "ENTREGA_CONCLUIDA":
+                entrega.concluida_em = db.func.now()
+                pedido.delivered_at = db.func.now()
+            elif novo_status == "CANCELADO":
+                entrega.cancelada_em = db.func.now()
+
+            db.session.commit()
+            return {
+                "success": True,
+                "mensagem": "Status da entrega atualizado com sucesso.",
+                "dados": OrderService._to_dict(pedido),
+            }
+        except OrderTransitionError as exc:
+            db.session.rollback()
+            return {"success": False, "erro": str(exc), "status_code": 409}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao atualizar a entrega.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def _to_dict(pedido):
@@ -367,6 +430,23 @@ class OrderService:
             "delivered_at": pedido.delivered_at.isoformat()
             if pedido.delivered_at
             else None,
+            "entrega": (
+                {
+                    "id": pedido.entrega.id,
+                    "status": pedido.entrega.status,
+                    "iniciado_em": pedido.entrega.iniciado_em.isoformat()
+                    if pedido.entrega.iniciado_em
+                    else None,
+                    "concluida_em": pedido.entrega.concluida_em.isoformat()
+                    if pedido.entrega.concluida_em
+                    else None,
+                    "cancelada_em": pedido.entrega.cancelada_em.isoformat()
+                    if pedido.entrega.cancelada_em
+                    else None,
+                }
+                if pedido.entrega
+                else None
+            ),
             "items": [
                 {
                     "id": item.id,
