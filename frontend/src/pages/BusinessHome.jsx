@@ -70,7 +70,14 @@ function BusinessHome() {
                     <h2>Seu cardápio</h2>
 
                     <div className="dashboard-header-actions">
-                        <button type="button" className="icon-button" title="Configurações">⚙</button>
+                        <button
+                            type="button"
+                            className="icon-button"
+                            title="Configurações"
+                            onClick={() => navigate("/business/configuracao")}
+                        >
+                            ⚙
+                        </button>
                         <button type="button" className="icon-button" title="Minha conta">👤</button>
                     </div>
                 </header>
