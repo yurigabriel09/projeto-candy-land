@@ -12,6 +12,7 @@ import Landing from "./pages/Landing";
 import Itens from "./pages/Itens";
 import ProductForm from "./pages/ProductForm";
 import CategoryManager from "./pages/CategoryManager";
+import PartnerLanding from "./pages/PartnerLanding";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -39,7 +40,10 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route path="/login" element={<Login />} />
+
+                        <Route path="/parceiros" element={<PartnerLanding />} />
+                        <Route path="/parceiros/login" element={<Login audiencia="BUSINESS" />} />
+                        <Route path="/login" element={<Login audiencia="PERSONAL" />} />
 
                         <Route
                             path="/register"

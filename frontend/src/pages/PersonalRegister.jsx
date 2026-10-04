@@ -116,7 +116,7 @@ function PersonalRegister() {
         <main className="auth-page">
             <section className="form-card">
                 <header className="form-header">
-                    <button type="button" className="back-button" onClick={() => navigate("/register", { state: dadosAutenticacao })}>
+                    <button type="button" className="back-button" onClick={() => navigate(-1)}>
                         ← Voltar
                     </button>
 
