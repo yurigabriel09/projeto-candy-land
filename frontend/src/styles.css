@@ -1323,6 +1323,59 @@ select:focus-visible {
     gap: 14px;
 }
 
+.category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 18px 12px;
+    border-radius: var(--raio);
+    border: 2px solid var(--borda);
+    background: #fff;
+    text-align: center;
+    font-weight: 500;
+}
+
+.category-emoji {
+    font-size: 32px;
+}
+
+.category-card-add {
+    border-style: dashed;
+    color: var(--texto-suave);
+}
+
+.category-card-add:hover {
+    border-color: var(--rosa);
+    color: var(--rosa);
+}
+
+.category-add-label {
+    font-size: 12px;
+}
+
+.category-card-active {
+    border-color: var(--rosa);
+}
+
+.category-card-inactive {
+    opacity: 0.55;
+}
+
+.category-toggle,
+.category-remove {
+    width: 100%;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--creme);
+    font-size: 12px;
+}
+
+.category-remove {
+    color: var(--erro);
+}
+
 /* ---------- Google Maps / Endereço ---------- */
 .address-autocomplete {
   position: relative;

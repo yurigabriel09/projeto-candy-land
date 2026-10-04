@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import AddressMap from "../components/AddressMap";
+// import AddressMap from "../components/AddressMap";
 import {
     getRestaurantConfiguration,
     updateRestaurantConfiguration,
