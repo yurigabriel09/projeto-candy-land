@@ -1,6 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, ForeignKey
+
+from sqlalchemy import DECIMAL, Column, DateTime, ForeignKey, Integer, String
+
 from app.database.database import db
+
 
 class Pedido(db.Model):
     __tablename__ = "orders"
@@ -22,3 +25,10 @@ class Pedido(db.Model):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     estimated_delivery_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
+
+    entrega = db.relationship(
+        "EntregaPedido",
+        back_populates="pedido",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

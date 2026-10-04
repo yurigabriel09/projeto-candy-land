@@ -1,5 +1,6 @@
 import re
 
+
 def normalizar_telefone(telefone):
     if not telefone:
         return telefone

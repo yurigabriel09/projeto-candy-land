@@ -44,3 +44,26 @@ python run.py
 npm start
 # ou se estiver usando Vite:
 npm run dev
+
+
+## 📦 Regras de negócio e modelo de dados
+
+A documentação funcional do projeto fica centralizada em `docs/`.
+
+- `docs/requisitos.md` — regras de negócio gerais.
+- `docs/regras-pedidos.md` — ciclo do pedido, ciclo da entrega, transições e exceções.
+- `docs/modelo-dados.md` — visão do modelo físico atual em diagrama ER.
+
+### Regra de manutenção da documentação
+
+Toda alteração que mudar uma regra de negócio deve atualizar a documentação correspondente e seus testes automatizados. Toda alteração estrutural no banco também deve atualizar `docs/modelo-dados.md`.
+
+### Testes de regras de negócio
+
+Os testes automatizados ficam em `backend/tests/`. Para executar a suíte: 
+
+```bash
+cd backend
+pip install -r requirements.txt
+pytest -q
+```

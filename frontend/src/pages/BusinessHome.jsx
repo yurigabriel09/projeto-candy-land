@@ -147,6 +147,14 @@ function BusinessHome() {
                         <button className="icon-button" title="Notificações" disabled>
                             🔔
                         </button>
+                        <button type="button"
+                            className="icon-button"
+                            title="Configurações"
+                            onClick={() => navigate("/business/configuracao")}
+                        >
+                            ⚙
+                        </button>
+                        <button type="button" className="icon-button" title="Minha conta">👤</button>
                     </div>
                 </header>
 

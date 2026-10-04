@@ -13,6 +13,7 @@ import Itens from "./pages/Itens";
 import ProductForm from "./pages/ProductForm";
 import CategoryManager from "./pages/CategoryManager";
 import PartnerLanding from "./pages/PartnerLanding";
+import RestaurantConfiguration from "./pages/RestaurantConfiguration";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -104,6 +105,15 @@ function App() {
                             element={
                                 <ProtectedRoute tipoConta="BUSINESS">
                                     <ProductForm />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business/configuracao"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <RestaurantConfiguration />
                                 </ProtectedRoute>
                             }
                         />

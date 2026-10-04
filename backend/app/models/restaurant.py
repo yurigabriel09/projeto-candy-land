@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from app.database.database import db
 
 
@@ -43,19 +44,22 @@ class Restaurante(db.Model):
             "descricao": self.descricao,
             "valor_minimo_pedido": (
                 float(self.valor_minimo_pedido)
-                if self.valor_minimo_pedido is not None else None
+                if self.valor_minimo_pedido is not None
+                else None
             ),
             "taxa_entrega_base": (
                 float(self.taxa_entrega_base)
-                if self.taxa_entrega_base is not None else None
+                if self.taxa_entrega_base is not None
+                else None
             ),
             "raio_entrega_km": (
                 float(self.raio_entrega_km)
-                if self.raio_entrega_km is not None else None
+                if self.raio_entrega_km is not None
+                else None
             ),
             "horario_funcionamento": self.horario_funcionamento,
             "status": self.status,
             "ativo": self.ativo,
             "address_id": self.address_id,
-            "dt_cadastro": self.dt_cadastro.isoformat() if self.dt_cadastro else None
+            "dt_cadastro": self.dt_cadastro.isoformat() if self.dt_cadastro else None,
         }

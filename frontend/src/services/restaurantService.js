@@ -36,3 +36,41 @@ export async function getRestaurantProducts(id) {
   if (!response.ok) throw new Error(resultado.erro || "Erro ao buscar produtos do restaurante");
   return resultado.dados;
 }
+function getToken() {
+  try {
+    const raw = localStorage.getItem("candyland_auth");
+    return raw ? JSON.parse(raw).token : null;
+  } catch {
+    return null;
+  }
+}
+
+function authHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function getRestaurantConfiguration(id) {
+  const response = await fetch(`${API_URL}/${id}/configuracao`, {
+    headers: authHeaders(),
+  });
+  const resultado = await response.json();
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Erro ao carregar configuração do restaurante");
+  }
+  return resultado.dados;
+}
+
+export async function updateRestaurantConfiguration(id, dados) {
+  const response = await fetch(`${API_URL}/${id}/configuracao`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(dados),
+  });
+  const resultado = await response.json();
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar configuração do restaurante");
+  }
+  return resultado.dados;
+}
+

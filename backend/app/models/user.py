@@ -1,13 +1,12 @@
 from app.database.database import db
 
+
 class Usuario(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True, index=True)
     id_restaurante = db.Column(
-        db.Integer,
-        db.ForeignKey("restaurants.id"),
-        nullable=True
+        db.Integer, db.ForeignKey("restaurants.id"), nullable=True
     )
     nome_completo = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -27,8 +26,12 @@ class Usuario(db.Model):
             "email": self.email,
             "telefone": self.telefone,
             "cpf": self.cpf,
-            "data_nascimento": self.data_nascimento.isoformat() if self.data_nascimento else None,
+            "data_nascimento": self.data_nascimento.isoformat()
+            if self.data_nascimento
+            else None,
             "status": self.status,
             "criado_em": self.criado_em.isoformat() if self.criado_em else None,
-            "atualizado_em": self.atualizado_em.isoformat() if self.atualizado_em else None
+            "atualizado_em": self.atualizado_em.isoformat()
+            if self.atualizado_em
+            else None,
         }

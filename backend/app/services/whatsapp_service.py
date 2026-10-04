@@ -28,9 +28,7 @@ class WhatsAppService:
                 from_=numero_whatsapp,
                 to=f"whatsapp:{telefone}",
                 content_sid=content_sid,
-                content_variables=json.dumps({
-                    "1": codigo
-                })
+                content_variables=json.dumps({"1": codigo}),
             )
 
             return mensagem.sid
