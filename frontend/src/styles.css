@@ -1409,3 +1409,145 @@ select:focus-visible {
 .product-edit-button:hover {
     background: var(--color-tertiary);
 }
+
+
+/* ==========================================================
+   Tela de Cardápio
+   ========================================================== */
+
+.dashboard-marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    text-decoration: none;
+}
+
+.dashboard-marca-icone {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.dashboard-marca-texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.dashboard-marca-texto strong {
+    color: var(--color-bg);
+    font-size: 15px;
+}
+
+.dashboard-marca-texto small {
+    color: var(--color-tertiary);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.cardapio-busca {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 10px 16px;
+    border-radius: var(--raio-pill);
+    border: 1px solid var(--color-tertiary);
+}
+
+.cardapio-busca input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    background: transparent;
+    color: var(--color-dark);
+}
+
+.cardapio-filtros {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0 26px;
+}
+
+.cardapio-gerenciar-categorias {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.cardapio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 18px;
+}
+
+.cardapio-card {
+    background: #fff;
+    border: 1px solid var(--color-tertiary);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.15s ease;
+}
+
+.cardapio-card-pausado {
+    opacity: 0.6;
+}
+
+.cardapio-card-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.cardapio-card-emoji {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    overflow: hidden;
+}
+
+.cardapio-card-emoji img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cardapio-card h3 {
+    margin: 0 0 2px;
+    font-size: 15px;
+    color: var(--color-dark);
+}
+
+.cardapio-card-categoria {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.cardapio-card-descricao {
+    margin: 0
+}
