@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
-import { deleteProduct } from "../services/productService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -13,8 +13,17 @@ const STATUS_LABEL = {
     SUSPENSO: "Suspenso",
 };
 
+const PREVIA_MAXIMA = 4;
+
+/**
+ * Home do painel do restaurante — visão geral.
+ *
+ * O gerenciamento completo do cardápio (busca, filtro por categoria,
+ * editar/remover, toggle de disponibilidade) agora vive em /business/cardapio.
+ * Aqui fica só um resumo: estatísticas e uma prévia dos produtos.
+ */
 function BusinessHome() {
-    const { dadosAutenticacao, sair } = useAuth();
+    const { dadosAutenticacao } = useAuth();
     const [restaurante, setRestaurante] = useState(null);
     const [produtos, setProdutos] = useState([]);
     const [carregando, setCarregando] = useState(true);
@@ -42,21 +51,6 @@ function BusinessHome() {
         } finally {
             setCarregando(false);
         }
-    }
-
-    async function handleDeletar(id) {
-        if (!confirm("Remover este produto do cardápio?")) return;
-        try {
-            await deleteProduct(id);
-            setProdutos((atual) => atual.filter((p) => p.id_produto !== id));
-        } catch (error) {
-            alert(error.message || "Erro ao remover produto.");
-        }
-    }
-
-    function handleSair() {
-        sair();
-        navigate("/");
     }
 
     const totalProdutos = produtos.length;
@@ -92,40 +86,11 @@ function BusinessHome() {
         day: "2-digit",
         month: "long",
     });
+    const previa = produtos.slice(0, PREVIA_MAXIMA);
 
     return (
         <div className="dashboard-layout">
-            <aside className="dashboard-sidebar">
-                <Link to="/business" className="dashboard-logo dashboard-logo-link">
-                    {restaurante.nome}
-                </Link>
-
-                <nav className="dashboard-nav">
-                    <button className="dashboard-nav-item active">🏠 Home</button>
-                    <button className="dashboard-nav-item" disabled title="Em breve">
-                        🧾 Pedidos
-                    </button>
-                    <button
-                        className="dashboard-nav-item"
-                        onClick={() => navigate("/business/categories")}
-                    >
-                        📋 Cardápio
-                    </button>
-                    <button className="dashboard-nav-item" disabled title="Em breve">
-                        💰 Financeiro
-                    </button>
-                    <button className="dashboard-nav-item" disabled title="Em breve">
-                        ⭐ Avaliações
-                    </button>
-                    <button className="dashboard-nav-item" disabled title="Em breve">
-                        ⚙️ Config
-                    </button>
-                </nav>
-
-                <button className="dashboard-logout" onClick={handleSair}>
-                    ↪ Sair
-                </button>
-            </aside>
+            <DashboardSidebar ativo="home" nomeLoja={restaurante.nome} />
 
             <div className="dashboard-content">
                 <header className="dashboard-header">
@@ -147,7 +112,8 @@ function BusinessHome() {
                         <button className="icon-button" title="Notificações" disabled>
                             🔔
                         </button>
-                        <button type="button"
+                        <button
+                            type="button"
                             className="icon-button"
                             title="Configurações"
                             onClick={() => navigate("/business/configuracao")}
@@ -180,23 +146,13 @@ function BusinessHome() {
 
                     <div className="dashboard-body-top">
                         <div className="dashboard-secao-cabecalho">
-                            <h3>Meus produtos</h3>
-                            <div style={{ display: "flex", gap: 12 }}>
-                                <button
-                                    className="primary-button dashboard-cta"
-                                    onClick={() => navigate("/business/products/new")}
-                                >
-                                    + Novo produto
-                                </button>
-                                <button
-                                    type="button"
-                                    className="auth-back"
-                                    style={{ width: "auto", marginTop: 0, padding: "0 24px" }}
-                                    onClick={() => navigate("/business/categories")}
-                                >
-                                    Gerenciar categorias
-                                </button>
-                            </div>
+                            <h3>Seus produtos</h3>
+                            <button
+                                className="primary-button dashboard-cta"
+                                onClick={() => navigate("/business/cardapio")}
+                            >
+                                Ver cardápio completo →
+                            </button>
                         </div>
                     </div>
 
@@ -212,7 +168,7 @@ function BusinessHome() {
                         </div>
                     ) : (
                         <div className="product-grid">
-                            {produtos.map((produto) => (
+                            {previa.map((produto) => (
                                 <div className="product-card" key={produto.id_produto}>
                                     <h3>{produto.nome_produto}</h3>
                                     <p className="product-price">
@@ -225,21 +181,6 @@ function BusinessHome() {
                                     >
                                         {produto.produto_disponivel ? "Disponível" : "Indisponível"}
                                     </span>
-
-                                    <div className="product-card-acoes">
-                                        <button
-                                            className="btn-contorno"
-                                            onClick={() => navigate(`/business/products/${produto.id_produto}/edit`)}
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            className="btn-contorno"
-                                            onClick={() => handleDeletar(produto.id_produto)}
-                                        >
-                                            Remover
-                                        </button>
-                                    </div>
                                 </div>
                             ))}
                         </div>

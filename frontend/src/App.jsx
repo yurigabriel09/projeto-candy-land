@@ -12,6 +12,7 @@ import Landing from "./pages/Landing";
 import Itens from "./pages/Itens";
 import ProductForm from "./pages/ProductForm";
 import CategoryManager from "./pages/CategoryManager";
+import Cardapio from "./pages/Cardapio";
 import PartnerLanding from "./pages/PartnerLanding";
 import RestaurantConfiguration from "./pages/RestaurantConfiguration";
 
@@ -87,6 +88,15 @@ function App() {
                             element={
                                 <ProtectedRoute tipoConta="BUSINESS">
                                     <BusinessHome />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business/cardapio"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <Cardapio />
                                 </ProtectedRoute>
                             }
                         />
