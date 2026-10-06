@@ -8,7 +8,7 @@ import { countries } from "../utils/countries";
 
 const API_URL = "http://127.0.0.1:5000/auth";
 
-function Login() {
+function Login({ audiencia = "PERSONAL" }) {
     const { entrar } = useAuth();
     const [tipo, setTipo] = useState("email");
     const [valor, setValor] = useState("");
@@ -142,10 +142,6 @@ function Login() {
 
             if (resultado.dados) {
                 setDadosAutenticacao(resultado.dados);
-
-                if (resultado.dados.token) {
-                    entrar(resultado.dados);
-                }
             }
 
             if (resultado.proximo_canal) {
@@ -158,7 +154,8 @@ function Login() {
             }
 
             if (resultado.dados?.novo_cadastro) {
-                navigate("/register", {
+                const destino = audiencia === "BUSINESS" ? "/register/business" : "/register/personal";
+                navigate(destino, {
                     state: {
                         tentativaId: resultado.dados.tentativa_id || tentativaId,
                         email: resultado.dados.email,
@@ -166,6 +163,19 @@ function Login() {
                     }
                 });
                 return;
+            }
+
+            if (resultado.dados?.tipo_conta && resultado.dados.tipo_conta !== audiencia) {
+                setErro(
+                    audiencia === "BUSINESS"
+                        ? "Essa conta é de cliente. Use a área do cliente para entrar."
+                        : "Essa conta é de restaurante parceiro. Use a área de parceiros para entrar."
+                );
+                return;
+            }
+
+            if (resultado.dados?.token) {
+                entrar(resultado.dados);
             }
 
             if (resultado.dados?.tipo_conta === "PERSONAL") {
@@ -203,10 +213,6 @@ function Login() {
 
             const resultado = await response.json();
 
-            /*
-             * O Google validou a identidade, mas ainda precisamos
-             * do celular para continuar o fluxo.
-             */
             if (resultado.precisa_telefone) {
                 setSocialProvider("GOOGLE");
                 setSocialCredential(credential);
@@ -242,10 +248,6 @@ function Login() {
                 entrar(resultado.dados);
             }
 
-            /*
-             * Depois que o celular foi informado, o backend
-             * criou a tentativa e enviou o código.
-             */
             if (resultado.proximo_canal === "WHATSAPP") {
                 setCanalAtual("WHATSAPP");
                 setValor(resultado.telefone || telefone || "");
@@ -409,16 +411,6 @@ function Login() {
             valorFormatado = phone.number;
         }
 
-        /*
-         * Fluxo social:
-         *
-         * Google -> celular -> código
-         * Facebook -> celular -> código
-         *
-         * O segundo dado NÃO usa /second-code.
-         * Ele precisa voltar ao endpoint do provedor
-         * para criar a tentativa de autenticação.
-         */
         if (socialProvider === "GOOGLE") {
             await handleGoogleLogin(
                 socialCredential,
@@ -435,11 +427,6 @@ function Login() {
             return;
         }
 
-        /*
-         * Fluxo normal:
-         *
-         * E-mail/celular -> primeiro código -> segundo canal.
-         */
         if (!tentativaId) {
             setErro("Não foi possível continuar a autenticação.");
             return;
@@ -588,45 +575,49 @@ function Login() {
                                 </button>
                             </form>
 
-                            <div className="divider">
-                                <span>ou</span>
-                            </div>
-
-                            <div className="social-login">
-                                <div className="social-button google-button">
-                                    <div className="google-login">
-                                        <GoogleLogin
-                                            onSuccess={(credentialResponse) =>
-                                                handleGoogleLogin(credentialResponse.credential)
-                                            }
-                                            onError={() => setErro("Não foi possível entrar com o Google.")}
-                                            size="large"
-                                            shape="pill"
-                                            width="358"
-                                        />
+                            {audiencia !== "BUSINESS" && (
+                                <>
+                                    <div className="divider">
+                                        <span>ou</span>
                                     </div>
-                                </div>
 
-                                <button
-                                    type="button"
-                                    className="facebook-button"
-                                    onClick={() => window.location.assign(`${API_URL}/facebook`)}
-                                    disabled={loading}
-                                >
-                                    <svg
-                                        className="facebook-icon"
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
-                                            fill="currentColor"
-                                        />
-                                    </svg>
+                                    <div className="social-login">
+                                        <div className="social-button google-button">
+                                            <div className="google-login">
+                                                <GoogleLogin
+                                                    onSuccess={(credentialResponse) =>
+                                                        handleGoogleLogin(credentialResponse.credential)
+                                                    }
+                                                    onError={() => setErro("Não foi possível entrar com o Google.")}
+                                                    size="large"
+                                                    shape="pill"
+                                                    width="358"
+                                                />
+                                            </div>
+                                        </div>
 
-                                    <span>Continuar com Facebook</span>
-                                </button>
-                            </div>
+                                        <button
+                                            type="button"
+                                            className="facebook-button"
+                                            onClick={() => window.location.assign(`${API_URL}/facebook`)}
+                                            disabled={loading}
+                                        >
+                                            <svg
+                                                className="facebook-icon"
+                                                viewBox="0 0 24 24"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
+                                                    fill="currentColor"
+                                                />
+                                            </svg>
+
+                                            <span>Continuar com Facebook</span>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </>
                     )}
 

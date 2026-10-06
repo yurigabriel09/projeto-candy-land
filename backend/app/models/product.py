@@ -1,6 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, DECIMAL, ForeignKey, DateTime
+
+from sqlalchemy import DECIMAL, Boolean, Column, DateTime, ForeignKey, Integer, String
+
 from app.database.database import db
+
 
 class Produto(db.Model):
     __tablename__ = "products"
@@ -33,5 +36,5 @@ class Produto(db.Model):
             "permite_personalizacao": self.allows_customization,
             "imagem_url": self.image_url,
             "dt_cadastro": self.created_at.isoformat() if self.created_at else None,
-            "dt_atualizacao": self.updated_at.isoformat() if self.updated_at else None
+            "dt_atualizacao": self.updated_at.isoformat() if self.updated_at else None,
         }

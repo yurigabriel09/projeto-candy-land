@@ -13,6 +13,8 @@ import Itens from "./pages/Itens";
 import ProductForm from "./pages/ProductForm";
 import CategoryManager from "./pages/CategoryManager";
 import Cardapio from "./pages/Cardapio";
+import PartnerLanding from "./pages/PartnerLanding";
+import RestaurantConfiguration from "./pages/RestaurantConfiguration";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -40,7 +42,10 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route path="/login" element={<Login />} />
+
+                        <Route path="/parceiros" element={<PartnerLanding />} />
+                        <Route path="/parceiros/login" element={<Login audiencia="BUSINESS" />} />
+                        <Route path="/login" element={<Login audiencia="PERSONAL" />} />
 
                         <Route
                             path="/register"
@@ -110,6 +115,15 @@ function App() {
                             element={
                                 <ProtectedRoute tipoConta="BUSINESS">
                                     <ProductForm />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/business/configuracao"
+                            element={
+                                <ProtectedRoute tipoConta="BUSINESS">
+                                    <RestaurantConfiguration />
                                 </ProtectedRoute>
                             }
                         />
