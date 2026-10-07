@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 /**
  * Cabeçalho usado na Home pública, na Home do cliente logado e na consulta
@@ -8,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
  */
 function Header() {
     const { dadosAutenticacao, autenticado, sair } = useAuth();
+    const { quantidadeTotal } = useCart();
     const logado =
         autenticado && dadosAutenticacao?.tipo_conta === "PERSONAL";
 
@@ -31,6 +33,15 @@ function Header() {
 
                 <nav className="site-nav">
                     <Link to="/itens">Doces</Link>
+
+                    {logado && (
+                        <Link to="/cart" className="cart-link">
+                            🛒 Carrinho
+                            {quantidadeTotal > 0 && (
+                                <span className="cart-badge">{quantidadeTotal}</span>
+                            )}
+                        </Link>
+                    )}
 
                     {logado ? (
                         <>

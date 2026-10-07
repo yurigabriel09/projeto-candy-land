@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { CartProvider } from "./context/CartContext";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,6 +16,7 @@ import CategoryManager from "./pages/CategoryManager";
 import Cardapio from "./pages/Cardapio";
 import PartnerLanding from "./pages/PartnerLanding";
 import RestaurantConfiguration from "./pages/RestaurantConfiguration";
+import Cart from "./pages/Cart";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -30,114 +32,125 @@ function App() {
     return (
         <GoogleOAuthProvider clientId={googleClientId}>
             <AuthProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/" element={<Landing />} />
-                        <Route path="/itens" element={<Itens />} />
-                        <Route
-                            path="/restaurantes/:restauranteId"
-                            element={
-                                <ProtectedRoute tipoConta="PERSONAL">
-                                    <Restaurant />
-                                </ProtectedRoute>
-                            }
-                        />
+                <CartProvider>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={<Landing />} />
+                            <Route path="/itens" element={<Itens />} />
+                            <Route
+                                path="/restaurantes/:restauranteId"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <Restaurant />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route path="/parceiros" element={<PartnerLanding />} />
-                        <Route path="/parceiros/login" element={<Login audiencia="BUSINESS" />} />
-                        <Route path="/login" element={<Login audiencia="PERSONAL" />} />
+                            <Route path="/parceiros" element={<PartnerLanding />} />
+                            <Route path="/parceiros/login" element={<Login audiencia="BUSINESS" />} />
+                            <Route path="/login" element={<Login audiencia="PERSONAL" />} />
 
-                        <Route
-                            path="/register"
-                            element={
-                                <RegistrationGuard>
-                                    <Register />
-                                </RegistrationGuard>
-                            }
-                        />
+                            <Route
+                                path="/register"
+                                element={
+                                    <RegistrationGuard>
+                                        <Register />
+                                    </RegistrationGuard>
+                                }
+                            />
 
-                        <Route
-                            path="/register/personal"
-                            element={
-                                <RegistrationGuard>
-                                    <PersonalRegister />
-                                </RegistrationGuard>
-                            }
-                        />
+                            <Route
+                                path="/register/personal"
+                                element={
+                                    <RegistrationGuard>
+                                        <PersonalRegister />
+                                    </RegistrationGuard>
+                                }
+                            />
 
-                        <Route
-                            path="/register/business"
-                            element={
-                                <RegistrationGuard>
-                                    <BusinessRegister />
-                                </RegistrationGuard>
-                            }
-                        />
+                            <Route
+                                path="/register/business"
+                                element={
+                                    <RegistrationGuard>
+                                        <BusinessRegister />
+                                    </RegistrationGuard>
+                                }
+                            />
 
-                        <Route
-                            path="/home"
-                            element={
-                                <ProtectedRoute tipoConta="PERSONAL">
-                                    <Home />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/home"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <Home />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <BusinessHome />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/business"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessHome />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business/cardapio"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <Cardapio />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/business/cardapio"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <Cardapio />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business/products/new"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <ProductForm />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/business/products/new"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <ProductForm />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business/products/:produtoId/edit"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <ProductForm />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/business/products/:produtoId/edit"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <ProductForm />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business/configuracao"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <RestaurantConfiguration />
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route
+                                path="/business/configuracao"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <RestaurantConfiguration />
+                                    </ProtectedRoute>
+                                }
+                            />
 
-                        <Route
-                            path="/business/categories"
-                            element={
-                                <ProtectedRoute tipoConta="BUSINESS">
-                                    <CategoryManager />
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
-                </BrowserRouter>
+                            <Route
+                                path="/business/categories"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <CategoryManager />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route 
+                                path="/cart"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <Cart />
+                                    </ProtectedRoute>
+                                }
+                            />
+                        </Routes>
+                    </BrowserRouter>
+                </CartProvider>
             </AuthProvider>
         </GoogleOAuthProvider>
     );
