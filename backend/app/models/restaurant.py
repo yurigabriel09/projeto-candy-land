@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class Restaurante(db.Model):
@@ -30,7 +29,7 @@ class Restaurante(db.Model):
     status = db.Column(db.String(20), nullable=False, default="EM_ANALISE")
     # controle administrativo (plataforma pode desativar a conta)
     ativo = db.Column(db.Boolean, default=True)
-    dt_cadastro = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    dt_cadastro = db.Column(db.DateTime, nullable=False, default=utc_now_naive)
 
     def to_dict(self):
         return {

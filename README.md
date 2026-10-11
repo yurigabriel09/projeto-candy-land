@@ -110,7 +110,7 @@ O fluxo é sempre **`main` (entregas de sprint) ← `dev` (integração) ← `fe
 4. **Histórico logístico ainda incompleto:** a rota autenticada `PUT /pedidos/<id>/entrega/status` está implementada nesta entrega; ainda falta uma tabela de histórico auditável e um perfil próprio de entregador. O estado `ENTREGA_CONCLUIDA` agora sincroniza o pedido para `ENTREGUE` na mesma transação.
 5. **Taxa de entrega:** a API calcula a taxa no servidor por Haversine, valida o raio configurado e ignora `delivery_fee` enviado pelo cliente. A distância cobrada fica registrada no pedido; a distância é em linha reta, não rota por ruas.
 6. **Catálogo inconsistente:** o botão `Adicionar` em `Itens.jsx` não chama `adicionarItem`; a inclusão funciona somente na tela do restaurante.
-7. **Testes e ferramentas:** há testes automatizados de regras de negócio em quatro arquivos. A suíte local registrada antes desta atualização passou com 21 testes; esta entrega adiciona cinco cenários de autorização/API/transição. Execute `python -m pytest tests/business_rules -q` para validar o total atualizado. Não há suíte end-to-end.
+7. **Testes e ferramentas:** a última validação local registrada para a frente de taxa por distância passou com 31 testes de regras de negócio em quatro arquivos (`python -m pytest tests/business_rules -q`). A suíte cobre regras, persistência, autorização de endpoint e taxa por distância, mas ainda não é end-to-end. A limpeza técnica substitui defaults `datetime.utcnow()` depreciados e encerra engines SQLite em memória sem `drop_all()` em fixtures com FKs cíclicas. Rode novamente os testes depois de aplicar essa limpeza.
 8. **Operação/documentação pendente:** faltam documentação de endpoints, diagrama de arquitetura, Docker, notificação de pedidos, emissão fiscal e integrações reais de pagamento.
 
 ### Frente recomendada para atacar primeiro
@@ -131,7 +131,7 @@ Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedi
 | Frontend | React 19, React DOM 19, React Router 7 | Aplicação web, não aplicativo Android/iOS. |
 | Build frontend | Node.js compatível com Vite 8 (`^20.19.0` ou `>=22.12.0`), npm 10+ recomendado, Vite 8.2.x, `@vitejs/plugin-react` 6.x | `npm run dev`, `npm run build`; não usar `npm start` (script não existe). |
 | Utilitários frontend | `libphonenumber-js`, `@react-oauth/google` | Há também consulta de CEP ViaCEP no serviço de endereço. |
-| Testes | pytest 8.4.2 | 17 testes atuais em 3 arquivos; faltam testes de rotas, auth, checkout e ponta a ponta. |
+| Testes | pytest 8.4.2 | 31 testes de regras de negócio em quatro arquivos passaram na validação local da frente de taxa; ainda faltam testes mais amplos de segurança, checkout e ponta a ponta. |
 | Ferramentas de desenvolvimento | Git/GitHub, PowerShell (`scripts/`), VS Code | As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
 | Extensões VS Code recomendadas | Python, Pylance, ESLint, Prettier e PowerShell | São recomendações de workspace, não uma afirmação de que todos já estejam instalados nos computadores da equipe. |
 | Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, gateway Mercado Pago/PayPal, push, NFe/SEFAZ, AWS | As integrações não devem ser descritas como concluídas só porque existe uma chave de configuração ou um modelo de dados. |
@@ -206,6 +206,8 @@ O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de
 - Os percentuais abaixo só sobem quando houver evidência no código e, idealmente, teste automatizado. Uma tela isolada não significa que o fluxo completo está pronto.
 - Não apagar nem recriar banco de dados para “atualizar o modelo”. `db.create_all()` cria tabelas ausentes, mas não migra tabelas já existentes. Mudanças físicas futuras devem ter backup e uma migração explícita; não há Alembic/configuração de migração identificado neste repositório.
 - Para modelos que guardam padrão no lado Python, como `Pedido.status`, alinhar o default com a regra. A correção `CREATED` → `PENDENTE_PAGAMENTO` não apaga nem atualiza pedidos já existentes.
+- Para datas UTC em colunas `DateTime` legadas sem timezone, usar `app.utils.datetime_utils.utc_now_naive`; não usar `datetime.utcnow()`, depreciado no Python 3.12+. A migração para colunas timezone-aware deve ser tratada separadamente.
+- Fixtures com SQLite em memória e app exclusiva devem encerrar a sessão e descartar o engine (`db.session.remove(); db.engine.dispose()`). Evitar `db.drop_all()` no teardown quando há FKs cíclicas que o SQLite não consegue alterar para ordenar o DROP; o banco em memória será descartado ao liberar o engine.
 - Nunca armazenar número completo/CVV de cartão. Usar token/metadados de provedor e escolher formalmente o gateway antes da integração.
 
 ## 6. Mapa de funcionalidades — percentual auditado

@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from sqlalchemy import DECIMAL, Column, DateTime, ForeignKey, Integer, String
 
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class Pedido(db.Model):
@@ -26,7 +25,7 @@ class Pedido(db.Model):
     status = Column(String(30), nullable=False, default="PENDENTE_PAGAMENTO")
     payment_method = Column(String(30), nullable=False)
     general_note = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now_naive)
     estimated_delivery_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
 

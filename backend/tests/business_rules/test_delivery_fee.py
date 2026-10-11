@@ -19,9 +19,10 @@ def app():
     with app.app_context():
         db.create_all()
         yield app
+        # Cada fixture usa SQLite em memória e uma app exclusiva; descartar o engine
+        # é suficiente e evita warnings ao tentar dropar FKs cíclicas (SQLite não ALTER).
         db.session.remove()
-        db.drop_all()
-        db.session.remove()
+        db.engine.dispose()
 
 
 def seed_delivery_scenario():

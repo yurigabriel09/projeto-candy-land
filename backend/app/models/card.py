@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class CartaoCliente(db.Model):
@@ -30,7 +29,7 @@ class CartaoCliente(db.Model):
 
     cartao_principal = db.Column(db.Boolean, nullable=False, default=False)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
-    dt_cadastro = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    dt_cadastro = db.Column(db.DateTime, nullable=False, default=utc_now_naive)
 
     def to_dict(self):
         return {
