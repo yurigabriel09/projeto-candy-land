@@ -62,6 +62,27 @@ class OrderController:
         )
 
     @staticmethod
+    def atualizar_status_entrega(pedido_id, dados, account_id, tipo_conta):
+        novo_status = dados.get("status")
+        if not isinstance(novo_status, str) or not novo_status.strip():
+            return make_response(
+                jsonify({"erro": "O campo status é obrigatório e deve ser texto."}),
+                400,
+            )
+
+        resultado = OrderService.atualizar_status_entrega(
+            pedido_id, novo_status, account_id, tipo_conta
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "pedido": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
     def cancelar_pedido(pedido_id, user_id, tipo_conta):
         if tipo_conta != "PERSONAL":
             return make_response(
