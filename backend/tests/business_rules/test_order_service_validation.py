@@ -13,3 +13,9 @@ def test_metodo_de_pagamento_invalido_e_rejeitado():
         assert "CARTAO_CREDITO" in str(exc)
     else:
         raise AssertionError("BOLETO deveria ser rejeitado no checkout")
+
+
+def test_status_padrao_do_modelo_reflete_a_regra_de_pedido():
+    from app.models.order import Pedido
+
+    assert Pedido.__table__.c.status.default.arg == "PENDENTE_PAGAMENTO"
