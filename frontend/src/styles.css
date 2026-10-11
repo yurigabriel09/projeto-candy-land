@@ -1924,6 +1924,49 @@ select:focus-visible {
     font-size: 16px;
 }
 
+.cart-tipo-pedido {
+    display: grid;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    background: #fff;
+}
+
+.cart-tipo-pedido legend {
+    padding: 0 6px;
+    font-weight: 700;
+}
+
+.cart-tipo-pedido label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.cart-tipo-pedido input {
+    margin-top: 4px;
+    accent-color: var(--rosa);
+}
+
+.cart-tipo-pedido label span {
+    display: grid;
+    gap: 3px;
+}
+
+.cart-tipo-pedido small,
+.cart-aviso-checkout {
+    color: var(--texto-secundario, #666);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.cart-aviso-checkout {
+    margin: 0 0 12px;
+}
+
 .cart-total {
     display: flex;
     justify-content: space-between;

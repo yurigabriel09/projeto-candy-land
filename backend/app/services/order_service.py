@@ -7,6 +7,7 @@ from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.product import Produto
+from app.models.restaurant import Restaurante
 from app.services.order_workflow_service import (
     OrderTransitionError,
     validar_transicao_entrega,
@@ -15,7 +16,7 @@ from app.services.order_workflow_service import (
 from sqlalchemy.exc import SQLAlchemyError
 
 PAYMENT_METHODS = {"PIX", "CARTAO_CREDITO"}
-ORDER_TYPES = {"DELIVERY"}
+ORDER_TYPES = {"DELIVERY", "PICKUP"}
 
 
 class OrderService:
@@ -37,13 +38,40 @@ class OrderService:
     @staticmethod
     def _validate_order_type(order_type):
         if order_type not in ORDER_TYPES:
-            raise ValueError("order_type deve ser DELIVERY.")
+            raise ValueError("order_type deve ser DELIVERY ou PICKUP.")
 
     @staticmethod
     def _validate_address(user_id, address_id):
-        address = Endereco.query.filter_by(id=address_id, id_usuario=user_id).first()
+        address = Endereco.query.filter_by(
+            id=address_id, id_usuario=user_id, ativo=True
+        ).first()
         if not address:
-            raise ValueError("Endereço de entrega não pertence ao cliente.")
+            raise ValueError(
+                "Endereço de entrega não pertence ao cliente ou está inativo."
+            )
+        return address
+
+    @staticmethod
+    def _resolve_pickup_address(restaurant_id):
+        restaurant = Restaurante.query.filter_by(id=restaurant_id).first()
+        if not restaurant:
+            raise ValueError("Restaurante não encontrado.")
+
+        address = None
+        if restaurant.address_id:
+            address = Endereco.query.filter_by(
+                id=restaurant.address_id, ativo=True
+            ).first()
+            if address and address.id_restaurante not in (None, restaurant_id):
+                address = None
+        if not address:
+            address = Endereco.query.filter_by(
+                id_restaurante=restaurant_id, ativo=True
+            ).first()
+        if not address:
+            raise ValueError(
+                "O restaurante precisa ter um endereço ativo cadastrado para retirada."
+            )
         return address
 
     @staticmethod
@@ -96,15 +124,26 @@ class OrderService:
             OrderService._validate_order_type(order_type)
             OrderService._validate_payment_method(payment_method)
 
-            if not isinstance(address_id, int):
-                raise TypeError("delivery_address_id é obrigatório para o pedido.")
-            OrderService._validate_address(user_id, address_id)
+            if order_type == "DELIVERY":
+                if not isinstance(address_id, int):
+                    raise TypeError(
+                        "delivery_address_id é obrigatório para entrega no endereço."
+                    )
+                OrderService._validate_address(user_id, address_id)
+            else:
+                # A coluna legado delivery_address_id é obrigatória no banco. Para
+                # retirada, ela referencia o endereço ativo do próprio restaurante.
+                address_id = OrderService._resolve_pickup_address(restaurant_id).id
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
             discount = OrderService._money(dados.get("discount", 0), "discount")
-            delivery_fee = OrderService._money(
-                dados.get("delivery_fee", 0), "delivery_fee"
-            )
+            if order_type == "PICKUP":
+                # Retirada nunca cobra taxa de entrega, mesmo que o cliente envie uma.
+                delivery_fee = Decimal("0.00")
+            else:
+                delivery_fee = OrderService._money(
+                    dados.get("delivery_fee", 0), "delivery_fee"
+                )
             platform_fee = OrderService._money(
                 dados.get("platform_fee", 0), "platform_fee"
             )
@@ -130,7 +169,8 @@ class OrderService:
             )
             db.session.add(pedido)
             db.session.flush()
-            db.session.add(EntregaPedido(pedido_id=pedido.id))
+            if order_type == "DELIVERY":
+                db.session.add(EntregaPedido(pedido_id=pedido.id))
 
             for product, item, unit_price, quantity in snapshots:
                 db.session.add(
@@ -298,7 +338,10 @@ class OrderService:
         if novo_status not in status_permitidos_restaurante:
             return {
                 "success": False,
-                "erro": "Esse status deve ser atualizado pelo sistema de pagamento ou pela logística.",
+                "erro": (
+                    "Esse status deve ser atualizado pelo sistema de pagamento "
+                    "ou pela logística."
+                ),
                 "status_code": 403,
             }
 
@@ -350,6 +393,9 @@ class OrderService:
 
     @staticmethod
     def _cancelar_entrega(pedido_id):
+        pedido = Pedido.query.filter_by(id=pedido_id).first()
+        if pedido and pedido.order_type == "PICKUP":
+            return
         entrega = EntregaPedido.query.filter_by(pedido_id=pedido_id).first()
         if not entrega:
             entrega = EntregaPedido(pedido_id=pedido_id)
@@ -365,6 +411,13 @@ class OrderService:
                 "success": False,
                 "erro": "Pedido não encontrado.",
                 "status_code": 404,
+            }
+
+        if pedido.order_type == "PICKUP":
+            return {
+                "success": False,
+                "erro": "Pedido para retirada não possui fluxo logístico de entrega.",
+                "status_code": 409,
             }
 
         entrega = EntregaPedido.query.filter_by(pedido_id=pedido.id).first()
@@ -413,7 +466,12 @@ class OrderService:
             "order_code": pedido.order_code,
             "user_id": pedido.user_id,
             "restaurant_id": pedido.restaurant_id,
-            "delivery_address_id": pedido.delivery_address_id,
+            "delivery_address_id": (
+                pedido.delivery_address_id if pedido.order_type == "DELIVERY" else None
+            ),
+            "pickup_address_id": (
+                pedido.delivery_address_id if pedido.order_type == "PICKUP" else None
+            ),
             "subtotal": float(pedido.subtotal),
             "discount": float(pedido.discount),
             "delivery_fee": float(pedido.delivery_fee),

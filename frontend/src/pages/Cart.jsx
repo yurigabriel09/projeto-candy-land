@@ -5,7 +5,7 @@ import { useCart } from "../context/CartContext";
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function Cart() {
-    const { carrinho, atualizarQuantidade, removerItem, total } = useCart();
+    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total } = useCart();
 
     return (
         <>
@@ -34,12 +34,43 @@ function Cart() {
                             ))}
                         </div>
 
+                        <fieldset className="cart-tipo-pedido">
+                            <legend>Como deseja receber?</legend>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="orderType"
+                                    value="DELIVERY"
+                                    checked={carrinho.orderType === "DELIVERY"}
+                                    onChange={() => atualizarTipoPedido("DELIVERY")}
+                                />
+                                <span>
+                                    <strong>Receber no endereço</strong>
+                                    <small>Informe seu endereço na finalização do pedido.</small>
+                                </span>
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="orderType"
+                                    value="PICKUP"
+                                    checked={carrinho.orderType === "PICKUP"}
+                                    onChange={() => atualizarTipoPedido("PICKUP")}
+                                />
+                                <span>
+                                    <strong>Retirar no restaurante</strong>
+                                    <small>Sem taxa de entrega; a retirada será no endereço cadastrado pelo restaurante.</small>
+                                </span>
+                            </label>
+                        </fieldset>
+
                         <div className="cart-total">
                             <span>Total</span>
                             <strong>{moeda.format(total)}</strong>
                         </div>
 
-                        <button className="btn-principal" disabled title="Pagamento em breve">
+                        <p className="cart-aviso-checkout">A opção escolhida fica salva no carrinho. A finalização e o pagamento ainda estão em desenvolvimento.</p>
+                        <button className="btn-principal" disabled title="Checkout ainda em desenvolvimento">
                             Finalizar pedido (em breve)
                         </button>
                     </>

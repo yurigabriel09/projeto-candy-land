@@ -33,6 +33,8 @@ app = create_app()
 with app.app_context():
     db.create_all()
     for pedido in Pedido.query.all():
+        if pedido.order_type == "PICKUP":
+            continue
         if not EntregaPedido.query.filter_by(pedido_id=pedido.id).first():
             status = (
                 "CANCELADO"
