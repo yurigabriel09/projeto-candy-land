@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from flask import current_app
@@ -13,7 +13,7 @@ class TokenService:
         Gera um JWT assinado para o usuario (PERSONAL) ou restaurante (BUSINESS)
         recem autenticado.
         """
-        agora = datetime.utcnow()
+        agora = datetime.now(timezone.utc).replace(tzinfo=None)
         horas_expiracao = current_app.config.get("JWT_EXPIRATION_HOURS", 24)
 
         payload = {
@@ -21,13 +21,11 @@ class TokenService:
             "tipo_conta": tipo_conta,
             "email": email,
             "iat": agora,
-            "exp": agora + timedelta(hours=horas_expiracao)
+            "exp": agora + timedelta(hours=horas_expiracao),
         }
 
         return jwt.encode(
-            payload,
-            current_app.config["SECRET_KEY"],
-            algorithm=TokenService.ALGORITHM
+            payload, current_app.config["SECRET_KEY"], algorithm=TokenService.ALGORITHM
         )
 
     @staticmethod
@@ -37,7 +35,5 @@ class TokenService:
         Lanca jwt.ExpiredSignatureError ou jwt.PyJWTError caso invalido.
         """
         return jwt.decode(
-            token,
-            current_app.config["SECRET_KEY"],
-            algorithms=[TokenService.ALGORITHM]
+            token, current_app.config["SECRET_KEY"], algorithms=[TokenService.ALGORITHM]
         )

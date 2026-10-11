@@ -1,10 +1,9 @@
 import os
 
 import jwt
+from app.config.config import Config
 from google.auth.transport import requests
 from google.oauth2 import id_token
-
-from app.config.config import Config
 
 
 class GoogleAuthService:
@@ -47,7 +46,7 @@ class GoogleAuthService:
                         "email": claims.get("email"),
                     },
                 )
-            except Exception as diagnostico_erro:
+            except jwt.PyJWTError as diagnostico_erro:
                 print(
                     "[GoogleAuthService] não foi possível ler claims do token:",
                     diagnostico_erro,

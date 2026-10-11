@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from app.database.database import db
 
 
@@ -12,6 +13,7 @@ class CartaoCliente(db.Model):
     tabela deixa o modelo pronto para quando o fechamento de pedido /
     pagamento for implementado.
     """
+
     __tablename__ = "customer_cards"
 
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -41,7 +43,7 @@ class CartaoCliente(db.Model):
             "ano_validade": self.ano_validade,
             "cartao_principal": self.cartao_principal,
             "ativo": self.ativo,
-            "dt_cadastro": self.dt_cadastro.isoformat() if self.dt_cadastro else None
+            "dt_cadastro": self.dt_cadastro.isoformat() if self.dt_cadastro else None,
             # token_gateway propositalmente omitido: dado sensivel, nunca
             # deve ir para o front-end.
         }

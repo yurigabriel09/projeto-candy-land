@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
+import { useCart } from "../context/CartContext";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -12,6 +13,7 @@ function Restaurant() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [tentativa, setTentativa] = useState(0);
+    const { adicionarItem } = useCart();
 
     useEffect(() => {
         let ativo = true;
@@ -82,6 +84,10 @@ function Restaurant() {
                                                 {produto.descricao_produto && <p className="card-produto-descricao">{produto.descricao_produto}</p>}
                                                 <div className="card-produto-rodape">
                                                     <strong>{moeda.format(produto.preco_produto ?? 0)}</strong>
+                                                    <button
+                                                        className="btn-principal btn-pequeno"
+                                                        onClick={() => adicionarItem(produto, restaurante.id, restaurante.nome)}
+                                                    >Adicionar</button>
                                                 </div>
                                             </div>
                                         </article>

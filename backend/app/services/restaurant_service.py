@@ -1,11 +1,12 @@
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.database.database import db
-from app.models.restaurant import Restaurante
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
+from app.models.restaurant import Restaurante
+from app.models.user import Usuario
 from app.services.token_service import TokenService
 from flask import current_app
-from app.models.user import Usuario
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 
 class RestauranteService:
     @staticmethod
@@ -13,41 +14,83 @@ class RestauranteService:
         try:
             restaurantes = Restaurante.query.all()
             if not restaurantes:
-                return {"success": True, "mensagem": "Nenhum restaurante cadastrado!", "dados": []}
-            return {"success": True, "mensagem": "Lista de restaurantes cadastrados:", "dados": [restaurante.to_dict() for restaurante in restaurantes]}
+                return {
+                    "success": True,
+                    "mensagem": "Nenhum restaurante cadastrado!",
+                    "dados": [],
+                }
+            return {
+                "success": True,
+                "mensagem": "Lista de restaurantes cadastrados:",
+                "dados": [restaurante.to_dict() for restaurante in restaurantes],
+            }
         except SQLAlchemyError:
-            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao consultar o banco de dados.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def buscar_restaurante(restaurante_id):
         try:
             restaurante = Restaurante.query.get(restaurante_id)
             if not restaurante:
-                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
-            return {"success": True, "mensagem": "Restaurante encontrado:", "dados": restaurante.to_dict()}
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+            return {
+                "success": True,
+                "mensagem": "Restaurante encontrado:",
+                "dados": restaurante.to_dict(),
+            }
         except SQLAlchemyError:
-            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao consultar o banco de dados.",
+                "status_code": 500,
+            }
 
     @staticmethod
-    def criar_restaurante(cnpj, razao_social, nome, email, telefone, cpf_responsavel,
-                           tentativa_id, endereco, nome_responsavel=None, descricao=None,
-                           valor_minimo_pedido=None, taxa_entrega_base=None,
-                           raio_entrega_km=None, horario_funcionamento=None):
+    def criar_restaurante(
+        cnpj,
+        razao_social,
+        nome,
+        email,
+        telefone,
+        cpf_responsavel,
+        tentativa_id,
+        endereco,
+        nome_responsavel=None,
+        descricao=None,
+        valor_minimo_pedido=None,
+        taxa_entrega_base=None,
+        raio_entrega_km=None,
+        horario_funcionamento=None,
+    ):
         try:
             telefone_normalizado = telefone
 
             if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
                 telefone_em_uso = (
                     Usuario.query.filter_by(telefone=telefone_normalizado).first()
-                    or Restaurante.query.filter_by(telefone=telefone_normalizado).first()
+                    or Restaurante.query.filter_by(
+                        telefone=telefone_normalizado
+                    ).first()
                 )
                 if telefone_em_uso:
-                    return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
+                    return {
+                        "success": False,
+                        "erro": "Telefone já cadastrado.",
+                        "status_code": 409,
+                    }
             if not tentativa_id:
                 return {
                     "success": False,
                     "erro": "Verificação de segurança (tentativa_id) é obrigatória.",
-                    "status_code": 400
+                    "status_code": 400,
                 }
 
             tentativa = TentativaAutenticacao.query.get(tentativa_id)
@@ -56,14 +99,18 @@ class RestauranteService:
                 return {
                     "success": False,
                     "erro": "Verificação de segurança não encontrada.",
-                    "status_code": 404
+                    "status_code": 404,
                 }
 
-            if not tentativa.concluida or not tentativa.email_validado or not tentativa.telefone_validado:
+            if (
+                not tentativa.concluida
+                or not tentativa.email_validado
+                or not tentativa.telefone_validado
+            ):
                 return {
                     "success": False,
                     "erro": "Verificação por e-mail e WhatsApp ainda não foi concluída.",
-                    "status_code": 401
+                    "status_code": 401,
                 }
 
             email = tentativa.email or email
@@ -81,7 +128,7 @@ class RestauranteService:
                 valor_minimo_pedido=valor_minimo_pedido or 0,
                 taxa_entrega_base=taxa_entrega_base or 0,
                 raio_entrega_km=raio_entrega_km,
-                horario_funcionamento=horario_funcionamento
+                horario_funcionamento=horario_funcionamento,
             )
 
             db.session.add(novo_restaurante)
@@ -101,7 +148,7 @@ class RestauranteService:
                 longitude=endereco.get("longitude"),
                 tipo_endereco="COMERCIAL",
                 principal=True,
-                ativo=True
+                ativo=True,
             )
 
             db.session.add(novo_endereco)
@@ -119,8 +166,8 @@ class RestauranteService:
                     "endereco": novo_endereco.to_dict(),
                     "token": TokenService.gerar_token(
                         "BUSINESS", novo_restaurante.id, novo_restaurante.email
-                    )
-                }
+                    ),
+                },
             }
 
         except IntegrityError:
@@ -128,7 +175,7 @@ class RestauranteService:
             return {
                 "success": False,
                 "erro": "CNPJ, e-mail ou telefone já cadastrado.",
-                "status_code": 409
+                "status_code": 409,
             }
 
         except SQLAlchemyError:
@@ -136,7 +183,7 @@ class RestauranteService:
             return {
                 "success": False,
                 "erro": "Falha ao criar empresa e endereço.",
-                "status_code": 500
+                "status_code": 500,
             }
 
     @staticmethod
@@ -144,29 +191,173 @@ class RestauranteService:
         try:
             restaurante = Restaurante.query.get(restaurante_id)
             if not restaurante:
-                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
             if nome is not None:
                 restaurante.nome = nome
             if email is not None:
                 restaurante.email = email
             db.session.commit()
-            return {"success": True, "mensagem": "Restaurante atualizado com sucesso!", "dados": restaurante.to_dict()}
+            return {
+                "success": True,
+                "mensagem": "Restaurante atualizado com sucesso!",
+                "dados": restaurante.to_dict(),
+            }
         except SQLAlchemyError:
             db.session.rollback()
-            return {"success": False, "erro": "Falha ao atualizar restaurante.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao atualizar restaurante.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def buscar_configuracao(restaurante_id):
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+
+            endereco = None
+            if restaurante.address_id:
+                endereco = db.session.get(Endereco, restaurante.address_id)
+
+            return {
+                "success": True,
+                "mensagem": "Configuração do restaurante carregada.",
+                "dados": {
+                    "restaurante": restaurante.to_dict(),
+                    "endereco": endereco.to_dict() if endereco else None,
+                },
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao consultar a configuração do restaurante.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def atualizar_configuracao(restaurante_id, dados):
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante:
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+
+            campos_restaurante = (
+                "nome",
+                "razao_social",
+                "nome_responsavel",
+                "descricao",
+                "valor_minimo_pedido",
+                "taxa_entrega_base",
+                "raio_entrega_km",
+                "horario_funcionamento",
+            )
+
+            for campo in campos_restaurante:
+                if campo in dados:
+                    setattr(restaurante, campo, dados[campo])
+
+            endereco_dados = dados.get("endereco")
+            endereco = None
+
+            if restaurante.address_id:
+                endereco = db.session.get(Endereco, restaurante.address_id)
+
+            if endereco_dados is not None:
+                if endereco is None:
+                    endereco = Endereco(
+                        id_restaurante=restaurante.id,
+                        tipo_endereco="COMERCIAL",
+                        principal=True,
+                        ativo=True,
+                    )
+                    db.session.add(endereco)
+                    db.session.flush()
+                    restaurante.address_id = endereco.id
+
+                campos_endereco = (
+                    "cep",
+                    "rua",
+                    "numero",
+                    "complemento",
+                    "bairro",
+                    "cidade",
+                    "estado",
+                    "referencia",
+                    "latitude",
+                    "longitude",
+                )
+
+                for campo in campos_endereco:
+                    if campo in endereco_dados:
+                        setattr(endereco, campo, endereco_dados[campo])
+
+            db.session.commit()
+
+            return {
+                "success": True,
+                "mensagem": "Configuração do restaurante atualizada com sucesso!",
+                "dados": {
+                    "restaurante": restaurante.to_dict(),
+                    "endereco": endereco.to_dict() if endereco else None,
+                },
+            }
+        except IntegrityError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Os dados informados já estão em uso.",
+                "status_code": 409,
+            }
+        except (TypeError, ValueError):
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Existem dados inválidos na configuração.",
+                "status_code": 400,
+            }
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao atualizar a configuração do restaurante.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def deletar_restaurante(restaurante_id):
         try:
             restaurante = Restaurante.query.get(restaurante_id)
             if not restaurante:
-                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
             db.session.delete(restaurante)
             db.session.commit()
             return {"success": True, "mensagem": "Restaurante removido com sucesso!"}
         except SQLAlchemyError:
             db.session.rollback()
-            return {"success": False, "erro": "Falha ao remover restaurante.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao remover restaurante.",
+                "status_code": 500,
+            }
+
     @staticmethod
     def listar_produtos_restaurante(restaurante_id):
         from app.models.product import Produto
@@ -174,12 +365,24 @@ class RestauranteService:
         try:
             restaurante = db.session.get(Restaurante, restaurante_id)
             if not restaurante:
-                return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
-            produtos = Produto.query.filter_by(restaurant_id=restaurante_id).order_by(Produto.id).all()
+                return {
+                    "success": False,
+                    "erro": "Restaurante não encontrado.",
+                    "status_code": 404,
+                }
+            produtos = (
+                Produto.query.filter_by(restaurant_id=restaurante_id)
+                .order_by(Produto.id)
+                .all()
+            )
             return {
                 "success": True,
                 "mensagem": "Produtos do restaurante:",
-                "dados": [produto.to_dict() for produto in produtos]
+                "dados": [produto.to_dict() for produto in produtos],
             }
         except SQLAlchemyError:
-            return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
+            return {
+                "success": False,
+                "erro": "Falha ao consultar o banco de dados.",
+                "status_code": 500,
+            }

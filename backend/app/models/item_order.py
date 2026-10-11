@@ -1,5 +1,6 @@
 from app.database.database import db
 
+
 class ItemPedido(db.Model):
     __tablename__ = "order_items"
 

@@ -1,6 +1,6 @@
-from flask import jsonify, make_response
 from app.services.auth_service import AuthService
 from app.services.facebook_auth_service import FacebookAuthService
+from flask import jsonify, make_response
 
 
 class AuthController:

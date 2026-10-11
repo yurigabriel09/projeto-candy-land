@@ -1,21 +1,19 @@
-from datetime import datetime, timedelta
-import os
 import re
 import secrets
-
-from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask import current_app
+from datetime import datetime, timedelta, timezone
 
 from app.database.database import db
-from app.models.user import Usuario
-from app.models.restaurant import Restaurante
-from app.models.auth_code import CodigoAutenticacao
 from app.models.auth_attempt import TentativaAutenticacao
+from app.models.auth_code import CodigoAutenticacao
+from app.models.restaurant import Restaurante
+from app.models.user import Usuario
 from app.services.email_service import EmailService
-from app.services.whatsapp_service import WhatsAppService
-from app.services.token_service import TokenService
 from app.services.google_auth_service import GoogleAuthService
+from app.services.token_service import TokenService
+from app.services.whatsapp_service import WhatsAppService
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 class AuthService:
@@ -55,7 +53,8 @@ class AuthService:
                 canal_inicial=canal,
                 email=valor if canal == "EMAIL" else None,
                 telefone=valor if canal == "WHATSAPP" else None,
-                expira_em=datetime.utcnow() + timedelta(minutes=15),
+                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                + timedelta(minutes=15),
             )
 
             db.session.add(tentativa)
@@ -103,7 +102,7 @@ class AuthService:
                     "status_code": 400,
                 }
 
-            if datetime.utcnow() > tentativa.expira_em:
+            if datetime.now(timezone.utc).replace(tzinfo=None) > tentativa.expira_em:
                 return {
                     "success": False,
                     "erro": "Tentativa de autenticação expirada.",
@@ -196,7 +195,7 @@ class AuthService:
                     "status_code": 400,
                 }
 
-            if datetime.utcnow() > tentativa.expira_em:
+            if datetime.now(timezone.utc).replace(tzinfo=None) > tentativa.expira_em:
                 tentativa.concluida = True
                 db.session.commit()
 
@@ -221,7 +220,7 @@ class AuthService:
                     "status_code": 401,
                 }
 
-            if datetime.utcnow() > registro.expira_em:
+            if datetime.now(timezone.utc).replace(tzinfo=None) > registro.expira_em:
                 registro.usado = True
                 db.session.commit()
 
@@ -376,7 +375,8 @@ class AuthService:
                 telefone=telefone_normalizado,
                 email_validado=True,
                 telefone_validado=False,
-                expira_em=datetime.utcnow() + timedelta(minutes=15),
+                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                + timedelta(minutes=15),
             )
 
             db.session.add(tentativa)
@@ -474,7 +474,7 @@ class AuthService:
                 if not telefone_normalizado:
                     return {
                         "success": False,
-                        "erro": ("A conta não possui um celular válido " "cadastrado."),
+                        "erro": ("A conta não possui um celular válido cadastrado."),
                         "status_code": 409,
                     }
 
@@ -498,7 +498,7 @@ class AuthService:
                 if not telefone_normalizado:
                     return {
                         "success": False,
-                        "erro": ("A conta não possui um celular válido " "cadastrado."),
+                        "erro": ("A conta não possui um celular válido cadastrado."),
                         "status_code": 409,
                     }
 
@@ -510,7 +510,7 @@ class AuthService:
                 if not telefone:
                     return {
                         "success": False,
-                        "erro": ("Celular é necessário para concluir " "o cadastro."),
+                        "erro": ("Celular é necessário para concluir o cadastro."),
                         "status_code": 400,
                         "precisa_telefone": True,
                         "email": email or None,
@@ -536,7 +536,7 @@ class AuthService:
                 if usuario_existente or restaurante_existente:
                     return {
                         "success": False,
-                        "erro": ("Este celular já está vinculado " "a outra conta."),
+                        "erro": ("Este celular já está vinculado a outra conta."),
                         "status_code": 409,
                     }
 
@@ -552,7 +552,8 @@ class AuthService:
                 telefone=telefone_normalizado,
                 email_validado=True,
                 telefone_validado=False,
-                expira_em=datetime.utcnow() + timedelta(minutes=15),
+                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                + timedelta(minutes=15),
             )
 
             db.session.add(tentativa)
@@ -600,7 +601,8 @@ class AuthService:
             tipo=canal,
             destino=destino,
             codigo_hash=generate_password_hash(codigo),
-            expira_em=datetime.utcnow() + timedelta(minutes=10),
+            expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+            + timedelta(minutes=10),
             usado=False,
         )
 
@@ -631,14 +633,31 @@ class AuthService:
         if current_app.config.get("ALLOW_DUPLICATE_PHONE"):
             # Modo desenvolvimento: telefone pode se repetir entre contas,
             # então só o e-mail identifica de forma confiável qual conta é.
-            usuarios = {u.id: u for u in Usuario.query.filter_by(email=tentativa.email).all()} if tentativa.email else {}
-            restaurantes = {r.id: r for r in Restaurante.query.filter_by(email=tentativa.email).all()} if tentativa.email else {}
+            usuarios = (
+                {u.id: u for u in Usuario.query.filter_by(email=tentativa.email).all()}
+                if tentativa.email
+                else {}
+            )
+            restaurantes = (
+                {
+                    r.id: r
+                    for r in Restaurante.query.filter_by(email=tentativa.email).all()
+                }
+                if tentativa.email
+                else {}
+            )
         else:
             # Comportamento original: e-mail e telefone juntos identificam a conta.
             usuarios_email = Usuario.query.filter_by(email=tentativa.email).all()
-            usuarios_telefone = Usuario.query.filter_by(telefone=tentativa.telefone).all()
-            restaurantes_email = Restaurante.query.filter_by(email=tentativa.email).all()
-            restaurantes_telefone = Restaurante.query.filter_by(telefone=tentativa.telefone).all()
+            usuarios_telefone = Usuario.query.filter_by(
+                telefone=tentativa.telefone
+            ).all()
+            restaurantes_email = Restaurante.query.filter_by(
+                email=tentativa.email
+            ).all()
+            restaurantes_telefone = Restaurante.query.filter_by(
+                telefone=tentativa.telefone
+            ).all()
 
             usuarios = {u.id: u for u in usuarios_email + usuarios_telefone}
             restaurantes = {r.id: r for r in restaurantes_email + restaurantes_telefone}

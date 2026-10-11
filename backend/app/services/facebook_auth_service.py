@@ -1,11 +1,11 @@
 import os
-import requests
 from urllib.parse import urlencode
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+
+import requests
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 
 class FacebookAuthService:
-
     AUTH_URL = "https://www.facebook.com/dialog/oauth"
     GRAPH_URL = "https://graph.facebook.com"
 

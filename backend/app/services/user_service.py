@@ -1,13 +1,14 @@
-from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from app.utils.formatter import normalizar_telefone
+from datetime import date
+
 from app.database.database import db
-from app.models.user import Usuario
-from app.models.restaurant import Restaurante
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
+from app.models.restaurant import Restaurante
+from app.models.user import Usuario
 from app.services.token_service import TokenService
+from app.utils.formatter import normalizar_telefone
 from flask import current_app
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
 class UserService:
@@ -71,11 +72,17 @@ class UserService:
             if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
                 telefone_em_uso = (
                     Usuario.query.filter_by(telefone=telefone_normalizado).first()
-                    or Restaurante.query.filter_by(telefone=telefone_normalizado).first()
+                    or Restaurante.query.filter_by(
+                        telefone=telefone_normalizado
+                    ).first()
                 )
                 if telefone_em_uso:
-                    return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
-                
+                    return {
+                        "success": False,
+                        "erro": "Telefone já cadastrado.",
+                        "status_code": 409,
+                    }
+
             if not tentativa_id:
                 return {
                     "success": False,
@@ -109,7 +116,7 @@ class UserService:
             telefone = tentativa.telefone or telefone
 
             if data_nascimento:
-                data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
+                data_nascimento = date.fromisoformat(data_nascimento)
 
             novo_usuario = Usuario(
                 nome_completo=nome_completo,
@@ -197,7 +204,7 @@ class UserService:
             if telefone is not None:
                 usuario.telefone = normalizar_telefone(telefone)
             if data_nascimento is not None:
-                data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
+                data_nascimento = date.fromisoformat(data_nascimento)
                 usuario.data_nascimento = data_nascimento
             db.session.commit()
             return {
