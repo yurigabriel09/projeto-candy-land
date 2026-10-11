@@ -111,11 +111,21 @@ Exemplo: se o cliente cancelar durante `PROCESSANDO`, o sistema deve interromper
 
 Se um motorista cancelar durante a atribuição, o pedido não deve ser cancelado automaticamente: a entrega deve retornar para `PROCURANDO` quando a regra permitir.
 
-## 5. Histórico
+## 5. Endpoint e autorização do estado logístico
 
-As transições relevantes devem ser auditáveis. A implementação completa do histórico deverá registrar, no mínimo, pedido, estado anterior, novo estado, ator/evento, data e observação quando aplicável.
+O backend expõe `PUT /pedidos/<pedido_id>/entrega/status`, protegido por `Authorization: Bearer <token>`. O corpo JSON deve conter `{"status":"PROCURANDO"}` usando um valor válido da máquina de estados.
 
-## 7. Pagamento do pedido
+- Até existir perfil próprio de entregador, somente uma conta `BUSINESS` vinculada ao restaurante do pedido pode alterar o estado logístico.
+- Contas de cliente (`PERSONAL`) e outros restaurantes recebem `403`; pedidos inexistentes retornam `404`.
+- Pedidos `PICKUP` não têm fluxo logístico e retornam `409`.
+- Transições fora da máquina e conclusão antes de o pedido poder passar para `ENTREGUE` retornam `409` sem persistir a mudança.
+- Ao transitar a entrega para `ENTREGA_CONCLUIDA`, a mesma transação grava `concluida_em`, `pedido.delivered_at` e o status do pedido `ENTREGUE`.
+
+### Histórico
+
+As transições relevantes devem ser auditáveis. A implementação completa do histórico deverá registrar, no mínimo, pedido, estado anterior, novo estado, ator/evento, data e observação quando aplicável. Essa tabela de histórico ainda não existe no modelo físico e deve ser tratada em tarefa posterior, com migração explícita.
+
+## 6. Pagamento do pedido
 
 Para o fluxo de pedidos do cliente, as modalidades são:
 
@@ -130,7 +140,7 @@ O pedido permanece em `PENDENTE_PAGAMENTO` até receber uma confirmação válid
 
 `BOLETO` não faz parte do checkout do pedido do cliente neste escopo. Pode ser reavaliado em uma futura funcionalidade de fornecedor/abastecimento de estoque, caso esse extra seja aprovado pelo grupo.
 
-## 8. Regra de sincronização
+## 7. Regra de sincronização
 
 Sempre que este fluxo for alterado:
 
@@ -141,14 +151,14 @@ Sempre que este fluxo for alterado:
 5. executar a suíte de testes antes do merge em `dev`.
 
 
-## 9. Situação da implementação observada na auditoria (11/10/2026)
+## 8. Situação da implementação observada na auditoria (11/10/2026)
 
 | Item | Estado no código atual | Pendência para considerar concluído |
 |---|---|---|
 | Estado inicial | `OrderService.criar_pedido()` grava `PENDENTE_PAGAMENTO`; o default do modelo foi alinhado ao mesmo valor. | Adicionar testes de endpoint para garantir o estado em todas as formas de criação. |
 | Confirmação de pagamento | Existe `OrderService.confirmar_pagamento()` e a lógica reduz estoque. | Não há endpoint/webhook autenticado/verificado para acionar o método; integração de provedor ausente. |
 | Cancelamento e reposição | Serviço de cancelamento tenta repor estoque após pagamento/andamento e cancelar a entrega. | Testar estoque real, falhas transacionais e cancelamento repetido para evitar reposição em duplicidade. |
-| Máquina de estados | `order_workflow_service.py` valida transições de pedido e entrega; há testes unitários do fluxo. | Criar endpoint seguro para estado de entrega e garantir autorização por papel/ator. |
+| Máquina de estados | `order_workflow_service.py` valida transições; `PUT /pedidos/<id>/entrega/status` exige token e restringe alteração ao restaurante dono. Conclusão logística sincroniza para `ENTREGUE`. | Falta tabela de histórico auditável, papel próprio de entregador e cobertura ponta a ponta. |
 | Histórico | Não há tabela própria de histórico de transições no modelo atual. | Aprovar estrutura de auditoria antes de ampliar uso operacional. |
 | Taxa de entrega | O modelo guarda `taxa_entrega_base` e `raio_entrega_km`. | A taxa do pedido ainda pode vir no payload; calcular no servidor e validar a área atendida. |
 

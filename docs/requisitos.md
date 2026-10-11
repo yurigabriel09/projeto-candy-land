@@ -54,6 +54,8 @@
 - O estado comercial/operacional do pedido e o estado logístico da entrega são independentes. Detalhes, estados permitidos e cancelamentos estão em `docs/regras-pedidos.md`.
 - Não permitir alteração depois de `FINALIZADO` ou `CANCELADO`; não aceitar transições fora da máquina de estados.
 - A procura de motorista pode ocorrer durante a produção. Se motorista desistir durante a atribuição, a entrega pode voltar para `PROCURANDO` sem cancelar automaticamente o pedido.
+- A atualização logística exige token e, no MVP atual, conta `BUSINESS` do restaurante associado ao pedido; conta de cliente e outro restaurante recebem `403`. Um perfil específico de entregador continua pendente.
+- Ao finalizar a entrega, o serviço deve atualizar `order_deliveries.status`, `concluida_em`, `orders.delivered_at` e o status principal para `ENTREGUE` na mesma transação.
 - Mudanças relevantes de estado devem guardar ator/evento, estado anterior/novo e horário. A estrutura de histórico ainda precisa ser decidida/implementada.
 - `order_type=DELIVERY` e `order_type=PICKUP` são os valores suportados para criação de pedido. A retirada usa o endereço ativo do restaurante, não cria `order_deliveries` e não pode receber atualização logística. O fluxo de checkout frontend ainda está desabilitado e não envia pedidos.
 

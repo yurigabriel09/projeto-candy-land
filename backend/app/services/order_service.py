@@ -404,13 +404,22 @@ class OrderService:
         entrega.cancelada_em = db.func.now()
 
     @staticmethod
-    def atualizar_status_entrega(pedido_id, novo_status):
+    def atualizar_status_entrega(pedido_id, novo_status, account_id, account_type):
         pedido = Pedido.query.filter_by(id=pedido_id).first()
         if not pedido:
             return {
                 "success": False,
                 "erro": "Pedido não encontrado.",
                 "status_code": 404,
+            }
+
+        # Até existir um papel próprio de entregador, somente o restaurante dono
+        # do pedido pode atualizar o estado logístico. Não confiar apenas no token.
+        if account_type != "BUSINESS" or pedido.restaurant_id != account_id:
+            return {
+                "success": False,
+                "erro": "Apenas o restaurante responsável pode atualizar a entrega.",
+                "status_code": 403,
             }
 
         if pedido.order_type == "PICKUP":
@@ -420,18 +429,24 @@ class OrderService:
                 "status_code": 409,
             }
 
-        entrega = EntregaPedido.query.filter_by(pedido_id=pedido.id).first()
-        if not entrega:
-            entrega = EntregaPedido(pedido_id=pedido.id)
-            db.session.add(entrega)
-            db.session.flush()
-
         try:
+            entrega = EntregaPedido.query.filter_by(pedido_id=pedido.id).first()
+            if not entrega:
+                entrega = EntregaPedido(pedido_id=pedido.id)
+                db.session.add(entrega)
+                db.session.flush()
+
             validar_transicao_entrega(entrega.status, novo_status)
             if pedido.status == "CANCELADO" and novo_status != "CANCELADO":
                 raise OrderTransitionError(
                     "Um pedido cancelado não pode retomar a entrega."
                 )
+
+            # A conclusão logística e a conclusão do pedido são uma única
+            # transação. Não registrar entrega concluída se o pedido ainda não
+            # puder transitar para ENTREGUE.
+            if novo_status == "ENTREGA_CONCLUIDA" and pedido.status != "ENTREGUE":
+                validar_transicao_pedido(pedido.status, "ENTREGUE")
 
             entrega.status = novo_status
             if novo_status == "PROCURANDO" and not entrega.iniciado_em:
@@ -439,6 +454,7 @@ class OrderService:
             elif novo_status == "ENTREGA_CONCLUIDA":
                 entrega.concluida_em = db.func.now()
                 pedido.delivered_at = db.func.now()
+                pedido.status = "ENTREGUE"
             elif novo_status == "CANCELADO":
                 entrega.cancelada_em = db.func.now()
 
