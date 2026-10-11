@@ -22,6 +22,7 @@ class Restaurante(db.Model):
     descricao = db.Column(db.String(255), nullable=True)
     valor_minimo_pedido = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     taxa_entrega_base = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    taxa_entrega_por_km = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     raio_entrega_km = db.Column(db.Numeric(5, 2), nullable=True)
     horario_funcionamento = db.Column(db.String(120), nullable=True)
 
@@ -50,6 +51,11 @@ class Restaurante(db.Model):
             "taxa_entrega_base": (
                 float(self.taxa_entrega_base)
                 if self.taxa_entrega_base is not None
+                else None
+            ),
+            "taxa_entrega_por_km": (
+                float(self.taxa_entrega_por_km)
+                if self.taxa_entrega_por_km is not None
                 else None
             ),
             "raio_entrega_km": (

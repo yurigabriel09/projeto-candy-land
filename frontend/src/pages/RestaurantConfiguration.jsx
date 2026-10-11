@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-// import AddressMap from "../components/AddressMap";
+import AddressCoordinates from "../components/AddressCoordinates";
 import {
     getRestaurantConfiguration,
     updateRestaurantConfiguration,
@@ -27,6 +27,7 @@ const EMPTY_FORM = {
     descricao: "",
     valor_minimo_pedido: "0",
     taxa_entrega_base: "0",
+    taxa_entrega_por_km: "0",
     raio_entrega_km: "",
     horario_funcionamento: "",
 };
@@ -48,7 +49,6 @@ function RestaurantConfiguration() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
-    const [autoLocateKey, setAutoLocateKey] = useState(0);
 
     useEffect(() => {
         if (!restauranteId) return;
@@ -66,6 +66,7 @@ function RestaurantConfiguration() {
                     descricao: restaurante.descricao || "",
                     valor_minimo_pedido: restaurante.valor_minimo_pedido ?? 0,
                     taxa_entrega_base: restaurante.taxa_entrega_base ?? 0,
+                    taxa_entrega_por_km: restaurante.taxa_entrega_por_km ?? 0,
                     raio_entrega_km: restaurante.raio_entrega_km ?? "",
                     horario_funcionamento: restaurante.horario_funcionamento || "",
                 });
@@ -98,7 +99,12 @@ function RestaurantConfiguration() {
 
     function handleAddressChange(event) {
         const { name, value } = event.target;
-        setAddress((current) => ({ ...current, [name]: value }));
+        const locationFields = ["cep", "rua", "numero", "bairro", "cidade", "estado"];
+        setAddress((current) => ({
+            ...current,
+            [name]: value,
+            ...(locationFields.includes(name) ? { latitude: null, longitude: null } : {}),
+        }));
     }
 
     function handleLocationChange({ latitude, longitude }) {
@@ -120,6 +126,7 @@ function RestaurantConfiguration() {
                 ...form,
                 valor_minimo_pedido: Number(form.valor_minimo_pedido || 0),
                 taxa_entrega_base: Number(form.taxa_entrega_base || 0),
+                taxa_entrega_por_km: Number(form.taxa_entrega_por_km || 0),
                 raio_entrega_km:
                     form.raio_entrega_km === ""
                         ? null
@@ -132,6 +139,7 @@ function RestaurantConfiguration() {
                 ...dados.restaurante,
                 valor_minimo_pedido: dados.restaurante?.valor_minimo_pedido ?? 0,
                 taxa_entrega_base: dados.restaurante?.taxa_entrega_base ?? 0,
+                taxa_entrega_por_km: dados.restaurante?.taxa_entrega_por_km ?? 0,
                 raio_entrega_km: dados.restaurante?.raio_entrega_km ?? "",
             }));
 
@@ -211,8 +219,15 @@ function RestaurantConfiguration() {
                         </div>
 
                         <div className="form-field">
-                            <label htmlFor="raio_entrega_km">Raio de entrega (km)</label>
-                            <input id="raio_entrega_km" name="raio_entrega_km" type="number" min="0" step="0.1" value={form.raio_entrega_km} onChange={handleChange} />
+                            <label htmlFor="taxa_entrega_por_km">Taxa adicional por quilômetro (R$)</label>
+                            <input id="taxa_entrega_por_km" name="taxa_entrega_por_km" type="number" min="0" step="0.01" value={form.taxa_entrega_por_km} onChange={handleChange} required />
+                            <small>Taxa final = taxa base + distância em km × taxa por km.</small>
+                        </div>
+
+                        <div className="form-field">
+                            <label htmlFor="raio_entrega_km">Raio máximo de entrega (km)</label>
+                            <input id="raio_entrega_km" name="raio_entrega_km" type="number" min="0.01" step="0.1" value={form.raio_entrega_km} onChange={handleChange} />
+                            <small>Obrigatório para aceitar pedidos de entrega; deixe vazio somente se oferecer apenas retirada.</small>
                         </div>
 
                         <div className="form-field">
@@ -267,21 +282,12 @@ function RestaurantConfiguration() {
                             <input id="config-referencia" name="referencia" value={address.referencia} onChange={handleAddressChange} />
                         </div>
 
-                        <AddressMap
-                            address={`${address.rua}, ${address.numero}, ${address.bairro}, ${address.cidade}, ${address.estado}`}
+                        <AddressCoordinates
                             latitude={address.latitude}
                             longitude={address.longitude}
-                            onLocationChange={handleLocationChange}
-                            autoLocateKey={autoLocateKey}
+                            onChange={handleLocationChange}
+                            title="Coordenadas do endereço comercial"
                         />
-
-                        <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => setAutoLocateKey((current) => current + 1)}
-                        >
-                            Atualizar localização no mapa
-                        </button>
                     </div>
 
                     <div className="form-section">

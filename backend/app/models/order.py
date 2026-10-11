@@ -18,6 +18,8 @@ class Pedido(db.Model):
     subtotal = Column(DECIMAL(10, 2), nullable=False)
     discount = Column(DECIMAL(10, 2), nullable=False, default=0)
     delivery_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
+    # Distância em linha reta usada para calcular a taxa no momento do pedido.
+    delivery_distance_km = Column(DECIMAL(8, 2), nullable=True)
     platform_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
     total = Column(DECIMAL(10, 2), nullable=False)
     order_type = Column(String(20), nullable=False)

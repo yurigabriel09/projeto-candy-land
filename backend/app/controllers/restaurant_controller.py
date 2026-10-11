@@ -44,6 +44,7 @@ class RestaurantController:
             descricao=dados.get("descricao"),
             valor_minimo_pedido=dados.get("valor_minimo_pedido"),
             taxa_entrega_base=dados.get("taxa_entrega_base"),
+            taxa_entrega_por_km=dados.get("taxa_entrega_por_km", 0),
             raio_entrega_km=dados.get("raio_entrega_km"),
             horario_funcionamento=dados.get("horario_funcionamento"),
         )

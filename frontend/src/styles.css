@@ -2000,3 +2000,26 @@ select:focus-visible {
     justify-content: center;
     padding: 0 4px;
 }
+
+.address-coordinates {
+    margin: 16px 0;
+    padding: 16px;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    background: #fff;
+}
+
+.address-coordinates h4 {
+    margin: 0 0 8px;
+}
+
+.address-coordinates > p {
+    margin: 0 0 12px;
+    color: var(--texto-secundario, #666);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.address-coordinates .secondary-button {
+    margin-top: 4px;
+}

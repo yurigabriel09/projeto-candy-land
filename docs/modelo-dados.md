@@ -53,12 +53,14 @@ Total observado: **11 modelos/tabelas**. Não foram encontrados modelos/tabelas 
 3. **Sem histórico de status:** o status atual é sobrescrito em `orders.status` e `order_deliveries.status`; não há tabela de eventos para manter histórico/auditoria das transições.
 4. **Entrega básica:** um único `order_deliveries` por pedido não representa histórico de múltiplas tentativas de motorista; por enquanto, isso está fora do modelo implementado.
 5. **Default de pedido:** o serviço cria pedidos em `PENDENTE_PAGAMENTO`; o default Python do modelo foi alinhado com essa regra. Essa mudança de default no ORM não altera nem limpa registros existentes.
-6. **Destino da retirada:** `orders.delivery_address_id` permanece NOT NULL por compatibilidade com o banco atual. Em pedidos `PICKUP`, guarda o endereço do restaurante; não houve alteração física na tabela nesta entrega. Uma futura renomeação para `destination_address_id` requer migração versionada.
-6. **Sem framework de migração identificado:** `db.create_all()` é executado no arranque, mas não atualiza tabelas já existentes. Uma futura mudança estrutural exige backup e migração explícita; não apague o banco local para “atualizar” o diagrama.
+6. **Taxa por distância:** `restaurants.taxa_entrega_por_km` configura o adicional por km; `orders.delivery_distance_km` registra o snapshot da distância usada na cobrança. A migração aditiva `app/database/migrations.py` adiciona essas colunas aos bancos existentes de forma idempotente, sem apagar dados. `run.py` executa a verificação antes de consultar pedidos.
+7. **Destino da retirada:** `orders.delivery_address_id` permanece NOT NULL por compatibilidade com o banco atual. Em pedidos `PICKUP`, guarda o endereço do restaurante; não houve alteração física na tabela nesta entrega. Uma futura renomeação para `destination_address_id` requer migração versionada.
+8. **Sem framework de migração identificado:** `db.create_all()` é executado no arranque, mas não atualiza tabelas já existentes. Uma futura mudança estrutural exige backup e migração explícita; não apague o banco local para “atualizar” o diagrama.
 
 ## Regras de consistência com o banco
 
 - Regras de negócio gerais: [`requisitos.md`](requisitos.md).
 - Estados, transições e cancelamento: [`regras-pedidos.md`](regras-pedidos.md).
 - Qualquer mudança de coluna, FK, unicidade, nullable, default com persistência ou relacionamento deve atualizar este Markdown, `modelo-dados.dot`, `modelo-dados.png` e testes.
+- Regra de taxa: [`regras-pedidos.md`](regras-pedidos.md) descreve fórmula, limite do raio e o snapshot `delivery_distance_km`.
 - Se o banco usado localmente divergir do modelo ORM, primeiro faça backup, compare schema/dados e prepare migração reversível. Nunca use `DROP TABLE`/delete do banco como correção automática.
