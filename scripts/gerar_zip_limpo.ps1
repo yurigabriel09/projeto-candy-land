@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$OutputZip = "CandyLand_limpo.zip"
 )
 
