@@ -5,13 +5,30 @@ const CART_STORAGE_KEY = "candyland_cart";
 
 function carregarCarrinhoInicial() {
     const dadosSalvos = localStorage.getItem(CART_STORAGE_KEY);
-    if (!dadosSalvos) return { restauranteId: null, restauranteNome: null, itens: [] };
+    const carrinhoVazio = {
+        restauranteId: null,
+        restauranteNome: null,
+        itens: [],
+        orderType: "DELIVERY",
+    };
+    if (!dadosSalvos) return carrinhoVazio;
 
     try {
-        return JSON.parse(dadosSalvos);
+        const salvo = JSON.parse(dadosSalvos);
+        return {
+            ...carrinhoVazio,
+            ...salvo,
+            itens: Array.isArray(salvo.itens) ? salvo.itens : [],
+            orderType: salvo.orderType === "PICKUP" ? "PICKUP" : "DELIVERY",
+        };
     } catch {
         localStorage.removeItem(CART_STORAGE_KEY);
-        return { restauranteId: null, restauranteNome: null, itens: [] };
+        return {
+            restauranteId: null,
+            restauranteNome: null,
+            itens: [],
+            orderType: "DELIVERY",
+        };
     }
 }
 
@@ -34,12 +51,13 @@ export function CartProvider({ children }) {
                 const novoCarrinho = {
                     restauranteId,
                     restauranteNome,
+                    orderType: "DELIVERY",
                     itens: [{
                         id_produto: produto.id_produto,
                         nome: produto.nome_produto,
                         preco: Number(produto.preco_produto),
-                        quantidade: 1
-                    }]
+                        quantidade: 1,
+                    }],
                 };
                 salvar(novoCarrinho);
                 return novoCarrinho;
@@ -61,7 +79,13 @@ export function CartProvider({ children }) {
                 }];
             }
 
-            const novoCarrinho = { restauranteId, restauranteNome, itens: novosItens };
+            const novoCarrinho = {
+                ...atual,
+                restauranteId,
+                restauranteNome,
+                orderType: atual.orderType === "PICKUP" ? "PICKUP" : "DELIVERY",
+                itens: novosItens,
+            };
             salvar(novoCarrinho);
             return novoCarrinho;
         });
@@ -85,15 +109,29 @@ export function CartProvider({ children }) {
         setCarrinho((atual) => {
             const novosItens = atual.itens.filter((i) => i.id_produto !== idProduto);
             const novoCarrinho = novosItens.length === 0
-                ? { restauranteId: null, restauranteNome: null, itens: [] }
+                ? { restauranteId: null, restauranteNome: null, itens: [], orderType: "DELIVERY" }
                 : { ...atual, itens: novosItens };
             salvar(novoCarrinho);
             return novoCarrinho;
         });
     }
 
+    function atualizarTipoPedido(orderType) {
+        if (!["DELIVERY", "PICKUP"].includes(orderType)) return;
+        setCarrinho((atual) => {
+            const novoCarrinho = { ...atual, orderType };
+            salvar(novoCarrinho);
+            return novoCarrinho;
+        });
+    }
+
     function limparCarrinho() {
-        const vazio = { restauranteId: null, restauranteNome: null, itens: [] };
+        const vazio = {
+            restauranteId: null,
+            restauranteNome: null,
+            itens: [],
+            orderType: "DELIVERY",
+        };
         setCarrinho(vazio);
         salvar(vazio);
     }
@@ -102,7 +140,18 @@ export function CartProvider({ children }) {
     const quantidadeTotal = carrinho.itens.reduce((soma, i) => soma + i.quantidade, 0);
 
     return (
-        <CartContext.Provider value={{ carrinho, adicionarItem, atualizarQuantidade, removerItem, limparCarrinho, total, quantidadeTotal }}>
+        <CartContext.Provider
+            value={{
+                carrinho,
+                adicionarItem,
+                atualizarQuantidade,
+                removerItem,
+                atualizarTipoPedido,
+                limparCarrinho,
+                total,
+                quantidadeTotal,
+            }}
+        >
             {children}
         </CartContext.Provider>
     );

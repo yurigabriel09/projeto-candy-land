@@ -1,128 +1,64 @@
-# Modelo de dados — CandyLand
+# Modelo físico de dados — CandyLand
 
-Este documento é a visão textual/visual de referência do **modelo físico atual**. Ele deve ser atualizado sempre que uma alteração de regra de negócio exigir mudança de tabela, coluna, chave estrangeira ou relacionamento.
+> **Snapshot do código auditado em 11/10/2026.** Este diagrama descreve os modelos SQLAlchemy atuais, não um redesign futuro. A fonte de verdade para campos é `backend/app/models/`; sempre compare este documento com os modelos no mesmo PR.
 
-> **Importante:** o modelo ainda contém estruturas legadas que serão revistas em uma futura etapa de redesign físico. O diagrama abaixo representa o estado atual, não o modelo futuro ideal.
+![Diagrama ER do modelo físico atual](modelo-dados.png)
 
-## Diagrama ER
+Fonte editável: [`modelo-dados.dot`](modelo-dados.dot). Se Graphviz estiver instalado, regenere a imagem na raiz do projeto com:
 
-```mermaid
-erDiagram
-    USERS ||--o{ ADDRESSES : possui
-    RESTAURANTS ||--o| ADDRESSES : usa
-    RESTAURANTS ||--o{ CATEGORIES : possui
-    CATEGORIES ||--o{ PRODUCTS : organiza
-    RESTAURANTS ||--o{ PRODUCTS : vende
-    USERS ||--o{ ORDERS : cria
-    RESTAURANTS ||--o{ ORDERS : recebe
-    ADDRESSES ||--o{ ORDERS : entrega
-    ORDERS ||--o{ ORDER_ITEMS : contem
-    PRODUCTS ||--o{ ORDER_ITEMS : compoe
-
-    USERS {
-        int id PK
-        int id_restaurante FK
-        string nome_completo
-        string email UK
-        string telefone
-        string cpf UK
-        string status
-    }
-
-    ADDRESSES {
-        int id PK
-        int id_usuario FK
-        int id_restaurante FK
-        string cep
-        string rua
-        string numero
-        string bairro
-        string cidade
-        string estado
-        decimal latitude
-        decimal longitude
-        string tipo_endereco
-        boolean principal
-        boolean ativo
-    }
-
-    RESTAURANTS {
-        int id PK
-        int address_id FK UK
-        string cnpj UK
-        string razao_social
-        string nome
-        string email UK
-        string telefone
-        decimal valor_minimo_pedido
-        decimal taxa_entrega_base
-        decimal raio_entrega_km
-        string status
-        boolean ativo
-    }
-
-    CATEGORIES {
-        int id PK
-        int id_restaurante FK
-        int id_categoria_pai FK
-        string nome
-        boolean ativa
-    }
-
-    PRODUCTS {
-        int id PK
-        int restaurant_id FK
-        int category_id FK
-        string name
-        decimal price
-        boolean is_available
-        int current_stock
-    }
-
-    ORDERS {
-        int id PK
-        string order_code UK
-        int user_id FK
-        int restaurant_id FK
-        int delivery_address_id FK
-        decimal subtotal
-        decimal discount
-        decimal delivery_fee
-        decimal platform_fee
-        decimal total
-        string order_type
-        string status
-        string payment_method
-        datetime created_at
-    }
-
-    ORDER_ITEMS {
-        int id PK
-        int id_pedido FK
-        int id_produto FK
-        int quantidade
-        decimal preco_unitario
-        string observacoes
-    }
+```bash
+dot -Tpng docs/modelo-dados.dot -o docs/modelo-dados.png
 ```
 
-## Alterações planejadas para o fluxo de pedidos
+## Tabelas/modelos encontrados
 
-A nova regra de negócio introduz a necessidade de separar:
+| Tabela | Modelo | Papel |
+|---|---|---|
+| `users` | `Usuario` | Identidade do cliente/conta e referência opcional de restaurante. |
+| `addresses` | `Endereco` | Endereços de usuário ou restaurante, CEP, coordenadas e status. |
+| `restaurants` | `Restaurante` | Dados cadastrais, operação, taxa base e raio de entrega. |
+| `categories` | `Categoria` | Categorias vinculadas a restaurante e categorias-pai. |
+| `products` | `Produto` | Produtos, preços, disponibilidade, imagem por URL e estoque. |
+| `orders` | `Pedido` | Pedido, valores, modalidade, status comercial e timestamps. |
+| `order_items` | `ItemPedido` | Itens do pedido, quantidade, preço fotografado e personalização. |
+| `order_deliveries` | `EntregaPedido` | Um registro logístico por pedido (`pedido_id` é único). |
+| `auth_attempts` | `TentativaAutenticacao` | Tentativa/canal de autenticação, validações e expiração. |
+| `auth_codes` | `CodigoAutenticacao` | Códigos de autenticação armazenados como hash e vínculo de tentativa. |
+| `customer_cards` | `CartaoCliente` | Referência tokenizada e dados limitados do cartão para exibição. |
 
-- estado comercial/operacional do pedido;
-- estado logístico da entrega;
-- histórico/auditoria das transições.
+Total observado: **11 modelos/tabelas**. Não foram encontrados modelos/tabelas para pagamento/retorno de gateway, histórico de transições do pedido, motorista/entregador, nota fiscal ou notificações.
 
-Antes da implementação final dessas estruturas, o modelo físico deve ser atualizado neste arquivo e validado junto ao grupo quando a mudança alterar tabelas/relacionamentos.
+## Relacionamentos representados
 
-## Pagamentos — decisão atual
+- `users` 1:N `addresses`, `orders`, `auth_codes` e `customer_cards`.
+- `restaurants` 1:N `products`, `categories`, `orders` e `auth_codes`.
+- `categories` pode possuir categorias-filhas; `products` pertencem a categoria e restaurante.
+- `orders` 1:N `order_items`; cada item referencia um produto. `orders` tem no máximo uma `order_deliveries` por causa da unicidade de `pedido_id`.
+- `orders.delivery_address_id` aponta para `addresses.id`. Em `DELIVERY`, aponta para o endereço ativo do cliente; em `PICKUP`, aponta para o endereço ativo do restaurante. Essa é uma compatibilidade temporária do schema atual; no futuro, renomear para `destination_address_id` com migração explícita.
+- `auth_codes.tentativa_id` aponta para `auth_attempts.id`.
 
-No checkout do cliente, a modalidade de pagamento é separada do provedor:
+## Restrições verificadas no SQLite incluído no ZIP
 
-- modalidades: `PIX` e `CARTAO_CREDITO`;
-- provedores planejados: `MERCADO_PAGO` e `PAYPAL`;
-- a bandeira do cartão não será fixada no modelo como uma única bandeira;
-- `BOLETO` fica fora do pedido do cliente e pode ser avaliado futuramente no escopo extra de fornecedor/abastecimento.
+- `users`: `email` e `cpf` únicos.
+- `restaurants`: `cnpj` e `address_id` únicos; `email` possui restrição única e índice único explícito (`unique=True, index=True` no ORM), duplicidade de mecanismo que pode ser simplificada em migração futura.
+- `categories`: combinação `(id_restaurante, nome)` única.
+- `orders`: `order_code` único.
+- `order_deliveries`: `pedido_id` único, garantindo no máximo uma entrega por pedido no modelo atual.
+- Chaves estrangeiras do SQLite auditado correspondem aos relacionamentos descritos acima.
 
-Quando o pagamento for implementado fisicamente, o modelo deverá distinguir `payment_method` de `payment_provider`. Dados sensíveis do cartão não devem ser armazenados pelo CandyLand; devem ser usados tokens/metadados retornados pelo provedor.
+## Pontos de atenção do modelo atual
+
+1. **Vínculo circular entre restaurante e endereço:** `restaurants.address_id` referencia `addresses.id` e `addresses.id_restaurante` referencia `restaurants.id`. São duas referências para a relação física entre os mesmos conceitos, ambas nullable. Não remova nenhuma sem decidir a referência canônica, planejar migração e reconciliar os dados existentes.
+2. **Pagamento ainda incompleto:** `orders.payment_method` armazena a modalidade (`PIX`/`CARTAO_CREDITO`), mas não há `payment_provider`, registro de cobrança, webhook ou tabela de transações. `customer_cards.token_gateway` é uma referência tokenizada de cartão, não integração de gateway.
+3. **Sem histórico de status:** o status atual é sobrescrito em `orders.status` e `order_deliveries.status`; não há tabela de eventos para manter histórico/auditoria das transições.
+4. **Entrega básica:** um único `order_deliveries` por pedido não representa histórico de múltiplas tentativas de motorista; por enquanto, isso está fora do modelo implementado.
+5. **Default de pedido:** o serviço cria pedidos em `PENDENTE_PAGAMENTO`; o default Python do modelo foi alinhado com essa regra. Essa mudança de default no ORM não altera nem limpa registros existentes.
+6. **Destino da retirada:** `orders.delivery_address_id` permanece NOT NULL por compatibilidade com o banco atual. Em pedidos `PICKUP`, guarda o endereço do restaurante; não houve alteração física na tabela nesta entrega. Uma futura renomeação para `destination_address_id` requer migração versionada.
+6. **Sem framework de migração identificado:** `db.create_all()` é executado no arranque, mas não atualiza tabelas já existentes. Uma futura mudança estrutural exige backup e migração explícita; não apague o banco local para “atualizar” o diagrama.
+
+## Regras de consistência com o banco
+
+- Regras de negócio gerais: [`requisitos.md`](requisitos.md).
+- Estados, transições e cancelamento: [`regras-pedidos.md`](regras-pedidos.md).
+- Qualquer mudança de coluna, FK, unicidade, nullable, default com persistência ou relacionamento deve atualizar este Markdown, `modelo-dados.dot`, `modelo-dados.png` e testes.
+- Se o banco usado localmente divergir do modelo ORM, primeiro faça backup, compare schema/dados e prepare migração reversível. Nunca use `DROP TABLE`/delete do banco como correção automática.

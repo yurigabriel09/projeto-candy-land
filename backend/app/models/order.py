@@ -12,6 +12,8 @@ class Pedido(db.Model):
     order_code = Column(String(20), unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
+    # Campo legado de destino: endereço do cliente em DELIVERY e do restaurante
+    # em PICKUP.
     delivery_address_id = Column(Integer, ForeignKey("addresses.id"), nullable=False)
     subtotal = Column(DECIMAL(10, 2), nullable=False)
     discount = Column(DECIMAL(10, 2), nullable=False, default=0)
@@ -19,7 +21,7 @@ class Pedido(db.Model):
     platform_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
     total = Column(DECIMAL(10, 2), nullable=False)
     order_type = Column(String(20), nullable=False)
-    status = Column(String(30), nullable=False, default="CREATED")
+    status = Column(String(30), nullable=False, default="PENDENTE_PAGAMENTO")
     payment_method = Column(String(30), nullable=False)
     general_note = Column(String(255), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)

@@ -1,0 +1,38 @@
+digraph CandyLandER {
+  graph [rankdir=LR, splines=ortho, nodesep=0.45, ranksep=1.0, pad=0.25, bgcolor="white", fontname="Arial", label="CANDYLAND — MODELO FÍSICO ATUAL (11 TABELAS)", labelloc=t, fontsize=22, concentrate=false];
+  node [shape=plain, fontname="Arial", fontsize=10];
+  edge [color="#596579", penwidth=1.2, arrowsize=0.7, fontname="Arial", fontsize=8];
+
+  users [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>users</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">id_restaurante FK NULL</TD></TR><TR><TD ALIGN="LEFT">nome_completo</TD></TR><TR><TD ALIGN="LEFT">email UNIQUE</TD></TR><TR><TD ALIGN="LEFT">telefone, cpf UNIQUE</TD></TR><TR><TD ALIGN="LEFT">data_nascimento, status</TD></TR><TR><TD ALIGN="LEFT">criado_em, atualizado_em</TD></TR><TR><TD ALIGN="LEFT">codigo_verificacao, codigo_expira_em</TD></TR></TABLE> >];
+  addresses [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>addresses</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">id_usuario FK NULL</TD></TR><TR><TD ALIGN="LEFT">id_restaurante FK NULL</TD></TR><TR><TD ALIGN="LEFT">cep, rua, numero, complemento</TD></TR><TR><TD ALIGN="LEFT">bairro, cidade, estado, referencia</TD></TR><TR><TD ALIGN="LEFT">latitude, longitude</TD></TR><TR><TD ALIGN="LEFT">tipo_endereco, principal, ativo</TD></TR></TABLE> >];
+  restaurants [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>restaurants</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">address_id FK UNIQUE NULL</TD></TR><TR><TD ALIGN="LEFT">cnpj UNIQUE, razao_social, nome</TD></TR><TR><TD ALIGN="LEFT">nome_responsavel, cpf_responsavel</TD></TR><TR><TD ALIGN="LEFT">email UNIQUE, telefone</TD></TR><TR><TD ALIGN="LEFT">descricao, valor_minimo_pedido</TD></TR><TR><TD ALIGN="LEFT">taxa_entrega_base, raio_entrega_km</TD></TR><TR><TD ALIGN="LEFT">horario_funcionamento, status, ativo</TD></TR><TR><TD ALIGN="LEFT">dt_cadastro</TD></TR></TABLE> >];
+  categories [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>categories</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">id_restaurante FK</TD></TR><TR><TD ALIGN="LEFT">id_categoria_pai FK NULL</TD></TR><TR><TD ALIGN="LEFT">nome, descricao</TD></TR><TR><TD ALIGN="LEFT">UNIQUE (id_restaurante, nome)</TD></TR><TR><TD ALIGN="LEFT">UNIQUE (id_restaurante, nome)</TD></TR><TR><TD ALIGN="LEFT">url_icone, url_capa</TD></TR><TR><TD ALIGN="LEFT">ordem_exibicao, ativa, criada_em</TD></TR></TABLE> >];
+  products [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>products</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">restaurant_id FK</TD></TR><TR><TD ALIGN="LEFT">category_id FK</TD></TR><TR><TD ALIGN="LEFT">name, description</TD></TR><TR><TD ALIGN="LEFT">price, is_available, is_imported</TD></TR><TR><TD ALIGN="LEFT">current_stock, allows_customization</TD></TR><TR><TD ALIGN="LEFT">image_url, created_at, updated_at</TD></TR></TABLE> >];
+  orders [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>orders</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK, order_code UNIQUE</TD></TR><TR><TD ALIGN="LEFT">user_id FK, restaurant_id FK</TD></TR><TR><TD ALIGN="LEFT">delivery_address_id FK (destino)</TD></TR><TR><TD ALIGN="LEFT">subtotal, discount, delivery_fee</TD></TR><TR><TD ALIGN="LEFT">platform_fee, total</TD></TR><TR><TD ALIGN="LEFT">order_type, status, payment_method</TD></TR><TR><TD ALIGN="LEFT">general_note, created_at</TD></TR><TR><TD ALIGN="LEFT">estimated_delivery_at, delivered_at</TD></TR></TABLE> >];
+  order_items [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>order_items</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">id_pedido FK</TD></TR><TR><TD ALIGN="LEFT">id_produto FK</TD></TR><TR><TD ALIGN="LEFT">quantidade, preco_unitario</TD></TR><TR><TD ALIGN="LEFT">observacoes, detalhes_personalizacao JSON</TD></TR></TABLE> >];
+  order_deliveries [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#24476B"><FONT COLOR="white"><B>order_deliveries</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">pedido_id FK UNIQUE</TD></TR><TR><TD ALIGN="LEFT">status</TD></TR><TR><TD ALIGN="LEFT">iniciado_em, concluida_em, cancelada_em</TD></TR></TABLE> >];
+  auth_attempts [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#547D70"><FONT COLOR="white"><B>auth_attempts</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK UUID</TD></TR><TR><TD ALIGN="LEFT">canal_inicial, email NULL, telefone NULL</TD></TR><TR><TD ALIGN="LEFT">email_validado, telefone_validado</TD></TR><TR><TD ALIGN="LEFT">concluida, expira_em, criado_em</TD></TR></TABLE> >];
+  auth_codes [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#547D70"><FONT COLOR="white"><B>auth_codes</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">usuario_id FK NULL</TD></TR><TR><TD ALIGN="LEFT">restaurante_id FK NULL</TD></TR><TR><TD ALIGN="LEFT">tentativa_id FK NULL</TD></TR><TR><TD ALIGN="LEFT">tipo, destino, codigo_hash</TD></TR><TR><TD ALIGN="LEFT">expira_em, usado, criado_em</TD></TR></TABLE> >];
+  customer_cards [label=< <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5"><TR><TD BGCOLOR="#547D70"><FONT COLOR="white"><B>customer_cards</B></FONT></TD></TR><TR><TD ALIGN="LEFT">id PK</TD></TR><TR><TD ALIGN="LEFT">id_cliente FK</TD></TR><TR><TD ALIGN="LEFT">nome_titular, bandeira</TD></TR><TR><TD ALIGN="LEFT">ultimos_4_digitos, validade</TD></TR><TR><TD ALIGN="LEFT">token_gateway (não retornar à UI)</TD></TR><TR><TD ALIGN="LEFT">cartao_principal, ativo, dt_cadastro</TD></TR></TABLE> >];
+
+  users -> addresses [label="1:N"];
+  restaurants -> addresses [label="1:N por id_restaurante"];
+  addresses -> restaurants [label="0/1:1 por address_id", color="#C07835"];
+  restaurants -> users [label="0:N / conta vinculada"];
+  restaurants -> categories [label="1:N"];
+  categories -> categories [label="pai/filha"];
+  restaurants -> products [label="1:N"];
+  categories -> products [label="1:N"];
+  users -> orders [label="1:N"];
+  restaurants -> orders [label="1:N"];
+  addresses -> orders [label="1:N endereço"];
+  orders -> order_items [label="1:N"];
+  products -> order_items [label="1:N"];
+  orders -> order_deliveries [label="1:0..1"];
+  users -> auth_codes [label="1:N opcional"];
+  restaurants -> auth_codes [label="1:N opcional"];
+  auth_attempts -> auth_codes [label="1:N"];
+  users -> customer_cards [label="1:N"];
+
+  {rank=same; auth_attempts; auth_codes; customer_cards;}
+}
