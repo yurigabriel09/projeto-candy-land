@@ -52,19 +52,49 @@ git branch -d feature/resumo-da-tarefa
 
 Apague a branch remota somente depois de confirmar que o PR foi integrado e que a equipe não precisa mais dela (`git push origin --delete feature/resumo-da-tarefa`).
 
-### 1.4 Criar e integrar PRs pelo terminal (destino explícito)
+### 1.4 GitHub CLI: instalar, autenticar, criar PR e mesclar pelo terminal
 
-O aviso amarelo do GitHub `dev had recent pushes — Compare & pull request` ao navegar em `main` é apenas uma sugestão automática; não é erro do repositório. Como `main` permanece a branch padrão/de entrega de sprint, não altere a branch padrão só para esconder o aviso. Crie PRs com a base explícita:
+O GitHub CLI (`gh`) é um programa de sistema, não uma dependência Python. **Não adicione `gh` a `backend/requirements.txt`**: `pip` instala bibliotecas Python, enquanto o CLI é instalado uma vez no Windows. Depois disso, o projeto oferece `scripts/gerenciar_pr.ps1` para criar, consultar e mesclar PRs sempre com destino `dev`.
 
-```bash
-gh auth status
-gh pr create --base dev --head feature/nome-da-tarefa --title "feat: descreve a tarefa"
-gh pr view
-# Depois de revisar diff, testes e aprovações exigidas:
-gh pr merge --merge --delete-branch
+Instale pelo WinGet, ou use o script do projeto:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao Instalar
 ```
 
-Antes de integrar, confirme com `gh pr view` que **base é `dev` e head é a branch da tarefa**. `gh pr merge` respeita as regras de proteção/revisão configuradas no repositório; se o GitHub bloquear o merge, resolva a exigência indicada em vez de forçar.
+O comando oficial equivalente é `winget install --id GitHub.cli --source winget`. Depois da instalação, feche todas as janelas do PowerShell/Windows Terminal e abra um terminal novo para atualizar o `PATH`. Para atualizar o CLI no futuro, execute `.\scripts\gerenciar_pr.ps1 -Acao Atualizar`. Referência oficial: https://cli.github.com/manual/.
+
+Autentize uma única vez usando o navegador:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao Autenticar
+```
+
+Para cada nova tarefa, trabalhe numa branch criada a partir de `dev`, rode os testes, faça commit e push. Então crie e confira o PR sem navegar até o GitHub:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao CriarPR -Titulo "feat: descreve a tarefa"
+.\scripts\gerenciar_pr.ps1 -Acao StatusPR
+```
+
+O script confirma que o repositório é o CandyLand esperado, que a branch está enviada ao `origin`, que a árvore de trabalho está limpa e que contém o `origin/dev` atual. Ele passa `--base dev` explicitamente, configura `dev` como base padrão local dessa branch e impede criar PR a partir de `dev` ou `main`. Se já houver PR aberto para a mesma branch, ele mostra o existente em vez de duplicá-lo.
+
+Depois da revisão e do aceite necessários pela equipe, confira novamente o PR e faça o merge pelo terminal:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao StatusPR
+.\scripts\gerenciar_pr.ps1 -Acao MesclarPR -ConfirmarMerge
+```
+
+A segunda ação valida que o PR está aberto, que a origem é a branch atual e que o destino é `dev`; pede que você digite `MERGE` antes de integrar. O GitHub ainda pode bloquear a integração se as regras/revisões exigidas não estiverem satisfeitas. Após o merge, atualize e limpe a branch local:
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git branch -d feature/nome-da-tarefa
+```
+
+O aviso amarelo do GitHub `dev had recent pushes — Compare & pull request` ao navegar em `main` é apenas uma sugestão automática. Como `main` permanece a branch padrão/de entrega de sprint, não altere essa configuração só para esconder o aviso: use o script, que fixa o destino `dev`.
 
 ### 1.5 Entregar `dev` em `main` somente no fechamento da sprint
 
@@ -132,7 +162,7 @@ Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedi
 | Build frontend | Node.js compatível com Vite 8 (`^20.19.0` ou `>=22.12.0`), npm 10+ recomendado, Vite 8.2.x, `@vitejs/plugin-react` 6.x | `npm run dev`, `npm run build`; não usar `npm start` (script não existe). |
 | Utilitários frontend | `libphonenumber-js`, `@react-oauth/google` | Há também consulta de CEP ViaCEP no serviço de endereço. |
 | Testes | pytest 8.4.2 | 31 testes de regras de negócio em quatro arquivos passaram na validação local da frente de taxa; ainda faltam testes mais amplos de segurança, checkout e ponta a ponta. |
-| Ferramentas de desenvolvimento | Git/GitHub, PowerShell (`scripts/`), VS Code | As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
+| Ferramentas de desenvolvimento | Git, GitHub CLI (`gh`), PowerShell (`scripts/`), VS Code | `gh` é ferramenta externa do sistema, instalada via WinGet; não entra em `backend/requirements.txt`. As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
 | Extensões VS Code recomendadas | Python, Pylance, ESLint, Prettier e PowerShell | São recomendações de workspace, não uma afirmação de que todos já estejam instalados nos computadores da equipe. |
 | Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, gateway Mercado Pago/PayPal, push, NFe/SEFAZ, AWS | As integrações não devem ser descritas como concluídas só porque existe uma chave de configuração ou um modelo de dados. |
 
@@ -149,7 +179,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 O script descobre a raiz pela própria localização, cria/reutiliza `.venv`, instala `backend/requirements.txt`, instala dependências do frontend com `npm ci` quando existe lockfile e executa o build. Ele cria `backend/.env` e `frontend/.env.local` a partir dos exemplos **somente se os arquivos não existirem**; não sobrescreve configurações locais.
 
-Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito.
+Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito. Para criar/mesclar PR pelo terminal, instale opcionalmente GitHub CLI com `scripts/gerenciar_pr.ps1 -Acao Instalar`; isso é uma ferramenta de desenvolvimento e não é instalada pelo `pip`.
 
 ### Iniciar o backend
 
@@ -327,5 +357,6 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
 - `scripts/preparar_ambiente.ps1` — instalação/verificação local sem sobrescrever `.env` existente.
+- `scripts/gerenciar_pr.ps1` — instala/verifica o GitHub CLI, autentica, cria PR para `dev`, consulta status e permite merge explícito após revisão.
 - `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
 - `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
