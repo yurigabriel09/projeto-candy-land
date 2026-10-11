@@ -8,7 +8,7 @@ A modalidade é enviada no campo `order_type` e deve ser uma das opções:
 
 | Valor da API | Experiência do cliente | Endereço de destino | Taxa de entrega | Registro em `order_deliveries` |
 |---|---|---|---:|---|
-| `DELIVERY` | Receber no endereço | Endereço ativo do cliente autenticado | Conforme regra de taxa (cálculo por distância ainda pendente) | Sim |
+| `DELIVERY` | Receber no endereço | Endereço ativo do cliente autenticado | Taxa base + distância Haversine × taxa por km, dentro do raio configurado | Sim |
 | `PICKUP` | Retirar no restaurante | Endereço ativo do restaurante | R$ 0,00 | Não |
 
 Regras:
@@ -16,9 +16,22 @@ Regras:
 - O backend mantém `DELIVERY` como padrão quando clientes antigos não enviam `order_type`, preservando compatibilidade.
 - Para `DELIVERY`, `delivery_address_id` precisa ser inteiro e pertencer ao cliente autenticado.
 - Para `PICKUP`, o backend não aceita endereço de destino escolhido pelo cliente; resolve o endereço ativo do próprio restaurante. No schema atual, o ID de destino é persistido na coluna legada `orders.delivery_address_id`; a resposta distingue `delivery_address_id` e `pickup_address_id`.
-- Pedidos `PICKUP` têm taxa de entrega zerada pelo servidor mesmo se o payload enviar outra taxa, e não possuem estado logístico em `order_deliveries`.
+- Pedidos `PICKUP` têm taxa de entrega zerada pelo servidor mesmo se o payload enviar outra taxa, a distância fica nula e não possuem estado logístico em `order_deliveries`.
 - O checkout frontend continua desabilitado. A escolha fica persistida no carrinho e ainda deverá ser enviada ao endpoint quando o fluxo de finalização for desenvolvido.
 - Alterar a coluna para um nome neutro (`destination_address_id`) exige migração explícita e atualização do modelo/diagrama; não apagar o banco para contornar isso.
+
+## Cálculo da taxa para `DELIVERY`
+
+A taxa é calculada exclusivamente no backend. O cliente não pode escolher nem sobrescrever `delivery_fee` no payload. Até existir motor server-side de promoções e taxa de plataforma, `discount` e `platform_fee` enviados pelo cliente também são ignorados e permanecem em R$ 0,00.
+
+1. Usar o endereço comercial ativo do restaurante e o endereço ativo do cliente autenticado. Ambos precisam conter latitude e longitude válidas.
+2. Calcular a distância em linha reta usando Haversine, com raio médio terrestre de `6371,0088 km`. **Isso não é a distância por ruas nem uma rota do Google Maps.**
+3. Arredondar a distância usada na fórmula para duas casas decimais e calcular `taxa_entrega_base + (distância_km × taxa_entrega_por_km)`. Arredondar a taxa final a centavos com `ROUND_HALF_UP`.
+4. Aceitar o pedido somente quando a distância não ultrapassar `raio_entrega_km` configurado no restaurante. Limite ausente ou não positivo impede entrega até que a configuração seja corrigida.
+5. Persistir em `orders.delivery_fee` a taxa calculada e em `orders.delivery_distance_km` a distância cobrada, como snapshot no momento da criação. Alterar a configuração do restaurante não recalcula pedidos antigos.
+6. Se o endereço/raio estiver incompleto, retornar erro de validação e não criar o pedido. Não estimar valores nem confiar em `delivery_fee` enviado pelo frontend.
+
+Para `PICKUP`, `delivery_fee = 0` e `delivery_distance_km = NULL`; não se calcula distância e não se cria registro logístico.
 
 ## 1. Estado principal do pedido
 

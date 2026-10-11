@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from sqlalchemy import DECIMAL, Column, DateTime, ForeignKey, Integer, String
 
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class Pedido(db.Model):
@@ -18,13 +17,15 @@ class Pedido(db.Model):
     subtotal = Column(DECIMAL(10, 2), nullable=False)
     discount = Column(DECIMAL(10, 2), nullable=False, default=0)
     delivery_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
+    # Distância em linha reta usada para calcular a taxa no momento do pedido.
+    delivery_distance_km = Column(DECIMAL(8, 2), nullable=True)
     platform_fee = Column(DECIMAL(10, 2), nullable=False, default=0)
     total = Column(DECIMAL(10, 2), nullable=False)
     order_type = Column(String(20), nullable=False)
     status = Column(String(30), nullable=False, default="PENDENTE_PAGAMENTO")
     payment_method = Column(String(30), nullable=False)
     general_note = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now_naive)
     estimated_delivery_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
 

@@ -1,4 +1,5 @@
-from decimal import Decimal, InvalidOperation
+import math
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from uuid import uuid4
 
 from app.database.database import db
@@ -26,8 +27,8 @@ class OrderService:
             result = Decimal(str(value))
         except (InvalidOperation, TypeError, ValueError):
             raise ValueError(f"{field} deve ser um valor monetário válido.")
-        if result < 0:
-            raise ValueError(f"{field} não pode ser negativo.")
+        if not result.is_finite() or result < 0:
+            raise ValueError(f"{field} não pode ser negativo nem inválido.")
         return result.quantize(Decimal("0.01"))
 
     @staticmethod
@@ -73,6 +74,103 @@ class OrderService:
                 "O restaurante precisa ter um endereço ativo cadastrado para retirada."
             )
         return address
+
+    @staticmethod
+    def _validar_coordenada(valor, campo, minimo, maximo):
+        try:
+            coordenada = float(valor)
+        except (TypeError, ValueError):
+            raise ValueError(f"Informe {campo} válido no endereço cadastrado.")
+        if not math.isfinite(coordenada) or not minimo <= coordenada <= maximo:
+            raise ValueError(f"Informe {campo} válido no endereço cadastrado.")
+        return coordenada
+
+    @staticmethod
+    def _resolver_endereco_restaurante(restaurant_id):
+        restaurant = db.session.get(Restaurante, restaurant_id)
+        if not restaurant:
+            raise ValueError("Restaurante não encontrado.")
+
+        address = None
+        if restaurant.address_id:
+            address = db.session.get(Endereco, restaurant.address_id)
+            if address and (
+                not address.ativo
+                or address.id_restaurante not in (None, restaurant_id)
+            ):
+                address = None
+        if not address:
+            address = Endereco.query.filter_by(
+                id_restaurante=restaurant_id, ativo=True
+            ).first()
+        if not address:
+            raise ValueError(
+                "Cadastre um endereço comercial ativo no restaurante para calcular a entrega."
+            )
+        return restaurant, address
+
+    @staticmethod
+    def _calcular_taxa_entrega(restaurant_id, customer_address):
+        restaurant, restaurant_address = OrderService._resolver_endereco_restaurante(
+            restaurant_id
+        )
+        if restaurant.raio_entrega_km is None:
+            raise ValueError(
+                "O restaurante precisa configurar o raio máximo de entrega em quilômetros."
+            )
+
+        try:
+            radius_km = float(restaurant.raio_entrega_km)
+        except (TypeError, ValueError):
+            raise ValueError("O raio de entrega configurado é inválido.")
+        if not math.isfinite(radius_km) or radius_km <= 0:
+            raise ValueError("O raio de entrega deve ser maior que zero.")
+
+        restaurant_lat = OrderService._validar_coordenada(
+            restaurant_address.latitude, "latitude do restaurante", -90, 90
+        )
+        restaurant_lon = OrderService._validar_coordenada(
+            restaurant_address.longitude, "longitude do restaurante", -180, 180
+        )
+        customer_lat = OrderService._validar_coordenada(
+            customer_address.latitude, "latitude do endereço de entrega", -90, 90
+        )
+        customer_lon = OrderService._validar_coordenada(
+            customer_address.longitude, "longitude do endereço de entrega", -180, 180
+        )
+
+        # Haversine: distância em linha reta sobre uma Terra aproximada como esfera.
+        lat1, lat2 = math.radians(restaurant_lat), math.radians(customer_lat)
+        delta_lat = lat2 - lat1
+        delta_lon = math.radians(customer_lon - restaurant_lon)
+        haversine = (
+            math.sin(delta_lat / 2) ** 2
+            + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+        )
+        haversine = min(1.0, max(0.0, haversine))
+        distance_raw = 2 * 6371.0088 * math.asin(math.sqrt(haversine))
+        if distance_raw > radius_km + 1e-9:
+            distance_display = Decimal(str(distance_raw)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+            raise ValueError(
+                f"Endereço fora do raio de entrega. Distância estimada: {distance_display} km; "
+                f"limite do restaurante: {Decimal(str(radius_km)).quantize(Decimal('0.01'))} km."
+            )
+
+        distance_km = Decimal(str(distance_raw)).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        base_fee = OrderService._money(
+            restaurant.taxa_entrega_base or 0, "taxa_entrega_base"
+        )
+        per_km_fee = OrderService._money(
+            restaurant.taxa_entrega_por_km or 0, "taxa_entrega_por_km"
+        )
+        total_fee = (base_fee + distance_km * per_km_fee).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        return total_fee, distance_km
 
     @staticmethod
     def _build_items(restaurant_id, items):
@@ -129,24 +227,26 @@ class OrderService:
                     raise TypeError(
                         "delivery_address_id é obrigatório para entrega no endereço."
                     )
-                OrderService._validate_address(user_id, address_id)
+                customer_address = OrderService._validate_address(user_id, address_id)
+                delivery_fee, delivery_distance_km = OrderService._calcular_taxa_entrega(
+                    restaurant_id, customer_address
+                )
             else:
                 # A coluna legado delivery_address_id é obrigatória no banco. Para
                 # retirada, ela referencia o endereço ativo do próprio restaurante.
                 address_id = OrderService._resolve_pickup_address(restaurant_id).id
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
-            discount = OrderService._money(dados.get("discount", 0), "discount")
+            # Ainda não existe motor server-side de promoções ou taxa da plataforma.
+            # Não aceitar desconto/taxa enviados livremente pelo cliente.
+            discount = Decimal("0.00")
             if order_type == "PICKUP":
-                # Retirada nunca cobra taxa de entrega, mesmo que o cliente envie uma.
+                # Retirada nunca cobra taxa de entrega nem registra distância logística.
                 delivery_fee = Decimal("0.00")
-            else:
-                delivery_fee = OrderService._money(
-                    dados.get("delivery_fee", 0), "delivery_fee"
-                )
-            platform_fee = OrderService._money(
-                dados.get("platform_fee", 0), "platform_fee"
-            )
+                delivery_distance_km = None
+            # Para DELIVERY, delivery_fee é calculado exclusivamente pelo servidor.
+            # O campo que eventualmente chegue no payload é ignorado.
+            platform_fee = Decimal("0.00")
             total = subtotal - discount + delivery_fee + platform_fee
 
             if total < 0:
@@ -160,6 +260,7 @@ class OrderService:
                 subtotal=subtotal,
                 discount=discount,
                 delivery_fee=delivery_fee,
+                delivery_distance_km=delivery_distance_km,
                 platform_fee=platform_fee,
                 total=total,
                 order_type=order_type,
@@ -491,6 +592,11 @@ class OrderService:
             "subtotal": float(pedido.subtotal),
             "discount": float(pedido.discount),
             "delivery_fee": float(pedido.delivery_fee),
+            "delivery_distance_km": (
+                float(pedido.delivery_distance_km)
+                if pedido.delivery_distance_km is not None
+                else None
+            ),
             "platform_fee": float(pedido.platform_fee),
             "total": float(pedido.total),
             "order_type": pedido.order_type,

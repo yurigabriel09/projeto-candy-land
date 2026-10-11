@@ -52,7 +52,51 @@ git branch -d feature/resumo-da-tarefa
 
 Apague a branch remota somente depois de confirmar que o PR foi integrado e que a equipe não precisa mais dela (`git push origin --delete feature/resumo-da-tarefa`).
 
-### 1.4 Entregar `dev` em `main` somente no fechamento da sprint
+### 1.4 GitHub CLI: instalar, autenticar, criar PR e mesclar pelo terminal
+
+O GitHub CLI (`gh`) é um programa de sistema, não uma dependência Python. **Não adicione `gh` a `backend/requirements.txt`**: `pip` instala bibliotecas Python, enquanto o CLI é instalado uma vez no Windows. Depois disso, o projeto oferece `scripts/gerenciar_pr.ps1` para criar, consultar e mesclar PRs sempre com destino `dev`.
+
+Instale pelo WinGet, ou use o script do projeto:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao Instalar
+```
+
+O comando oficial equivalente é `winget install --id GitHub.cli --source winget`. Depois da instalação, feche todas as janelas do PowerShell/Windows Terminal e abra um terminal novo para atualizar o `PATH`. Para atualizar o CLI no futuro, execute `.\scripts\gerenciar_pr.ps1 -Acao Atualizar`. Referência oficial: https://cli.github.com/manual/.
+
+Autentize uma única vez usando o navegador:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao Autenticar
+```
+
+Para cada nova tarefa, trabalhe numa branch criada a partir de `dev`, rode os testes, faça commit e push. Então crie e confira o PR sem navegar até o GitHub:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao CriarPR -Titulo "feat: descreve a tarefa"
+.\scripts\gerenciar_pr.ps1 -Acao StatusPR
+```
+
+O script confirma que o repositório é o CandyLand esperado, que a branch está enviada ao `origin`, que a árvore de trabalho está limpa e que contém o `origin/dev` atual. Ele passa `--base dev` explicitamente, configura `dev` como base padrão local dessa branch e impede criar PR a partir de `dev` ou `main`. Se já houver PR aberto para a mesma branch, ele mostra o existente em vez de duplicá-lo.
+
+Depois da revisão e do aceite necessários pela equipe, confira novamente o PR e faça o merge pelo terminal:
+
+```powershell
+.\scripts\gerenciar_pr.ps1 -Acao StatusPR
+.\scripts\gerenciar_pr.ps1 -Acao MesclarPR -ConfirmarMerge
+```
+
+A segunda ação valida que o PR está aberto, que a origem é a branch atual e que o destino é `dev`; pede que você digite `MERGE` antes de integrar. O GitHub ainda pode bloquear a integração se as regras/revisões exigidas não estiverem satisfeitas. Após o merge, atualize e limpe a branch local:
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git branch -d feature/nome-da-tarefa
+```
+
+O aviso amarelo do GitHub `dev had recent pushes — Compare & pull request` ao navegar em `main` é apenas uma sugestão automática. Como `main` permanece a branch padrão/de entrega de sprint, não altere essa configuração só para esconder o aviso: use o script, que fixa o destino `dev`.
+
+### 1.5 Entregar `dev` em `main` somente no fechamento da sprint
 
 No fluxo recomendado, abra um Pull Request **de `dev` para `main`** ao final da sprint, depois das validações e do aceite da equipe. Não integre feature diretamente em `main`.
 
@@ -94,9 +138,9 @@ O fluxo é sempre **`main` (entregas de sprint) ← `dev` (integração) ← `fe
 2. **Checkout não fecha:** o botão `Finalizar pedido` está desabilitado e não há tela de pagamento integrada.
 3. **Confirmação do pagamento não tem rota pública/autenticada de integração:** `OrderService.confirmar_pagamento()` existe como método interno, mas não há endpoint/webhook para acioná-lo com segurança.
 4. **Histórico logístico ainda incompleto:** a rota autenticada `PUT /pedidos/<id>/entrega/status` está implementada nesta entrega; ainda falta uma tabela de histórico auditável e um perfil próprio de entregador. O estado `ENTREGA_CONCLUIDA` agora sincroniza o pedido para `ENTREGUE` na mesma transação.
-5. **Taxa de entrega:** o pedido aceita `delivery_fee` no payload; o backend ainda não calcula distância nem valida raio/taxa, portanto não deve confiar nesse valor do cliente.
+5. **Taxa de entrega:** a API calcula a taxa no servidor por Haversine, valida o raio configurado e ignora `delivery_fee` enviado pelo cliente. A distância cobrada fica registrada no pedido; a distância é em linha reta, não rota por ruas.
 6. **Catálogo inconsistente:** o botão `Adicionar` em `Itens.jsx` não chama `adicionarItem`; a inclusão funciona somente na tela do restaurante.
-7. **Testes e ferramentas:** há testes automatizados de regras de negócio em quatro arquivos. A suíte local registrada antes desta atualização passou com 21 testes; esta entrega adiciona cinco cenários de autorização/API/transição. Execute `python -m pytest tests/business_rules -q` para validar o total atualizado. Não há suíte end-to-end.
+7. **Testes e ferramentas:** a última validação local registrada para a frente de taxa por distância passou com 31 testes de regras de negócio em quatro arquivos (`python -m pytest tests/business_rules -q`). A suíte cobre regras, persistência, autorização de endpoint e taxa por distância, mas ainda não é end-to-end. A limpeza técnica substitui defaults `datetime.utcnow()` depreciados e encerra engines SQLite em memória sem `drop_all()` em fixtures com FKs cíclicas. Rode novamente os testes depois de aplicar essa limpeza.
 8. **Operação/documentação pendente:** faltam documentação de endpoints, diagrama de arquitetura, Docker, notificação de pedidos, emissão fiscal e integrações reais de pagamento.
 
 ### Frente recomendada para atacar primeiro
@@ -117,8 +161,8 @@ Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedi
 | Frontend | React 19, React DOM 19, React Router 7 | Aplicação web, não aplicativo Android/iOS. |
 | Build frontend | Node.js compatível com Vite 8 (`^20.19.0` ou `>=22.12.0`), npm 10+ recomendado, Vite 8.2.x, `@vitejs/plugin-react` 6.x | `npm run dev`, `npm run build`; não usar `npm start` (script não existe). |
 | Utilitários frontend | `libphonenumber-js`, `@react-oauth/google` | Há também consulta de CEP ViaCEP no serviço de endereço. |
-| Testes | pytest 8.4.2 | 17 testes atuais em 3 arquivos; faltam testes de rotas, auth, checkout e ponta a ponta. |
-| Ferramentas de desenvolvimento | Git/GitHub, PowerShell (`scripts/`), VS Code | As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
+| Testes | pytest 8.4.2 | 31 testes de regras de negócio em quatro arquivos passaram na validação local da frente de taxa; ainda faltam testes mais amplos de segurança, checkout e ponta a ponta. |
+| Ferramentas de desenvolvimento | Git, GitHub CLI (`gh`), PowerShell (`scripts/`), VS Code | `gh` é ferramenta externa do sistema, instalada via WinGet; não entra em `backend/requirements.txt`. As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
 | Extensões VS Code recomendadas | Python, Pylance, ESLint, Prettier e PowerShell | São recomendações de workspace, não uma afirmação de que todos já estejam instalados nos computadores da equipe. |
 | Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, gateway Mercado Pago/PayPal, push, NFe/SEFAZ, AWS | As integrações não devem ser descritas como concluídas só porque existe uma chave de configuração ou um modelo de dados. |
 
@@ -135,7 +179,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 O script descobre a raiz pela própria localização, cria/reutiliza `.venv`, instala `backend/requirements.txt`, instala dependências do frontend com `npm ci` quando existe lockfile e executa o build. Ele cria `backend/.env` e `frontend/.env.local` a partir dos exemplos **somente se os arquivos não existirem**; não sobrescreve configurações locais.
 
-Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito.
+Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito. Para criar/mesclar PR pelo terminal, instale opcionalmente GitHub CLI com `scripts/gerenciar_pr.ps1 -Acao Instalar`; isso é uma ferramenta de desenvolvimento e não é instalada pelo `pip`.
 
 ### Iniciar o backend
 
@@ -192,6 +236,8 @@ O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de
 - Os percentuais abaixo só sobem quando houver evidência no código e, idealmente, teste automatizado. Uma tela isolada não significa que o fluxo completo está pronto.
 - Não apagar nem recriar banco de dados para “atualizar o modelo”. `db.create_all()` cria tabelas ausentes, mas não migra tabelas já existentes. Mudanças físicas futuras devem ter backup e uma migração explícita; não há Alembic/configuração de migração identificado neste repositório.
 - Para modelos que guardam padrão no lado Python, como `Pedido.status`, alinhar o default com a regra. A correção `CREATED` → `PENDENTE_PAGAMENTO` não apaga nem atualiza pedidos já existentes.
+- Para datas UTC em colunas `DateTime` legadas sem timezone, usar `app.utils.datetime_utils.utc_now_naive`; não usar `datetime.utcnow()`, depreciado no Python 3.12+. A migração para colunas timezone-aware deve ser tratada separadamente.
+- Fixtures com SQLite em memória e app exclusiva devem encerrar a sessão e descartar o engine (`db.session.remove(); db.engine.dispose()`). Evitar `db.drop_all()` no teardown quando há FKs cíclicas que o SQLite não consegue alterar para ordenar o DROP; o banco em memória será descartado ao liberar o engine.
 - Nunca armazenar número completo/CVV de cartão. Usar token/metadados de provedor e escolher formalmente o gateway antes da integração.
 
 ## 6. Mapa de funcionalidades — percentual auditado
@@ -245,7 +291,7 @@ O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de
 | 43 | Operação | Leitor de QR Code | P7 | 0% | Não há leitura de QR Code em frontend ou backend. | Uso e validação do conteúdo não definidos. Próxima ação: Definir caso de uso e regra de segurança. |
 | 44 | Estoque | Estoque, baixa após pagamento e reposição em cancelamento | P5 | 60% | Produto mantém current_stock; pedido valida quantidade; confirmar_pagamento debita e cancelamento após pagamento repõe. | Confirmação não está exposta por rota, teste de estoque é insuficiente e concorrência não foi validada. Próxima ação: Adicionar endpoint autenticado/webhook, transação e testes de duplicidade/concor­rência. |
 | 45 | Catálogo | Sugestão de produtos | P7 | 0% | Não foi encontrado recomendador nem regra de produtos relacionados. | Sem critérios (popularidade, categoria ou histórico) e sem interface. Próxima ação: Começar por recomendações simples por categoria quando houver dados. |
-| 46 | Entrega | Taxa de entrega por distância | P5 | 15% | Restaurante possui taxa base e raio de entrega. | O pedido recebe delivery_fee enviado pelo cliente; não há cálculo real de distância nem validação do raio. Próxima ação: Calcular no backend e nunca confiar na taxa enviada pelo frontend. |
+| 46 | Entrega | Taxa de entrega por distância | P5 | 75% | Taxa calculada no backend: taxa base + distância Haversine × taxa por km, dentro do raio do restaurante. | Falta validar UX ponta a ponta e disponibilizar edição de coordenadas para endereços antigos (gerenciamento de endereços está atribuído a outro integrante); Haversine mede linha reta, não rota viária. |
 
 ## 7. Planejamento por responsável — Sprint 3 (23/09 a 19/10/2026)
 
@@ -273,9 +319,9 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 | Sprint 3 (23/09–19/10) | Pedidos | CRUD - Backend (Código Python) | `—` | `backend/app/routes/order_routes.py; backend/app/services/order_service.py` | Theofilo Fernandes de Mesquita | Concluído (informado) | 70%; create/list/detail/status/cancel e endpoint de status logístico existem; confirmação de pagamento segue sem rota. | 2026-10-07 |
 | Sprint 3 (23/09–19/10) | Pedidos | Regras de fluxo, cancelamento e estoque (Código Python) | `feature/orders-crud` | `backend/app/services/order_workflow_service.py; backend/app/services/order_service.py` | Theofilo Fernandes de Mesquita | Concluído (informado) | 70%; transições e serviços de estoque existem; confirmação por provedor e testes de estoque/duplicidade ainda faltam. | 2026-10-07 |
 | Sprint 3 (23/09–19/10) | Cadastro Usuário | Tela de Dados - Informações Pessoais - Frontend (Código React) | `—` | `frontend/src/pages/PersonalRegister.jsx` | Maria Eduarda Gomes Romera | Em andamento (50% informado) | 70% estimado pelo código; consolidada aqui para eliminar a linha duplicada conflitante na planilha. | 2026-10-07 |
-| Sprint 3 (23/09–19/10) | Pedidos | Implementação da seleção do tipo de entrega (Código Python/React) | `feature/tipo-entrega-pedido` (integrada em `dev`) | `Cart.jsx; CartContext.jsx; order_service.py; test_order_type.py` | Theofilo Fernandes de Mesquita | Base integrada; checkout pendente | 75%; seleção persistida no carrinho e suporte `DELIVERY`/`PICKUP` na API. Falta integrar ao checkout, que permanece desabilitado. | 2026-10-19 |
-| Sprint 3 (23/09–19/10) | Pedidos | Integração e persistência dos estados do pedido e entrega (Código Python) | `feature/persistencia-status-entrega` | `order_routes.py; order_controller.py; order_service.py; test_order_delivery_persistence.py` | Theofilo Fernandes de Mesquita | Em andamento | 80%; endpoint autenticado com autorização por restaurante, persistência e sincronização do estado final. Falta histórico auditável, papel de entregador e validação ponta a ponta. | 2026-10-19 |
-| Sprint 3 (23/09–19/10) | Pedidos | Implementação do cálculo da taxa de entrega por distância (Código Python) | `—` | `Restaurant.raio_entrega_km e taxa_entrega_base; sem cálculo` | Theofilo Fernandes de Mesquita | Não iniciado | 15%; campos existem, taxa é recebida no payload e não calculada pelo backend. | 2026-10-19 |
+| Sprint 3 (23/09–19/10) | Pedidos | Implementação da seleção do tipo de entrega (Código Python/React) | `feature/tipo-entrega-pedido` (integrada em `dev`) | `Cart.jsx; CartContext.jsx; order_service.py; test_order_type.py` | Theofilo Fernandes de Mesquita | Integrada em `dev`; checkout pendente | 75%; seleção persistida no carrinho e suporte `DELIVERY`/`PICKUP` na API. Falta integrar ao checkout, que permanece desabilitado. | 2026-10-19 |
+| Sprint 3 (23/09–19/10) | Pedidos | Integração e persistência dos estados do pedido e entrega (Código Python) | `feature/persistencia-status-entrega` (integrada em `dev`) | `order_routes.py; order_controller.py; order_service.py; test_order_delivery_persistence.py` | Theofilo Fernandes de Mesquita | Integrada em `dev` | 80%; endpoint autenticado com autorização por restaurante, persistência e sincronização do estado final. Falta histórico auditável, papel de entregador e validação ponta a ponta. | 2026-10-19 |
+| Sprint 3 (23/09–19/10) | Pedidos | Implementação do cálculo da taxa de entrega por distância (Python/React/SQLAlchemy) | `feature/taxa-entrega-distancia` (esta branch) | `order_service.py; restaurant_service.py; AddressCoordinates.jsx; test_delivery_fee.py; migrations.py` | Theofilo Fernandes de Mesquita | Implementado nesta branch; aguarda testes e PR | 75%; taxa calculada no servidor, coordenadas e configuração adicionadas, migração aditiva e testes; checkout completo e UX com endereços reais continuam pendentes. | 2026-10-19 |
 | Sprint 3 (23/09–19/10) | Produto | Inserir fluxo de adicionar foto para o produto cadastrado (Código Python/React) | `—` | `Produto.image_url; ProductForm.jsx` | Yuri Gabriel Conceição Gonçalves | Não iniciado | 30%; campo URL existe, não há upload/armazenamento de arquivo. | 2026-10-19 |
 | Sprint 3 (23/09–19/10) | Documentação | Documentar os endpoints da aplicação (Documento) | `—` | `Não localizado; README lista rotas principais` | Ana Carolina Guedes Bueno | Não iniciado | 0%; falta catálogo de endpoints, payloads, autenticação e códigos de erro. | 2026-10-19 |
 | Sprint 3 (23/09–19/10) | Docker | Criar configuração de Docker - Frontend (Dockerfile/Compose) | `—` | `Nenhum Dockerfile encontrado` | Kauan Felipe Dutra de Almeida | Não iniciado | 0%; não existe configuração Docker no repositório auditado. | 2026-10-19 |
@@ -293,13 +339,13 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 | 3 | Pagamento e estoque idempotentes | Decisão formal de provedor; confirmação não pode ser chamada publicamente por qualquer pessoa; webhook/evento verificado; pagamento duplicado não debita estoque duas vezes; cancelamento repõe corretamente uma única vez. |
 | 4 | Histórico da entrega e papéis | Endpoint autenticado já existe; falta histórico de transições, papel de entregador e testes ponta a ponta do ciclo completo. |
 | 5 | Painel do restaurante e experiência do cliente | Lista operacional de pedidos, estados, acompanhamento e notificações integradas. |
-| 6 | Integrações e entrega de sprint | Maps/distância, gateway real, notificação e fiscal apenas quando requisitos e credenciais de homologação estiverem definidos. |
+| 6 | Integrações e entrega de sprint | Gateway real, notificação e fiscal apenas quando requisitos e credenciais de homologação estiverem definidos. O cálculo de taxa em linha reta já foi implementado; rota viária é uma melhoria futura. |
 
 ## 9. Decisões pendentes do grupo
 
 1. **Gateway de pagamento:** o plano cita PayPal, enquanto o escopo cita Mercado Pago. Escolher uma integração inicial; Pix/cartão são modalidades, gateways são provedores.
 2. **Entrega vs. retirada:** este branch implementa `DELIVERY` e `PICKUP` como proposta para o MVP, com taxa zero e sem fluxo logístico para retirada. A equipe deve ratificar a regra antes do merge; o painel de chamada continua fora desta tarefa.
-3. **Taxa de entrega:** decidir fórmula (taxa base + distância, faixas ou área), limite do raio e fonte de coordenadas. O cálculo deve ser no backend.
+3. **Taxa de entrega:** regra definida: taxa base + (distância Haversine em linha reta × taxa por km), arredondada a centavos. O backend valida o raio e não aceita taxa enviada pelo cliente. Cliente e restaurante precisam cadastrar coordenadas válidas; o cálculo por rota viária continua fora do escopo desta regra.
 4. **Histórico/auditoria do pedido:** definir se será tabela própria de eventos e quais atores podem executar cada transição.
 5. **Banco legado:** escolher ferramenta de migração antes de mudanças estruturais. Fazer backup antes de qualquer migração; não remover tabelas nem apagar o banco local para resolver divergência documental.
 
@@ -309,6 +355,8 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `docs/regras-pedidos.md` — estados e transições de pedido/entrega, cancelamento e pagamento.
 - `docs/modelo-dados.md` — modelo físico atual, lacunas e instruções de atualização.
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
+- `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
 - `scripts/preparar_ambiente.ps1` — instalação/verificação local sem sobrescrever `.env` existente.
+- `scripts/gerenciar_pr.ps1` — instala/verifica o GitHub CLI, autentica, cria PR para `dev`, consulta status e permite merge explícito após revisão.
 - `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
 - `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.

@@ -1,5 +1,6 @@
 from app.config.config import Config
 from app.database.database import db
+from app.database.migrations import migrar_taxa_entrega_por_distancia
 from app.models.delivery import EntregaPedido
 from app.models.order import Pedido
 from app.routes.auth_routes import auth_bp
@@ -32,6 +33,7 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
+    migrar_taxa_entrega_por_distancia(db.engine)
     for pedido in Pedido.query.all():
         if pedido.order_type == "PICKUP":
             continue
