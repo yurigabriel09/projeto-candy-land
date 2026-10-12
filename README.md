@@ -243,6 +243,34 @@ O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de
 - Fixtures com SQLite em memória e app exclusiva devem encerrar a sessão e descartar o engine (`db.session.remove(); db.engine.dispose()`). Evitar `db.drop_all()` no teardown quando há FKs cíclicas que o SQLite não consegue alterar para ordenar o DROP; o banco em memória será descartado ao liberar o engine.
 - Nunca armazenar número completo/CVV de cartão. Usar token/metadados de provedor e escolher formalmente o gateway antes da integração.
 
+### Configuração e validação de login Google e Facebook
+
+O código de autenticação OAuth depende de configuração válida nos painéis dos provedores. A existência das rotas ou dos botões de login, isoladamente, não comprova que o login está operacional.
+
+#### Google OAuth
+
+- Configurar `VITE_GOOGLE_CLIENT_ID` em `frontend/.env.local`.
+- Configurar `GOOGLE_CLIENT_ID` em `backend/.env`.
+- Os dois IDs devem corresponder ao mesmo cliente OAuth.
+- Cadastrar os domínios autorizados e os URIs de redirecionamento exigidos pelo fluxo utilizado.
+- Em ambiente de teste, autorizar as contas de teste no painel Google Cloud quando necessário.
+
+#### Facebook Login
+
+- Configurar `FACEBOOK_CLIENT_ID` e `FACEBOOK_CLIENT_SECRET` em `backend/.env`.
+- Configurar `FACEBOOK_REDIRECT_URI` com o endereço exato usado pelo backend e cadastrado no painel Meta.
+- Conferir o modo do aplicativo, os usuários com funções de teste e as permissões solicitadas.
+- Antes da publicação, configurar os domínios e URLs de produção e verificar os requisitos de acesso do aplicativo.
+
+#### Validação e segurança
+
+- Testar cada provedor separadamente com uma conta autorizada.
+- Validar login bem-sucedido, cancelamento e falha de autenticação.
+- Não registrar tokens, client secrets ou credenciais nos logs, no README ou no Git.
+- Manter valores reais apenas nos arquivos locais de ambiente ou no gerenciador de segredos do serviço publicado.
+- A conclusão da tarefa exige evidência de login funcionando; variáveis preenchidas não são suficientes.
+- A configuração local e a configuração de produção devem ser verificadas separadamente. Não presumir que um login local validado já está pronto para publicação.
+
 ## 6. Mapa de funcionalidades — percentual auditado
 
 **Critério:** percentual estimado de entrega da funcionalidade, não percentual de linhas codificadas. `0%` significa que a implementação não foi encontrada nesta cópia; `100%` significa que o entregável descrito foi encontrado/documentado, não que todo o produto ou uma versão futura ideal esteja pronto. Itens de integração externa só contam como concluídos após teste com o provedor.

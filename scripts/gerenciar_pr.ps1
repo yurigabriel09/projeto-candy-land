@@ -237,12 +237,19 @@ switch ($Acao) {
             throw 'A branch nao possui commits exclusivos em relacao a origin/dev; nao ha alteracoes para propor.'
         }
 
-        $remoteLine = (& git -C $ProjectRoot ls-remote --heads origin $branch | Select-Object -First 1)
-        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($remoteLine)) {
-            throw "A branch '$branch' nao existe no origin. Envie-a primeiro: git push -u origin $branch"
+        $remoteOutput = @(
+            & git -C $ProjectRoot ls-remote --heads origin "refs/heads/$branch" 2>$null
+        )
+        $remoteExitCode = $LASTEXITCODE
+        $remoteLine = $remoteOutput | Select-Object -First 1
+
+        if ($remoteExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($remoteLine)) {
+            throw "A branch '$branch' nao foi encontrada no origin. Confirme com: git ls-remote --heads origin refs/heads/$branch"
         }
+
         $remoteSha = ($remoteLine -split '\s+')[0]
         $localSha = (& git -C $ProjectRoot rev-parse HEAD).Trim()
+
         if ($LASTEXITCODE -ne 0 -or $remoteSha -ne $localSha) {
             throw 'O commit local nao coincide com o topo remoto. Execute git push e tente novamente.'
         }
