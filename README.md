@@ -1,4 +1,4 @@
-# CandyLand — guia do projeto e estado real
+﻿# CandyLand — guia do projeto e estado real
 
 > **Atualizado em 11/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
 
@@ -54,36 +54,38 @@ Apague a branch remota somente depois de confirmar que o PR foi integrado e que 
 
 ### 1.4 GitHub CLI: instalar, autenticar, criar PR e mesclar pelo terminal
 
-O GitHub CLI (`gh`) é um programa de sistema, não uma dependência Python. **Não adicione `gh` a `backend/requirements.txt`**: `pip` instala bibliotecas Python, enquanto o CLI é instalado uma vez no Windows. Depois disso, o projeto oferece `scripts/gerenciar_pr.ps1` para criar, consultar e mesclar PRs sempre com destino `dev`.
+O GitHub CLI (`gh`) é um programa de sistema, não uma dependência Python. **Não adicione `gh` a `backend/requirements.txt`**: `pip` instala bibliotecas Python, enquanto o CLI é instalado uma vez no Windows. Os lançadores `.cmd` executam os scripts PowerShell com `-ExecutionPolicy Bypass` **somente no processo daquele comando**; assim, não é necessário liberar a política manualmente a cada terminal nem alterar a política global do Windows.
 
-Instale pelo WinGet, ou use o script do projeto:
-
-```powershell
-.\scripts\gerenciar_pr.ps1 -Acao Instalar
-```
-
-O comando oficial equivalente é `winget install --id GitHub.cli --source winget`. Depois da instalação, feche todas as janelas do PowerShell/Windows Terminal e abra um terminal novo para atualizar o `PATH`. Para atualizar o CLI no futuro, execute `.\scripts\gerenciar_pr.ps1 -Acao Atualizar`. Referência oficial: https://cli.github.com/manual/.
-
-Autentize uma única vez usando o navegador:
+Para consultar o PR da branch atual, execute:
 
 ```powershell
-.\scripts\gerenciar_pr.ps1 -Acao Autenticar
+.\scripts\gerenciar_pr.cmd -Acao StatusPR
 ```
 
-Para cada nova tarefa, trabalhe numa branch criada a partir de `dev`, rode os testes, faça commit e push. Então crie e confira o PR sem navegar até o GitHub:
+O gerenciador procura `gh.exe` no `PATH` e nos caminhos comuns de instalação. Se não estiver instalado, tenta instalá-lo pelo WinGet. Se não houver sessão autenticada, inicia o login pelo navegador e confirma o estado da sessão. O caminho do CLI também é salvo no `PATH` do usuário quando possível, mas o próprio gerenciador usa o caminho completo do executável para não depender de terminais antigos do VS Code/Windows Terminal. Portanto, não é necessário executar `Instalar` ou `Autenticar` manualmente a cada terminal.
+
+As ações explícitas continuam disponíveis quando forem necessárias:
 
 ```powershell
-.\scripts\gerenciar_pr.ps1 -Acao CriarPR -Titulo "feat: descreve a tarefa"
-.\scripts\gerenciar_pr.ps1 -Acao StatusPR
+.\scripts\gerenciar_pr.cmd -Acao Instalar
+.\scripts\gerenciar_pr.cmd -Acao Autenticar
+.\scripts\gerenciar_pr.cmd -Acao Atualizar
 ```
 
-O script confirma que o repositório é o CandyLand esperado, que a branch está enviada ao `origin`, que a árvore de trabalho está limpa e que contém o `origin/dev` atual. Ele passa `--base dev` explicitamente, configura `dev` como base padrão local dessa branch e impede criar PR a partir de `dev` ou `main`. Se já houver PR aberto para a mesma branch, ele mostra o existente em vez de duplicá-lo.
+Para cada nova tarefa, trabalhe numa branch criada a partir de `dev`, rode os testes, faça commit e push. Então crie e confira o PR:
+
+```powershell
+.\scripts\gerenciar_pr.cmd -Acao CriarPR -Titulo "feat: descreve a tarefa"
+.\scripts\gerenciar_pr.cmd -Acao StatusPR
+```
+
+O script confirma que o repositório é o CandyLand esperado, que a branch está enviada ao `origin`, que a árvore de trabalho está limpa e que contém o `origin/dev` atual. Ele passa `--base dev` explicitamente, configura `dev` como base padrão local dessa branch e impede criar PR a partir de `dev` ou `main`. Se não houver PR aberto, `StatusPR` informa isso sem encerrar com erro; se já existir um PR para a branch, ele mostra o existente em vez de duplicá-lo.
 
 Depois da revisão e do aceite necessários pela equipe, confira novamente o PR e faça o merge pelo terminal:
 
 ```powershell
-.\scripts\gerenciar_pr.ps1 -Acao StatusPR
-.\scripts\gerenciar_pr.ps1 -Acao MesclarPR -ConfirmarMerge
+.\scripts\gerenciar_pr.cmd -Acao StatusPR
+.\scripts\gerenciar_pr.cmd -Acao MesclarPR -ConfirmarMerge
 ```
 
 A segunda ação valida que o PR está aberto, que a origem é a branch atual e que o destino é `dev`; pede que você digite `MERGE` antes de integrar. O GitHub ainda pode bloquear a integração se as regras/revisões exigidas não estiverem satisfeitas. Após o merge, atualize e limpe a branch local:
@@ -170,16 +172,17 @@ Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedi
 
 ## 4. Preparar e executar o ambiente local (Windows/PowerShell)
 
-Na raiz do projeto, execute o script por caminho relativo:
+Na raiz do projeto, execute o lançador:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\preparar_ambiente.ps1
+.\scripts\preparar_ambiente.cmd
 ```
+
+O lançador aplica `-ExecutionPolicy Bypass` somente ao processo PowerShell iniciado para essa tarefa. Não é necessário liberar a política manualmente a cada terminal nem alterar a política global do Windows.
 
 O script descobre a raiz pela própria localização, cria/reutiliza `.venv`, instala `backend/requirements.txt`, instala dependências do frontend com `npm ci` quando existe lockfile e executa o build. Ele cria `backend/.env` e `frontend/.env.local` a partir dos exemplos **somente se os arquivos não existirem**; não sobrescreve configurações locais.
 
-Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito. Para criar/mesclar PR pelo terminal, instale opcionalmente GitHub CLI com `scripts/gerenciar_pr.ps1 -Acao Instalar`; isso é uma ferramenta de desenvolvimento e não é instalada pelo `pip`.
+Pré-requisitos: Git, PowerShell, Python 3.10+ e Node.js aceito pelo Vite 8. O script falhará com mensagem explícita se faltar um requisito. Para criar/mesclar PR pelo terminal, o gerenciador de PR tenta instalar o GitHub CLI automaticamente se necessário; isso é uma ferramenta de desenvolvimento e não é instalada pelo `pip`.
 
 ### Iniciar o backend
 
@@ -223,7 +226,7 @@ Não considerar o ambiente validado se os testes não rodarem. Guarde a saída d
 A partir da raiz, execute:
 
 ```powershell
-.\scripts\gerar_zip_limpo.ps1
+.\scripts\gerar_zip_limpo.cmd
 ```
 
 O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de exemplo como `.gitignore` e `.env.example`. O script exclui arquivos `.env` reais, bancos locais, credenciais, `.git`, ambientes virtuais, `node_modules`, caches, builds e outros ZIPs. **Ele não apaga nem limpa nenhum arquivo original do projeto.**
@@ -239,6 +242,34 @@ O ZIP é criado na raiz e contém o código/documentação, mantendo dotfiles de
 - Para datas UTC em colunas `DateTime` legadas sem timezone, usar `app.utils.datetime_utils.utc_now_naive`; não usar `datetime.utcnow()`, depreciado no Python 3.12+. A migração para colunas timezone-aware deve ser tratada separadamente.
 - Fixtures com SQLite em memória e app exclusiva devem encerrar a sessão e descartar o engine (`db.session.remove(); db.engine.dispose()`). Evitar `db.drop_all()` no teardown quando há FKs cíclicas que o SQLite não consegue alterar para ordenar o DROP; o banco em memória será descartado ao liberar o engine.
 - Nunca armazenar número completo/CVV de cartão. Usar token/metadados de provedor e escolher formalmente o gateway antes da integração.
+
+### Configuração e validação de login Google e Facebook
+
+O código de autenticação OAuth depende de configuração válida nos painéis dos provedores. A existência das rotas ou dos botões de login, isoladamente, não comprova que o login está operacional.
+
+#### Google OAuth
+
+- Configurar `VITE_GOOGLE_CLIENT_ID` em `frontend/.env.local`.
+- Configurar `GOOGLE_CLIENT_ID` em `backend/.env`.
+- Os dois IDs devem corresponder ao mesmo cliente OAuth.
+- Cadastrar os domínios autorizados e os URIs de redirecionamento exigidos pelo fluxo utilizado.
+- Em ambiente de teste, autorizar as contas de teste no painel Google Cloud quando necessário.
+
+#### Facebook Login
+
+- Configurar `FACEBOOK_CLIENT_ID` e `FACEBOOK_CLIENT_SECRET` em `backend/.env`.
+- Configurar `FACEBOOK_REDIRECT_URI` com o endereço exato usado pelo backend e cadastrado no painel Meta.
+- Conferir o modo do aplicativo, os usuários com funções de teste e as permissões solicitadas.
+- Antes da publicação, configurar os domínios e URLs de produção e verificar os requisitos de acesso do aplicativo.
+
+#### Validação e segurança
+
+- Testar cada provedor separadamente com uma conta autorizada.
+- Validar login bem-sucedido, cancelamento e falha de autenticação.
+- Não registrar tokens, client secrets ou credenciais nos logs, no README ou no Git.
+- Manter valores reais apenas nos arquivos locais de ambiente ou no gerenciador de segredos do serviço publicado.
+- A conclusão da tarefa exige evidência de login funcionando; variáveis preenchidas não são suficientes.
+- A configuração local e a configuração de produção devem ser verificadas separadamente. Não presumir que um login local validado já está pronto para publicação.
 
 ## 6. Mapa de funcionalidades — percentual auditado
 
@@ -356,7 +387,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `docs/modelo-dados.md` — modelo físico atual, lacunas e instruções de atualização.
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
-- `scripts/preparar_ambiente.ps1` — instalação/verificação local sem sobrescrever `.env` existente.
-- `scripts/gerenciar_pr.ps1` — instala/verifica o GitHub CLI, autentica, cria PR para `dev`, consulta status e permite merge explícito após revisão.
-- `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
-- `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
+- `scripts/preparar_ambiente.cmd` e `scripts/preparar_ambiente.ps1` — lançador seguro e instalação/verificação local sem sobrescrever `.env` existente.
+- `scripts/gerenciar_pr.cmd` e `scripts/gerenciar_pr.ps1` — localiza/instala o GitHub CLI, verifica ou inicia autenticação, cria PR para `dev`, consulta status e permite merge explícito após revisão.
+- `scripts/gerar_zip_limpo.cmd` e `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
+- `limpar_e_gerar_zip.cmd` e `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
