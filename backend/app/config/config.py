@@ -16,3 +16,8 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-troque-em-producao")
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
     GOOGLE_CLOCK_SKEW_SECONDS = int(os.getenv("GOOGLE_CLOCK_SKEW_SECONDS", "300"))
+
+    UPLOAD_FOLDER = BASE_DIR / "uploads"
+    UPLOAD_MAX_BYTES = 2 * 1024 * 1024
+    # Limite duro da requisição (folga para o overhead do multipart)
+    MAX_CONTENT_LENGTH = UPLOAD_MAX_BYTES + 512 * 1024

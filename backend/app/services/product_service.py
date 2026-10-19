@@ -2,6 +2,7 @@ from app.database.database import db
 from app.models.category import Categoria
 from app.models.product import Produto
 from sqlalchemy.exc import SQLAlchemyError
+from app.utils.image_upload import remover_imagem, salvar_imagem_produto
 
 
 class ProductService:
@@ -177,13 +178,62 @@ class ProductService:
                     "status_code": 403,
                 }
 
+            imagem = produto.image_url
             db.session.delete(produto)
             db.session.commit()
+            remover_imagem(imagem, restaurant_id)
             return {"success": True, "mensagem": "Produto removido com sucesso!"}
         except SQLAlchemyError:
             db.session.rollback()
             return {
                 "success": False,
                 "erro": "Falha ao remover produto.",
+                "status_code": 500,
+            }
+
+    
+    @staticmethod
+    def atualizar_imagem(produto_id, restaurant_id, arquivo):
+        nova_url = None
+        try:
+            produto = Produto.query.filter_by(id=produto_id).first()
+            if not produto:
+                return {
+                    "success": False,
+                    "erro": "Produto não encontrado.",
+                    "status_code": 404,
+                }
+
+            if produto.restaurant_id != restaurant_id:
+                return {
+                    "success": False,
+                    "erro": "Você não tem permissão para alterar este produto.",
+                    "status_code": 403,
+                }
+
+            try:
+                nova_url = salvar_imagem_produto(arquivo, restaurant_id)
+            except ValueError as erro:
+                return {"success": False, "erro": str(erro), "status_code": 400}
+
+            imagem_antiga = produto.image_url
+            produto.image_url = nova_url
+            db.session.commit()
+
+            # Só apaga a foto antiga depois que o banco confirmou a troca
+            remover_imagem(imagem_antiga, restaurant_id)
+
+            return {
+                "success": True,
+                "mensagem": "Imagem atualizada com sucesso!",
+                "dados": produto.to_dict(),
+            }
+        except SQLAlchemyError:
+            db.session.rollback()
+            if nova_url:
+                remover_imagem(nova_url, restaurant_id)
+            return {
+                "success": False,
+                "erro": "Falha ao salvar a imagem do produto.",
                 "status_code": 500,
             }
