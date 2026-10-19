@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, ForeignKey, Integer, String
 
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class Produto(db.Model):
@@ -19,8 +18,8 @@ class Produto(db.Model):
     current_stock = Column(Integer, nullable=False, default=0)
     allows_customization = Column(Boolean, default=False, nullable=False)
     image_url = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=True, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now_naive)
+    updated_at = Column(DateTime, nullable=True, onupdate=utc_now_naive)
 
     def to_dict(self):
         return {

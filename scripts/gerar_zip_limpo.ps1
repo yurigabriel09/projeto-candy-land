@@ -97,13 +97,14 @@ try {
                 $leaf = $parts[-1]
                 $badDirectory = $false
                 foreach ($part in $parts) {
-                    if ($part -in @('.git', '.venv', 'venv', 'node_modules', 'Credenciais', 'credentials', 'secrets')) {
+                    if ($part -in @('.git', '.venv', 'venv', 'node_modules', 'Credenciais', 'credentials', 'secrets', '__pycache__', '.pytest_cache', '.ruff_cache', '.mypy_cache', '.cache', 'dist', 'build', 'coverage', 'htmlcov', '.idea', 'instance', 'temp', 'tmp')) {
                         $badDirectory = $true
                         break
                     }
                 }
+                $badGeneratedFile = ($leaf -like '*.pyc') -or ($leaf -like '*.pyo') -or ($leaf -like '*.db') -or ($leaf -like '*.sqlite') -or ($leaf -like '*.sqlite3')
                 $badEnvironmentFile = ($leaf -eq '.env') -or ($leaf -eq '.env.local') -or (($leaf -like '.env.*') -and ($leaf -notin @('.env.example', '.env.template')))
-                if ($badDirectory -or $badEnvironmentFile) { $entry }
+                if ($badDirectory -or $badEnvironmentFile -or $badGeneratedFile) { $entry }
             }
         )
         if ($unsafe.Count -gt 0) { throw "ZIP contém caminho que deveria ser excluído: $($unsafe[0].FullName)" }

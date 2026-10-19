@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { maskCep, maskCpf, maskCnpj } from "../utils/masks";
 import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
+import AddressCoordinates from "../components/AddressCoordinates";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createRestaurant } from "../services/restaurantService";
@@ -27,7 +28,9 @@ function BusinessRegister() {
         complement: "",
         neighborhood: "",
         city: "",
-        state: ""
+        state: "",
+        latitude: null,
+        longitude: null
     });
 
     const [cepError, setCepError] = useState("");
@@ -39,7 +42,9 @@ function BusinessRegister() {
 
         setForm((currentForm) => ({
             ...currentForm,
-            cep: value
+            cep: value,
+            latitude: null,
+            longitude: null,
         }));
 
         setCepError("");
@@ -61,7 +66,9 @@ function BusinessRegister() {
                 address: address.address,
                 neighborhood: address.neighborhood,
                 city: address.city,
-                state: address.state
+                state: address.state,
+                latitude: null,
+                longitude: null,
             }));
         } catch (error) {
             setCepError("CEP não encontrado.");
@@ -83,9 +90,11 @@ function BusinessRegister() {
             formattedValue = maskCpf(value);
         }
 
+        const addressFields = ["cep", "address", "number", "neighborhood", "city", "state"];
         setForm((currentForm) => ({
             ...currentForm,
-            [name]: formattedValue
+            [name]: formattedValue,
+            ...(addressFields.includes(name) ? { latitude: null, longitude: null } : {}),
         }));
     }
 
@@ -173,7 +182,9 @@ function BusinessRegister() {
                 complemento: form.complement.trim() || null,
                 bairro: form.neighborhood.trim(),
                 cidade: form.city.trim(),
-                estado: form.state.trim().toUpperCase()
+                estado: form.state.trim().toUpperCase(),
+                latitude: form.latitude,
+                longitude: form.longitude
             }
         };
 
@@ -403,6 +414,16 @@ function BusinessRegister() {
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="form-section">
+                        <h3>Localização para cálculo de entrega</h3>
+                        <AddressCoordinates
+                            latitude={form.latitude}
+                            longitude={form.longitude}
+                            onChange={({ latitude, longitude }) => setForm((current) => ({ ...current, latitude, longitude }))}
+                            title="Coordenadas do restaurante"
+                        />
                     </div>
 
                     <button type="submit" className="primary-button" disabled={loading}>

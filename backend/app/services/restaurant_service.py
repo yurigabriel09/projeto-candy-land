@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
@@ -9,6 +11,28 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
 class RestauranteService:
+    @staticmethod
+    def _validar_valor_nao_negativo(valor, campo):
+        try:
+            numero = Decimal(str(valor))
+        except (InvalidOperation, TypeError, ValueError):
+            raise ValueError(f"{campo} deve ser um valor numérico válido.")
+        if not numero.is_finite() or numero < 0:
+            raise ValueError(f"{campo} não pode ser negativo nem inválido.")
+        return numero.quantize(Decimal("0.01"))
+
+    @staticmethod
+    def _validar_raio(valor):
+        if valor in (None, ""):
+            return None
+        try:
+            raio = Decimal(str(valor))
+        except (InvalidOperation, TypeError, ValueError):
+            raise ValueError("raio_entrega_km deve ser numérico.")
+        if not raio.is_finite() or raio <= 0:
+            raise ValueError("raio_entrega_km deve ser maior que zero.")
+        return raio.quantize(Decimal("0.01"))
+
     @staticmethod
     def listar_restaurantes():
         try:
@@ -67,6 +91,7 @@ class RestauranteService:
         descricao=None,
         valor_minimo_pedido=None,
         taxa_entrega_base=None,
+        taxa_entrega_por_km=0,
         raio_entrega_km=None,
         horario_funcionamento=None,
     ):
@@ -126,8 +151,15 @@ class RestauranteService:
                 cpf_responsavel=cpf_responsavel,
                 descricao=descricao,
                 valor_minimo_pedido=valor_minimo_pedido or 0,
-                taxa_entrega_base=taxa_entrega_base or 0,
-                raio_entrega_km=raio_entrega_km,
+                taxa_entrega_base=RestauranteService._validar_valor_nao_negativo(
+                    taxa_entrega_base if taxa_entrega_base is not None else 0,
+                    "taxa_entrega_base",
+                ),
+                taxa_entrega_por_km=RestauranteService._validar_valor_nao_negativo(
+                    taxa_entrega_por_km if taxa_entrega_por_km is not None else 0,
+                    "taxa_entrega_por_km",
+                ),
+                raio_entrega_km=RestauranteService._validar_raio(raio_entrega_km),
                 horario_funcionamento=horario_funcionamento,
             )
 
@@ -169,6 +201,10 @@ class RestauranteService:
                     ),
                 },
             }
+
+        except ValueError as exc:
+            db.session.rollback()
+            return {"success": False, "erro": str(exc), "status_code": 400}
 
         except IntegrityError:
             db.session.rollback()
@@ -262,13 +298,22 @@ class RestauranteService:
                 "descricao",
                 "valor_minimo_pedido",
                 "taxa_entrega_base",
+                "taxa_entrega_por_km",
                 "raio_entrega_km",
                 "horario_funcionamento",
             )
 
             for campo in campos_restaurante:
-                if campo in dados:
-                    setattr(restaurante, campo, dados[campo])
+                if campo not in dados:
+                    continue
+                valor = dados[campo]
+                if campo in {"taxa_entrega_base", "taxa_entrega_por_km"}:
+                    valor = RestauranteService._validar_valor_nao_negativo(
+                        valor if valor not in (None, "") else 0, campo
+                    )
+                elif campo == "raio_entrega_km":
+                    valor = RestauranteService._validar_raio(valor)
+                setattr(restaurante, campo, valor)
 
             endereco_dados = dados.get("endereco")
             endereco = None
@@ -322,11 +367,11 @@ class RestauranteService:
                 "erro": "Os dados informados já estão em uso.",
                 "status_code": 409,
             }
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as exc:
             db.session.rollback()
             return {
                 "success": False,
-                "erro": "Existem dados inválidos na configuração.",
+                "erro": str(exc) or "Existem dados inválidos na configuração.",
                 "status_code": 400,
             }
         except SQLAlchemyError:

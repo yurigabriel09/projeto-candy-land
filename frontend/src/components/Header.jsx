@@ -50,6 +50,8 @@ function Header() {
                                     Olá, {primeiroNome}
                                 </span>
                             )}
+
+                            <Link to="/minha-conta/dados-pessoais">Minha conta</Link>
                             <button onClick={handleSair} className="btn-contorno">
                                 Sair
                             </button>

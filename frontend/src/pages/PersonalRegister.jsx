@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { maskCep, maskCpf } from "../utils/masks";
 import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
+import AddressCoordinates from "../components/AddressCoordinates";
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
 import { createUser } from "../services/userService";
@@ -25,7 +26,9 @@ function PersonalRegister() {
         complement: "",
         neighborhood: "",
         city: "",
-        state: ""
+        state: "",
+        latitude: null,
+        longitude: null
     });
 
     const [cepError, setCepError] = useState("");
@@ -35,7 +38,7 @@ function PersonalRegister() {
     async function handleCepChange(event) {
         const value = maskCep(event.target.value);
 
-        setForm((currentForm) => ({ ...currentForm, cep: value }));
+        setForm((currentForm) => ({ ...currentForm, cep: value, latitude: null, longitude: null }));
         setCepError("");
 
         const cleanCep = value.replace(/\D/g, "");
@@ -46,7 +49,7 @@ function PersonalRegister() {
 
             const address = await getAddressByCep(cleanCep);
 
-            setForm((currentForm) => ({ ...currentForm, cep: value, address: address.address, neighborhood: address.neighborhood, city: address.city, state: address.state }));
+            setForm((currentForm) => ({ ...currentForm, cep: value, address: address.address, neighborhood: address.neighborhood, city: address.city, state: address.state, latitude: null, longitude: null }));
         } catch (error) { setCepError("CEP não encontrado."); } finally { setLoadingCep(false); }
     }
 
@@ -57,7 +60,12 @@ function PersonalRegister() {
         if (name === "cpf") { formattedValue = maskCpf(value); }
         if (name === "cep") { formattedValue = maskCep(value); }
 
-        setForm((currentForm) => ({ ...currentForm, [name]: formattedValue }));
+        const addressFields = ["address", "number", "cep", "neighborhood", "city", "state"];
+        setForm((currentForm) => ({
+            ...currentForm,
+            [name]: formattedValue,
+            ...(addressFields.includes(name) ? { latitude: null, longitude: null } : {}),
+        }));
     }
 
     async function handleSubmit(event) {
@@ -89,7 +97,9 @@ function PersonalRegister() {
                 complemento: form.complement.trim() || null,
                 bairro: form.neighborhood.trim(),
                 cidade: form.city.trim(),
-                estado: form.state.trim().toUpperCase()
+                estado: form.state.trim().toUpperCase(),
+                latitude: form.latitude,
+                longitude: form.longitude
             }
         };
 
@@ -201,6 +211,16 @@ function PersonalRegister() {
                                 <input id="state" name="state" type="text" value={form.state} onChange={handleChange} placeholder="SP" maxLength="2" />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="form-section">
+                        <h3>Localização para entrega</h3>
+                        <AddressCoordinates
+                            latitude={form.latitude}
+                            longitude={form.longitude}
+                            onChange={({ latitude, longitude }) => setForm((current) => ({ ...current, latitude, longitude }))}
+                            title="Coordenadas do endereço residencial"
+                        />
                     </div>
 
                     <button type="submit" className="primary-button" disabled={loading}>

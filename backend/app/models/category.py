@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from sqlalchemy import UniqueConstraint
 
 from app.database.database import db
+from app.utils.datetime_utils import utc_now_naive
 
 
 class Categoria(db.Model):
@@ -26,7 +25,7 @@ class Categoria(db.Model):
     url_capa = db.Column(db.String(255), nullable=True)
     ordem_exibicao = db.Column(db.Integer, nullable=False, default=0)
     ativa = db.Column(db.Boolean, nullable=False, default=True)
-    criada_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criada_em = db.Column(db.DateTime, nullable=False, default=utc_now_naive)
 
     def to_dict(self):
         return {

@@ -40,6 +40,17 @@ def atualizar_status(pedido_id):
     )
 
 
+@pedido_bp.route("/<int:pedido_id>/entrega/status", methods=["PUT"])
+@token_required
+def atualizar_status_entrega(pedido_id):
+    return OrderController.atualizar_status_entrega(
+        pedido_id,
+        request.get_json(silent=True) or {},
+        int(g.current_account_id),
+        g.current_account_type,
+    )
+
+
 @pedido_bp.route("/<int:pedido_id>/cancelar", methods=["POST"])
 @token_required
 def cancelar_pedido(pedido_id):

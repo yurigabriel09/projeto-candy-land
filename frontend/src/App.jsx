@@ -21,6 +21,7 @@ import Cart from "./pages/Cart";
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationGuard from "./components/RegistrationGuard";
+import DadosPessoais from "./pages/DadosPessoais";
 
 function App() {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -85,6 +86,15 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
+
+                            <Route
+                                path="/minha-conta/dados-pessoais"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <DadosPessoais />
+                                    </ProtectedRoute>
+                                }
+/>
 
                             <Route
                                 path="/business"

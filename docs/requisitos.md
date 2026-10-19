@@ -22,13 +22,16 @@
 - O endereço de entrega usado em pedido precisa pertencer ao cliente autenticado e estar completo/ativo.
 - Consulta de CEP pode preencher dados iniciais, mas não substitui validação de endereço e coordenadas.
 - Autocomplete, geocodificação, rota e distância Google Maps são funcionalidades diferentes e só podem ser marcadas como feitas quando houver implementação e teste correspondentes.
+- Para o cálculo inicial da taxa, cliente e restaurante precisam ter latitude e longitude válidas associadas aos seus endereços ativos. A localização do navegador só deve ser usada quando o dispositivo estiver no endereço que está sendo cadastrado; também é permitido informar as coordenadas manualmente. Contas antigas cujo endereço não possui coordenadas precisarão atualizar o cadastro quando a interface de gerenciamento de endereços (trabalho atribuído a outro integrante) estiver pronta.
 
 ## 4. Carrinho e criação do pedido
 
 - Um carrinho pertence a um único restaurante por vez; trocar de restaurante exige limpar/substituir os itens depois de confirmação do usuário.
 - Quantidade deve ser inteiro positivo; remover ou levar a quantidade a zero remove o item.
 - `localStorage` é apenas conveniência de interface, não fonte confiável para preço, taxa ou estoque.
-- Na criação do pedido, o servidor deve recarregar produtos/preços do banco, validar propriedade/estoque/disponibilidade e calcular subtotal/total. Não confiar em `delivery_fee`, desconto ou total enviados livremente pelo cliente.
+- Na criação do pedido, o servidor deve recarregar produtos/preços do banco, validar propriedade/estoque/disponibilidade e calcular subtotal/total. Não confiar em `delivery_fee`, desconto, taxa de plataforma ou total enviados livremente pelo cliente. Até existir motor de promoções/taxas configurado no servidor, `discount` e `platform_fee` são zero.
+- Para `DELIVERY`, o servidor calcula a distância em linha reta com Haversine entre o endereço comercial ativo do restaurante e o endereço ativo do cliente. A distância usada na cobrança é arredondada a duas casas decimais; a taxa é `taxa_entrega_base + distância_km × taxa_entrega_por_km`, arredondada para centavos com `ROUND_HALF_UP`.
+- O endereço de entrega deve estar dentro de `raio_entrega_km` do restaurante. Para entrega, coordenadas ausentes/inválidas ou raio não configurado devem interromper a criação do pedido com erro de validação; não se deve cobrar silenciosamente uma taxa incorreta. A taxa enviada no payload é ignorada. Para `PICKUP`, a taxa é sempre R$ 0,00 e a distância é nula.
 - Todo pedido deve pertencer a cliente autenticado e restaurante válido. Para `DELIVERY`, o endereço de destino precisa pertencer ao cliente e estar ativo; para `PICKUP`, o destino é o endereço ativo cadastrado pelo restaurante.
 - `order_type` aceita `DELIVERY` (entrega no endereço) ou `PICKUP` (retirada no restaurante). O tipo é persistido no pedido; seleção no carrinho não significa que o checkout esteja concluído.
 - Pedido `PICKUP` não cobra taxa de entrega e não cria fluxo logístico em `order_deliveries`. O endereço do restaurante é guardado temporariamente na coluna legada `orders.delivery_address_id` para não quebrar o schema atual. Uma renomeação para `destination_address_id` requer migração formal futura.
@@ -54,6 +57,8 @@
 - O estado comercial/operacional do pedido e o estado logístico da entrega são independentes. Detalhes, estados permitidos e cancelamentos estão em `docs/regras-pedidos.md`.
 - Não permitir alteração depois de `FINALIZADO` ou `CANCELADO`; não aceitar transições fora da máquina de estados.
 - A procura de motorista pode ocorrer durante a produção. Se motorista desistir durante a atribuição, a entrega pode voltar para `PROCURANDO` sem cancelar automaticamente o pedido.
+- A atualização logística exige token e, no MVP atual, conta `BUSINESS` do restaurante associado ao pedido; conta de cliente e outro restaurante recebem `403`. Um perfil específico de entregador continua pendente.
+- Ao finalizar a entrega, o serviço deve atualizar `order_deliveries.status`, `concluida_em`, `orders.delivered_at` e o status principal para `ENTREGUE` na mesma transação.
 - Mudanças relevantes de estado devem guardar ator/evento, estado anterior/novo e horário. A estrutura de histórico ainda precisa ser decidida/implementada.
 - `order_type=DELIVERY` e `order_type=PICKUP` são os valores suportados para criação de pedido. A retirada usa o endereço ativo do restaurante, não cria `order_deliveries` e não pode receber atualização logística. O fluxo de checkout frontend ainda está desabilitado e não envia pedidos.
 
