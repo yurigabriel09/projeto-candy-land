@@ -2032,4 +2032,333 @@ select:focus-visible {
     border-radius: var(--raio);
     border: 1px solid var(--borda);
     margin-bottom: 10px;
+.conta-page {
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-dark);
+}
+
+.conta-topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--color-tertiary);
+}
+
+.conta-topbar-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.conta-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.conta-logo-icone {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: var(--gradiente);
+    color: #fff;
+    font-weight: 700;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--sombra-forte);
+}
+
+.conta-logo-texto {
+    font-family: "Pacifico", cursive;
+    font-size: 30px;
+    color: var(--rosa);
+}
+
+.conta-voltar {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--rosa);
+}
+
+.conta-layout {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 36px;
+    align-items: start;
+}
+
+/* ---------- Menu lateral ---------- */
+
+.conta-menu {
+    background: var(--color-dark);
+    color: var(--color-bg);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(75, 30, 30, 0.25);
+}
+
+.conta-menu-perfil {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.conta-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--gradiente);
+    color: #fff;
+    font-weight: 700;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.conta-avatar-grande {
+    width: 100px;
+    height: 100px;
+    font-size: 34px;
+    box-shadow: var(--sombra-forte);
+}
+
+.conta-menu-nome {
+    display: block;
+    color: #fff;
+    font-size: 18px;
+}
+
+.conta-menu-sub {
+    display: block;
+    margin-top: 2px;
+    color: var(--color-tertiary);
+    opacity: 0.85;
+    font-size: 13px;
+}
+
+.conta-menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 22px 0;
+}
+
+.conta-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--color-tertiary);
+    font-weight: 700;
+    font-size: 16px;
+    text-align: left;
+}
+
+.conta-menu-item:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.conta-menu-item-ativo {
+    background: #fff;
+    color: var(--color-dark);
+}
+
+.conta-menu-numero {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.conta-menu-item-ativo .conta-menu-numero {
+    background: var(--gradiente);
+    color: #fff;
+}
+
+.conta-menu-sair {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 22px 0 4px;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--color-tertiary);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.conta-menu-sair:hover {
+    color: #fff;
+}
+
+/* ---------- Conteúdo ---------- */
+
+.conta-eyebrow {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--rosa);
+}
+
+.conta-titulo {
+    margin: 0 0 8px;
+    font-size: clamp(32px, 4vw, 46px);
+    color: var(--color-dark);
+}
+
+.conta-subtitulo {
+    margin: 0 0 34px;
+    font-size: 17px;
+    color: var(--color-dark);
+    opacity: 0.65;
+}
+
+.conta-card {
+    background: #fff;
+    border: 1px solid var(--color-tertiary);
+    border-radius: 32px;
+    padding: 40px;
+}
+
+.conta-foto {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-bottom: 32px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--color-tertiary);
+}
+
+.conta-foto-textos strong {
+    display: block;
+    font-size: 20px;
+}
+
+.conta-foto-textos p {
+    margin: 4px 0 14px;
+    font-size: 15px;
+    opacity: 0.6;
+}
+
+.conta-foto .btn-contorno:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.conta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 24px;
+}
+
+.conta-campo-cheio {
+    grid-column: 1 / -1;
+}
+
+.conta-campo label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.conta-campo input {
+    width: 100%;
+    height: 56px;
+    padding: 0 22px;
+    border: 2px solid var(--color-tertiary);
+    border-radius: 18px;
+    background: var(--color-bg);
+    color: var(--color-dark);
+    font-size: 17px;
+    font-family: inherit;
+}
+
+.conta-campo input:focus {
+    outline: none;
+    border-color: var(--rosa);
+    box-shadow: 0 0 0 3px rgba(244, 53, 110, 0.18);
+}
+
+.conta-campo input[readonly] {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+.conta-campo small {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.6;
+}
+
+.conta-acoes {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.conta-salvar {
+    width: auto;
+    height: 56px;
+    margin-top: 0;
+    padding: 0 36px;
+    font-size: 17px;
+}
+
+@media (max-width: 900px) {
+    .conta-layout {
+        grid-template-columns: 1fr;
+        padding-top: 32px;
+    }
+}
+
+@media (max-width: 640px) {
+    .conta-card {
+        padding: 24px;
+    }
+
+    .conta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .conta-foto {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .conta-acoes {
+        justify-content: stretch;
+    }
+
+    .conta-salvar {
+        width: 100%;
+    }
 }
