@@ -2024,6 +2024,14 @@ select:focus-visible {
     margin-top: 4px;
 }
 
+.product-image-preview {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: var(--raio);
+    border: 1px solid var(--borda);
+    margin-bottom: 10px;
 .conta-page {
     min-height: 100vh;
     background: var(--color-bg);

@@ -39,3 +39,11 @@ def deletar_produto(produto_id):
     return ProductController.deletar_produto(
         produto_id, int(g.current_account_id), g.current_account_type
     )
+
+@produto_bp.route("/<int:produto_id>/imagem", methods=["POST"])
+@token_required
+def enviar_imagem_produto(produto_id):
+    arquivo = request.files.get("imagem")
+    return ProductController.enviar_imagem(
+        produto_id, arquivo, int(g.current_account_id), g.current_account_type
+    )

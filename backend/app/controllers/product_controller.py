@@ -185,3 +185,29 @@ class ProductController:
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
         return make_response("", 204)
+
+
+    @staticmethod
+    def enviar_imagem(produto_id, arquivo, restaurant_id, tipo_conta):
+        if tipo_conta != "BUSINESS":
+            return make_response(
+                jsonify(
+                    {"erro": "Apenas contas de restaurante podem enviar imagens de produtos."}
+                ),
+                403,
+            )
+
+        if arquivo is None or not arquivo.filename:
+            return make_response(
+                jsonify({"erro": "Nenhuma imagem enviada. Use o campo 'imagem'."}), 400
+            )
+
+        resultado = ProductService.atualizar_imagem(produto_id, restaurant_id, arquivo)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "produto": resultado["dados"]}),
+            200,
+        )

@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { createProduct, getProduct, updateProduct } from "../services/productService";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { createProduct, getProduct, updateProduct, uploadProductImage } from "../services/productService";
 import { getCategories } from "../services/categoryService";
+import { resolverImagemUrl } from "../utils/imageUrl";
+
+const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
+const TAMANHO_MAXIMO = 2 * 1024 * 1024;
 
 function ProductForm() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { produtoId } = useParams();
     const modoEdicao = Boolean(produtoId);
 
@@ -21,7 +26,15 @@ function ProductForm() {
         disponivel: true
     });
     const [loading, setLoading] = useState(false);
-    const [erro, setErro] = useState("");
+    const [erro, setErro] = useState(location.state?.aviso || "");
+
+    const [arquivoImagem, setArquivoImagem] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState("");
+    const [imagemAtual, setImagemAtual] = useState(null);
+
+    useEffect(() => {
+        if (location.state?.aviso) setErro(location.state.aviso);
+    }, [location.state]);
 
     useEffect(() => {
         async function carregarCategorias() {
@@ -51,6 +64,7 @@ function ProductForm() {
                     categoria_id: String(produto.id_categoria || ""),
                     disponivel: Boolean(produto.produto_disponivel)
                 });
+                setImagemAtual(produto.imagem_url || null);
             } catch (error) {
                 setErro("Não foi possível carregar o produto.");
             } finally {
@@ -60,12 +74,48 @@ function ProductForm() {
         carregarProduto();
     }, [modoEdicao, produtoId]);
 
+    useEffect(() => {
+        if (!arquivoImagem) {
+            setPreviewUrl("");
+            return;
+        }
+        const url = URL.createObjectURL(arquivoImagem);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [arquivoImagem]);
+
     function handleChange(event) {
         const { name, value, type, checked } = event.target;
         setForm((current) => ({
             ...current,
             [name]: type === "checkbox" ? checked : value
         }));
+    }
+
+    function handleImagemChange(event) {
+        const arquivo = event.target.files?.[0];
+        setErro("");
+
+        if (!arquivo) {
+            setArquivoImagem(null);
+            return;
+        }
+
+        if (!TIPOS_ACEITOS.includes(arquivo.type)) {
+            setErro("Formato inválido. Use JPG, PNG ou WEBP.");
+            event.target.value = "";
+            setArquivoImagem(null);
+            return;
+        }
+
+        if (arquivo.size > TAMANHO_MAXIMO) {
+            setErro("A imagem passa de 2 MB. Escolha um arquivo menor.");
+            event.target.value = "";
+            setArquivoImagem(null);
+            return;
+        }
+
+        setArquivoImagem(arquivo);
     }
 
     async function handleSubmit(event) {
@@ -87,11 +137,30 @@ function ProductForm() {
 
         try {
             setLoading(true);
-            if (modoEdicao) {
-                await updateProduct(produtoId, dados);
-            } else {
-                await createProduct(dados);
+
+            const produtoSalvo = modoEdicao
+                ? await updateProduct(produtoId, dados)
+                : await createProduct(dados);
+
+            if (arquivoImagem) {
+                try {
+                    await uploadProductImage(produtoSalvo.id_produto, arquivoImagem);
+                } catch (erroImagem) {
+                    const aviso = `Produto salvo, mas a foto não foi enviada: ${erroImagem.message}`;
+
+                    if (modoEdicao) {
+                        setErro(aviso);
+                    } else {
+                        // O produto já existe: vai para a edição, para não criar um duplicado ao tentar de novo
+                        setArquivoImagem(null);
+                        navigate(`/business/products/${produtoSalvo.id_produto}/edit`, {
+                            state: { aviso }
+                        });
+                    }
+                    return;
+                }
             }
+
             navigate("/business");
         } catch (error) {
             setErro(error.message || "Erro ao salvar produto.");
@@ -128,6 +197,8 @@ function ProductForm() {
             </main>
         );
     }
+
+    const imagemExibida = previewUrl || resolverImagemUrl(imagemAtual);
 
     return (
         <main className="dashboard-page">
@@ -171,6 +242,24 @@ function ProductForm() {
                                 <option key={c.id} value={c.id}>{c.nome}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="form-field">
+                        <label htmlFor="imagem">Foto do produto</label>
+                        {imagemExibida && (
+                            <img
+                                className="product-image-preview"
+                                src={imagemExibida}
+                                alt="Pré-visualização do produto"
+                            />
+                        )}
+                        <input
+                            id="imagem"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleImagemChange}
+                        />
+                        <small className="field-message">JPG, PNG ou WEBP, até 2 MB.</small>
                     </div>
 
                     <div className="form-field form-checkbox">

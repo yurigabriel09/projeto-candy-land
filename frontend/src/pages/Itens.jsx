@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import { getProducts } from "../services/productService";
 import { getRestaurants } from "../services/restaurantService";
+import { resolverImagemUrl } from "../utils/imageUrl";
 
 const EMOJIS_PRODUTO = ["🍰", "🍫", "🍭", "🧁", "🍮", "🍪", "🍩", "🍬"];
 
@@ -11,6 +14,11 @@ function formatarPreco(valor) {
 }
 
 function Itens() {
+  const navigate = useNavigate();
+  const { autenticado, dadosAutenticacao } = useAuth();
+  const { adicionarItem } = useCart();
+  const compradorLogado = autenticado && dadosAutenticacao?.tipo_conta === "PERSONAL";
+
   const [parametros, setParametros] = useSearchParams();
   const lojaAtiva = parametros.get("loja");
   const buscaInicial = parametros.get("busca") || "";
@@ -46,6 +54,15 @@ function Itens() {
   function nomeDaLoja(idRestaurante) {
     const loja = lojas.find((l) => l.id === idRestaurante);
     return loja ? loja.nome : "Loja Candyland";
+  }
+
+  function handleAdicionar(produto) {
+    if (!compradorLogado) {
+      navigate("/login");
+      return;
+    }
+
+    adicionarItem(produto, produto.id_restaurante, nomeDaLoja(produto.id_restaurante));
   }
 
   function trocarLoja(id) {
@@ -165,7 +182,7 @@ function Itens() {
               <article key={produto.id_produto} className="card-produto">
                 <div className="card-produto-capa">
                   {produto.imagem_url ? (
-                    <img src={produto.imagem_url} alt={produto.nome_produto} />
+                    <img src={resolverImagemUrl(produto.imagem_url)} alt={produto.nome_produto} />
                   ) : (
                     EMOJIS_PRODUTO[i % EMOJIS_PRODUTO.length]
                   )}
@@ -188,6 +205,7 @@ function Itens() {
                     <button
                       className="btn-principal btn-pequeno"
                       disabled={!produto.produto_disponivel}
+                      onClick={() => handleAdicionar(produto)}
                     >
                       Adicionar
                     </button>

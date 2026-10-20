@@ -63,3 +63,18 @@ export async function deleteProduct(id) {
     if (!response.ok) throw new Error("Erro ao remover produto");
     return true;
 }
+
+export async function uploadProductImage(id, arquivo) {
+    const formData = new FormData();
+    formData.append("imagem", arquivo);
+
+    const response = await fetch(`${API_URL}/${id}/imagem`, {
+        method: "POST",
+        // Sem Content-Type: o navegador define sozinho, com o boundary do multipart
+        headers: { ...authHeaders() },
+        body: formData,
+    });
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resultado.erro || "Erro ao enviar imagem");
+    return resultado.produto;
+}

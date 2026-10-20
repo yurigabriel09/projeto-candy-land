@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import DashboardSidebar from "../components/DashboardSidebar";
+import { resolverImagemUrl } from "../utils/imageUrl";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -170,6 +171,13 @@ function BusinessHome() {
                         <div className="product-grid">
                             {previa.map((produto) => (
                                 <div className="product-card" key={produto.id_produto}>
+                                    {produto.imagem_url && (
+                                        <img
+                                            className="product-image-preview"
+                                            src={resolverImagemUrl(produto.imagem_url)}
+                                            alt={produto.nome_produto}
+                                        />
+                                    )}
                                     <h3>{produto.nome_produto}</h3>
                                     <p className="product-price">
                                         {moeda.format(produto.preco_produto ?? 0)}

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
 import { useCart } from "../context/CartContext";
+import { resolverImagemUrl } from "../utils/imageUrl";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -75,7 +76,7 @@ function Restaurant() {
                                         <article className="card-produto" key={produto.id_produto}>
                                             <div className="card-produto-capa">
                                                 {produto.imagem_url ? (
-                                                    <img src={produto.imagem_url} alt={produto.nome_produto} />
+                                                    <img src={resolverImagemUrl(produto.imagem_url)} alt={produto.nome_produto} />
                                                 ) : <span aria-hidden="true">🍰</span>}
                                                 {!produto.produto_disponivel && <span className="selo-indisponivel">Indisponível</span>}
                                             </div>
