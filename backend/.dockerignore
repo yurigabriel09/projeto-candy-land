@@ -1,0 +1,25 @@
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+
+instance/
+*.db
+*.sqlite3
+
+# Outros
+tests/
+Dockerfile
+.dockerignore
+.git
+.vscode/
