@@ -7,6 +7,9 @@ import PhoneInput from "../components/PhoneInput";
 import { countries } from "../utils/countries";
 
 const API_URL = "http://127.0.0.1:5000/auth";
+const ALLOW_DUPLICATE_PHONE = ["true", "1", "yes", "on"].includes(
+    String(import.meta.env.VITE_ALLOW_DUPLICATE_PHONE || "false").trim().toLowerCase()
+);
 
 function Login({ audiencia = "PERSONAL" }) {
     const { entrar } = useAuth();
@@ -166,12 +169,18 @@ function Login({ audiencia = "PERSONAL" }) {
             }
 
             if (resultado.dados?.tipo_conta && resultado.dados.tipo_conta !== audiencia) {
-                setErro(
-                    audiencia === "BUSINESS"
-                        ? "Essa conta é de cliente. Use a área do cliente para entrar."
-                        : "Essa conta é de restaurante parceiro. Use a área de parceiros para entrar."
-                );
-                return;
+                // Em modo de teste, permita entrar na conta que realmente pertence
+                // ao e-mail verificado, mesmo que o login tenha sido aberto pela
+                // área do outro tipo de conta. Isso não cria uma segunda conta:
+                // para isso, o cadastro novo precisa usar outro e-mail verificado.
+                if (!ALLOW_DUPLICATE_PHONE) {
+                    setErro(
+                        audiencia === "BUSINESS"
+                            ? "Essa conta é de cliente. Use a área do cliente para entrar."
+                            : "Essa conta é de restaurante parceiro. Use a área de parceiros para entrar."
+                    );
+                    return;
+                }
             }
 
             if (resultado.dados?.token) {

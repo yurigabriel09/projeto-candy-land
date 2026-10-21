@@ -2032,6 +2032,7 @@ select:focus-visible {
     border-radius: var(--raio);
     border: 1px solid var(--borda);
     margin-bottom: 10px;
+}
 .conta-page {
     min-height: 100vh;
     background: var(--color-bg);

@@ -391,3 +391,10 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `scripts/gerenciar_pr.cmd` e `scripts/gerenciar_pr.ps1` — localiza/instala o GitHub CLI, verifica ou inicia autenticação, cria PR para `dev`, consulta status e permite merge explícito após revisão.
 - `scripts/gerar_zip_limpo.cmd` e `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
 - `limpar_e_gerar_zip.cmd` e `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
+
+
+### Compartilhar celular entre conta pessoal e restaurante (desenvolvimento)
+
+No `backend/.env`, configure `ALLOW_DUPLICATE_PHONE=true` e reinicie completamente o backend. Com essa opção ativa, o celular pode ser usado por uma conta `PERSONAL` e uma conta `BUSINESS`; o e-mail verificado identifica qual conta está sendo acessada. Para criar uma nova conta pessoal, use um e-mail diferente do e-mail cadastrado no restaurante. Se o e-mail informado já pertence ao restaurante, o login continuará identificando a conta como `BUSINESS`, pois o e-mail é o identificador da conta neste modo.
+
+Valores aceitos como verdadeiros: `true`, `1`, `yes` e `on`. Desative essa opção em produção.
