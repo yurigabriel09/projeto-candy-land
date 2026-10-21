@@ -1,3 +1,4 @@
+import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -525,20 +526,27 @@ class AuthService:
                         "status_code": 400,
                     }
 
-                usuario_existente = Usuario.query.filter_by(
-                    telefone=telefone_normalizado
-                ).first()
+                permitir_telefone_compartilhado = (
+                    current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
+                    or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
+                    in ("true", "1", "yes", "on")
+                )
 
-                restaurante_existente = Restaurante.query.filter_by(
-                    telefone=telefone_normalizado
-                ).first()
+                if not permitir_telefone_compartilhado:
+                    usuario_existente = Usuario.query.filter_by(
+                        telefone=telefone_normalizado
+                    ).first()
 
-                if usuario_existente or restaurante_existente:
-                    return {
-                        "success": False,
-                        "erro": ("Este celular já está vinculado a outra conta."),
-                        "status_code": 409,
-                    }
+                    restaurante_existente = Restaurante.query.filter_by(
+                        telefone=telefone_normalizado
+                    ).first()
+
+                    if usuario_existente or restaurante_existente:
+                        return {
+                            "success": False,
+                            "erro": ("Este celular já está vinculado a outra conta."),
+                            "status_code": 409,
+                        }
 
             # ---------------------------------------------------------
             # 5. Criamos a tentativa de autenticação.
@@ -630,20 +638,38 @@ class AuthService:
     @staticmethod
     def _finalizar_autenticacao(tentativa):
 
-        if current_app.config.get("ALLOW_DUPLICATE_PHONE"):
-            # Modo desenvolvimento: telefone pode se repetir entre contas,
-            # então só o e-mail identifica de forma confiável qual conta é.
+        # O .env é a fonte de configuração em desenvolvimento. A leitura direta
+        # do ambiente também cobre processos que tenham carregado Config antes
+        # de a variável ser definida no ambiente de execução.
+        permitir_telefone_compartilhado = (
+            current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
+            or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
+            in ("true", "1", "yes", "on")
+        )
+
+        if permitir_telefone_compartilhado:
+            # Modo de desenvolvimento: telefone pode se repetir entre contas.
+            # Identificamos exclusivamente pelo e-mail verificado; NUNCA usamos
+            # o telefone para escolher entre PERSONAL e BUSINESS neste modo.
+            email_verificado = (tentativa.email or "").strip().lower()
             usuarios = (
-                {u.id: u for u in Usuario.query.filter_by(email=tentativa.email).all()}
-                if tentativa.email
+                {
+                    u.id: u
+                    for u in Usuario.query.filter(
+                        db.func.lower(Usuario.email) == email_verificado
+                    ).all()
+                }
+                if email_verificado
                 else {}
             )
             restaurantes = (
                 {
                     r.id: r
-                    for r in Restaurante.query.filter_by(email=tentativa.email).all()
+                    for r in Restaurante.query.filter(
+                        db.func.lower(Restaurante.email) == email_verificado
+                    ).all()
                 }
-                if tentativa.email
+                if email_verificado
                 else {}
             )
         else:

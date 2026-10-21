@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal, InvalidOperation
 
 from app.database.database import db
@@ -98,7 +99,11 @@ class RestauranteService:
         try:
             telefone_normalizado = telefone
 
-            if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
+            if not (
+                current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
+                or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
+                in ("true", "1", "yes", "on")
+            ):
                 telefone_em_uso = (
                     Usuario.query.filter_by(telefone=telefone_normalizado).first()
                     or Restaurante.query.filter_by(

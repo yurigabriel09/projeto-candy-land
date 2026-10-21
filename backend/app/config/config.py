@@ -11,7 +11,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ALLOW_DUPLICATE_PHONE = (
-        os.getenv("ALLOW_DUPLICATE_PHONE", "false").lower() == "true"
+        os.getenv("ALLOW_DUPLICATE_PHONE", "false").strip().lower()
+        in ("true", "1", "yes", "on")
     )
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-troque-em-producao")
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))

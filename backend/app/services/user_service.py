@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 from app.database.database import db
@@ -69,7 +70,11 @@ class UserService:
         try:
             telefone_normalizado = normalizar_telefone(telefone)
 
-            if not current_app.config.get("ALLOW_DUPLICATE_PHONE"):
+            if not (
+                current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
+                or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
+                in ("true", "1", "yes", "on")
+            ):
                 telefone_em_uso = (
                     Usuario.query.filter_by(telefone=telefone_normalizado).first()
                     or Restaurante.query.filter_by(
