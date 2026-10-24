@@ -393,8 +393,10 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `limpar_e_gerar_zip.cmd` e `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
 
 
-### Compartilhar celular entre conta pessoal e restaurante (desenvolvimento)
+### Compartilhar celular entre conta pessoal e restaurante (somente desenvolvimento/testes)
 
-No `backend/.env`, configure `ALLOW_DUPLICATE_PHONE=true` e reinicie completamente o backend. Com essa opção ativa, o celular pode ser usado por uma conta `PERSONAL` e uma conta `BUSINESS`; o e-mail verificado identifica qual conta está sendo acessada. Para criar uma nova conta pessoal, use um e-mail diferente do e-mail cadastrado no restaurante. Se o e-mail informado já pertence ao restaurante, o login continuará identificando a conta como `BUSINESS`, pois o e-mail é o identificador da conta neste modo.
+No `backend/.env`, use `APP_ENV=development` e `ALLOW_DUPLICATE_PHONE=true`; depois reinicie o backend. Assim, uma conta `PERSONAL` e uma conta `BUSINESS` podem compartilhar o mesmo celular. O e-mail verificado continua único globalmente e é o que define a conta autenticada.
 
-Valores aceitos como verdadeiros: `true`, `1`, `yes` e `on`. Desative essa opção em produção.
+**Produção:** configure `APP_ENV=production`. Nesse ambiente o backend bloqueia a duplicidade mesmo que `ALLOW_DUPLICATE_PHONE=true` tenha sido definido por engano. Se `APP_ENV` não estiver configurado, o backend assume `production` por segurança. Valores aceitos para a flag booleana: `true`, `1`, `yes` e `on`.
+
+A regra é aplicada ao cadastro por e-mail/WhatsApp, ao cadastro via OAuth e à alteração do telefone de um usuário. A validação do e-mail é global entre clientes e restaurantes.
