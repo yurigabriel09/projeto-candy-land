@@ -36,6 +36,17 @@ export async function getRestaurantProducts(id) {
   if (!response.ok) throw new Error(resultado.erro || "Erro ao buscar produtos do restaurante");
   return resultado.dados;
 }
+
+export async function getRestaurantProductsManagement(id) {
+  const response = await fetch(`${API_URL}/${id}/produtos/gerenciamento`, {
+    headers: authHeaders(),
+  });
+  const resultado = await response.json();
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Erro ao buscar estoque do restaurante");
+  }
+  return resultado.dados;
+}
 function getToken() {
   try {
     const raw = localStorage.getItem("candyland_auth");

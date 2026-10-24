@@ -18,8 +18,13 @@ class ProductController:
         )
 
     @staticmethod
-    def buscar_produto(produto_id):
-        resultado = ProductService.buscar_produto(produto_id)
+    def buscar_produto(produto_id, restaurant_id, tipo_conta):
+        if tipo_conta != "BUSINESS":
+            return make_response(
+                jsonify({"erro": "Apenas restaurantes podem consultar os detalhes internos do produto."}),
+                403,
+            )
+        resultado = ProductService.buscar_produto(produto_id, restaurant_id)
         if not resultado["success"]:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]

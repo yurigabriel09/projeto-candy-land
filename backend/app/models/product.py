@@ -21,6 +21,21 @@ class Produto(db.Model):
     created_at = Column(DateTime, nullable=False, default=utc_now_naive)
     updated_at = Column(DateTime, nullable=True, onupdate=utc_now_naive)
 
+    def to_catalog_dict(self):
+        """Representação pública do catálogo sem quantidade interna de estoque."""
+        return {
+            "id_produto": self.id,
+            "id_restaurante": self.restaurant_id,
+            "id_categoria": self.category_id,
+            "nome_produto": self.name,
+            "descricao_produto": self.description,
+            "preco_produto": float(self.price) if self.price is not None else None,
+            "produto_disponivel": self.is_available,
+            "produto_importado": self.is_imported,
+            "permite_personalizacao": self.allows_customization,
+            "imagem_url": self.image_url,
+        }
+
     def to_dict(self):
         return {
             "id_produto": self.id,
