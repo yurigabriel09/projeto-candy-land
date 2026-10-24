@@ -49,11 +49,15 @@ class UserController:
 
     @staticmethod
     def atualizar_usuario(user_id, dados):
+        if "email" in dados or "telefone" in dados:
+            return make_response(
+                jsonify({"erro": "Alteração de e-mail/telefone exige fluxo de verificação próprio."}),
+                400,
+            )
         resultado = UserService.atualizar_usuario(
             user_id,
             nome_completo=dados.get("nome_completo"),
-            email=dados.get("email"),
-            telefone=dados.get("telefone"),
+            # Alterações de e-mail/telefone exigem fluxo de verificação próprio.
             data_nascimento=dados.get("data_nascimento"),
         )
         if not resultado["success"]:

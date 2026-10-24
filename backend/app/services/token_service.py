@@ -35,5 +35,8 @@ class TokenService:
         Lanca jwt.ExpiredSignatureError ou jwt.PyJWTError caso invalido.
         """
         return jwt.decode(
-            token, current_app.config["SECRET_KEY"], algorithms=[TokenService.ALGORITHM]
+            token,
+            current_app.config["SECRET_KEY"],
+            algorithms=[TokenService.ALGORITHM],
+            options={"require": ["exp", "sub", "tipo_conta"]},
         )

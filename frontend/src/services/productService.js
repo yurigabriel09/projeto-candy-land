@@ -27,9 +27,9 @@ export async function getProductsByRestaurant(restauranteId) {
 }
 
 export async function getProduct(id) {
-    const response = await fetch(`${API_URL}/${id}`);
-    if (!response.ok) throw new Error("Produto não encontrado");
-    const resultado = await response.json();
+    const response = await fetch(`${API_URL}/${id}`, { headers: authHeaders() });
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resultado.erro || "Produto não encontrado");
     return resultado.produto;
 }
 

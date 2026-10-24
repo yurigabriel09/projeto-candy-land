@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import DashboardSidebar from "../components/DashboardSidebar";
 import { resolverImagemUrl } from "../utils/imageUrl";
-import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
+import { getRestaurant, getRestaurantProductsManagement } from "../services/restaurantService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -42,7 +42,7 @@ function BusinessHome() {
         try {
             const [loja, itens] = await Promise.all([
                 getRestaurant(dadosAutenticacao.id),
-                getRestaurantProducts(dadosAutenticacao.id),
+                getRestaurantProductsManagement(dadosAutenticacao.id),
             ]);
             setRestaurante(loja);
             setStatusVisual(loja.status);
@@ -81,7 +81,7 @@ function BusinessHome() {
         );
     }
 
-    const primeiroNome = (restaurante.nome_responsavel || restaurante.nome || "").split(" ")[0];
+    const primeiroNome = (restaurante.nome || "").split(" ")[0];
     const hoje = new Date().toLocaleDateString("pt-BR", {
         weekday: "long",
         day: "2-digit",

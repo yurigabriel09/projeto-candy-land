@@ -31,6 +31,37 @@ class Restaurante(db.Model):
     ativo = db.Column(db.Boolean, default=True)
     dt_cadastro = db.Column(db.DateTime, nullable=False, default=utc_now_naive)
 
+
+    def to_catalog_dict(self):
+        """Representação pública de restaurante, sem dados pessoais/comerciais privados."""
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "descricao": self.descricao,
+            "valor_minimo_pedido": (
+                float(self.valor_minimo_pedido)
+                if self.valor_minimo_pedido is not None
+                else None
+            ),
+            "taxa_entrega_base": (
+                float(self.taxa_entrega_base)
+                if self.taxa_entrega_base is not None
+                else None
+            ),
+            "taxa_entrega_por_km": (
+                float(self.taxa_entrega_por_km)
+                if self.taxa_entrega_por_km is not None
+                else None
+            ),
+            "raio_entrega_km": (
+                float(self.raio_entrega_km)
+                if self.raio_entrega_km is not None
+                else None
+            ),
+            "horario_funcionamento": self.horario_funcionamento,
+            "status": self.status,
+        }
+
     def to_dict(self):
         return {
             "id": self.id,

@@ -52,7 +52,7 @@ class RestauranteService:
             return {
                 "success": True,
                 "mensagem": "Lista de restaurantes cadastrados:",
-                "dados": [restaurante.to_dict() for restaurante in restaurantes],
+                "dados": [restaurante.to_catalog_dict() for restaurante in restaurantes],
             }
         except SQLAlchemyError:
             return {
@@ -74,7 +74,7 @@ class RestauranteService:
             return {
                 "success": True,
                 "mensagem": "Restaurante encontrado:",
-                "dados": restaurante.to_dict(),
+                "dados": restaurante.to_catalog_dict(),
             }
         except SQLAlchemyError:
             return {
@@ -436,7 +436,7 @@ class RestauranteService:
             }
 
     @staticmethod
-    def listar_produtos_restaurante(restaurante_id):
+    def listar_produtos_restaurante(restaurante_id, incluir_estoque=False):
         from app.models.product import Produto
 
         try:
@@ -455,7 +455,10 @@ class RestauranteService:
             return {
                 "success": True,
                 "mensagem": "Produtos do restaurante:",
-                "dados": [produto.to_dict() for produto in produtos],
+                "dados": [
+                    produto.to_dict() if incluir_estoque else produto.to_catalog_dict()
+                    for produto in produtos
+                ],
             }
         except SQLAlchemyError:
             return {
