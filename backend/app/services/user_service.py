@@ -1,11 +1,15 @@
-import os
 from datetime import date
 
+from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
+from app.services.account_identity_service import (
+    email_esta_em_uso,
+    telefone_esta_em_uso,
+)
 from app.services.token_service import TokenService
 from app.utils.formatter import normalizar_telefone
 from flask import current_app
@@ -68,26 +72,6 @@ class UserService:
         endereco=None,
     ):
         try:
-            telefone_normalizado = normalizar_telefone(telefone)
-
-            if not (
-                current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
-                or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
-                in ("true", "1", "yes", "on")
-            ):
-                telefone_em_uso = (
-                    Usuario.query.filter_by(telefone=telefone_normalizado).first()
-                    or Restaurante.query.filter_by(
-                        telefone=telefone_normalizado
-                    ).first()
-                )
-                if telefone_em_uso:
-                    return {
-                        "success": False,
-                        "erro": "Telefone já cadastrado.",
-                        "status_code": 409,
-                    }
-
             if not tentativa_id:
                 return {
                     "success": False,
@@ -95,7 +79,7 @@ class UserService:
                     "status_code": 400,
                 }
 
-            tentativa = TentativaAutenticacao.query.get(tentativa_id)
+            tentativa = db.session.get(TentativaAutenticacao, tentativa_id)
 
             if not tentativa:
                 return {
@@ -115,10 +99,36 @@ class UserService:
                     "status_code": 401,
                 }
 
-            # usa os dados já validados na tentativa como fonte de verdade,
-            # em vez de confiar cegamente no que o front-end mandou
-            email = tentativa.email or email
+            # Usa os dados verificados na tentativa como fonte de verdade.
+            email = (tentativa.email or email or "").strip().lower()
             telefone = tentativa.telefone or telefone
+
+            if not email:
+                return {
+                    "success": False,
+                    "erro": "E-mail verificado é obrigatório para criar a conta.",
+                    "status_code": 400,
+                }
+
+            # O e-mail deve identificar no máximo uma conta em toda a plataforma,
+            # não apenas dentro da tabela de clientes.
+            if email_esta_em_uso(email):
+                return {
+                    "success": False,
+                    "erro": "E-mail já cadastrado em outra conta.",
+                    "status_code": 409,
+                }
+
+            telefone_normalizado = normalizar_telefone(telefone)
+            if (
+                not telefone_compartilhado_permitido(current_app.config)
+                and telefone_esta_em_uso(telefone_normalizado)
+            ):
+                return {
+                    "success": False,
+                    "erro": "Telefone já cadastrado.",
+                    "status_code": 409,
+                }
 
             if data_nascimento:
                 data_nascimento = date.fromisoformat(data_nascimento)
@@ -205,9 +215,30 @@ class UserService:
             if nome_completo is not None:
                 usuario.nome_completo = nome_completo
             if email is not None:
-                usuario.email = email
+                email_normalizado = email.strip().lower()
+                if email_esta_em_uso(
+                    email_normalizado, usuario_id_ignorar=usuario.id
+                ):
+                    return {
+                        "success": False,
+                        "erro": "E-mail já cadastrado em outra conta.",
+                        "status_code": 409,
+                    }
+                usuario.email = email_normalizado
             if telefone is not None:
-                usuario.telefone = normalizar_telefone(telefone)
+                telefone_normalizado = normalizar_telefone(telefone)
+                if (
+                    not telefone_compartilhado_permitido(current_app.config)
+                    and telefone_esta_em_uso(
+                        telefone_normalizado, usuario_id_ignorar=usuario.id
+                    )
+                ):
+                    return {
+                        "success": False,
+                        "erro": "Telefone já cadastrado em outra conta.",
+                        "status_code": 409,
+                    }
+                usuario.telefone = telefone_normalizado
             if data_nascimento is not None:
                 data_nascimento = date.fromisoformat(data_nascimento)
                 usuario.data_nascimento = data_nascimento

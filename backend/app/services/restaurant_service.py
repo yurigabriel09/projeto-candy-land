@@ -1,12 +1,17 @@
-import os
 from decimal import Decimal, InvalidOperation
 
+from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
+from app.services.account_identity_service import (
+    email_esta_em_uso,
+    telefone_esta_em_uso,
+)
 from app.services.token_service import TokenService
+from app.utils.formatter import normalizar_telefone
 from flask import current_app
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -97,25 +102,6 @@ class RestauranteService:
         horario_funcionamento=None,
     ):
         try:
-            telefone_normalizado = telefone
-
-            if not (
-                current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
-                or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
-                in ("true", "1", "yes", "on")
-            ):
-                telefone_em_uso = (
-                    Usuario.query.filter_by(telefone=telefone_normalizado).first()
-                    or Restaurante.query.filter_by(
-                        telefone=telefone_normalizado
-                    ).first()
-                )
-                if telefone_em_uso:
-                    return {
-                        "success": False,
-                        "erro": "Telefone já cadastrado.",
-                        "status_code": 409,
-                    }
             if not tentativa_id:
                 return {
                     "success": False,
@@ -123,7 +109,7 @@ class RestauranteService:
                     "status_code": 400,
                 }
 
-            tentativa = TentativaAutenticacao.query.get(tentativa_id)
+            tentativa = db.session.get(TentativaAutenticacao, tentativa_id)
 
             if not tentativa:
                 return {
@@ -143,8 +129,40 @@ class RestauranteService:
                     "status_code": 401,
                 }
 
-            email = tentativa.email or email
+            email = (tentativa.email or email or "").strip().lower()
             telefone = tentativa.telefone or telefone
+
+            if not email:
+                return {
+                    "success": False,
+                    "erro": "E-mail verificado é obrigatório para criar a conta.",
+                    "status_code": 400,
+                }
+
+            if email_esta_em_uso(email):
+                return {
+                    "success": False,
+                    "erro": "E-mail já cadastrado em outra conta.",
+                    "status_code": 409,
+                }
+
+            telefone_normalizado = normalizar_telefone(telefone)
+            if not telefone_normalizado:
+                return {
+                    "success": False,
+                    "erro": "Telefone inválido.",
+                    "status_code": 400,
+                }
+
+            if (
+                not telefone_compartilhado_permitido(current_app.config)
+                and telefone_esta_em_uso(telefone_normalizado)
+            ):
+                return {
+                    "success": False,
+                    "erro": "Telefone já cadastrado.",
+                    "status_code": 409,
+                }
 
             novo_restaurante = Restaurante(
                 cnpj=cnpj,
@@ -152,7 +170,7 @@ class RestauranteService:
                 nome=nome,
                 nome_responsavel=nome_responsavel,
                 email=email,
-                telefone=telefone,
+                telefone=telefone_normalizado,
                 cpf_responsavel=cpf_responsavel,
                 descricao=descricao,
                 valor_minimo_pedido=valor_minimo_pedido or 0,
@@ -240,7 +258,16 @@ class RestauranteService:
             if nome is not None:
                 restaurante.nome = nome
             if email is not None:
-                restaurante.email = email
+                email_normalizado = email.strip().lower()
+                if email_esta_em_uso(
+                    email_normalizado, restaurante_id_ignorar=restaurante.id
+                ):
+                    return {
+                        "success": False,
+                        "erro": "E-mail já cadastrado em outra conta.",
+                        "status_code": 409,
+                    }
+                restaurante.email = email_normalizado
             db.session.commit()
             return {
                 "success": True,

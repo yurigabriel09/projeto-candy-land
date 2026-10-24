@@ -1,13 +1,13 @@
 # Modelo físico de dados — CandyLand
 
-> **Snapshot do código auditado em 11/10/2026.** Este diagrama descreve os modelos SQLAlchemy atuais, não um redesign futuro. A fonte de verdade para campos é `backend/app/models/`; sempre compare este documento com os modelos no mesmo PR.
+> **Snapshot do código auditado em 24/10/2026.** Este diagrama descreve os modelos SQLAlchemy atuais, não um redesign futuro. A fonte de verdade para campos é `backend/app/models/`; sempre compare este documento com os modelos no mesmo PR.
 
 ![Diagrama ER do modelo físico atual](modelo-dados.png)
 
 Fonte editável: [`modelo-dados.dot`](modelo-dados.dot). Se Graphviz estiver instalado, regenere a imagem na raiz do projeto com:
 
 ```bash
-dot -Tpng docs/modelo-dados.dot -o docs/modelo-dados.png
+dot -Tpng docs/modelo-dados.dot -o docs/modelo-dados.png  # saída em alta resolução
 ```
 
 ## Tabelas/modelos encontrados
@@ -30,6 +30,8 @@ Total observado: **11 modelos/tabelas**. Não foram encontrados modelos/tabelas 
 
 ## Relacionamentos representados
 
+**Não há relacionamento N:N direto declarado nos modelos SQLAlchemy.** A associação entre pedidos e produtos passa por `order_items`, que é uma entidade própria e armazena atributos do vínculo (`quantidade`, `preco_unitario`, `observacoes` e `detalhes_personalizacao`). Portanto, o modelo físico é `orders 1:N order_items` e `products 1:N order_items`, sem uma tabela de associação genérica ou um `secondary` N:N. Não é necessário alterar essa parte do schema para eliminar N:N direta.
+
 - `users` 1:N `addresses`, `orders`, `auth_codes` e `customer_cards`.
 - `restaurants` 1:N `products`, `categories`, `orders` e `auth_codes`.
 - `categories` pode possuir categorias-filhas; `products` pertencem a categoria e restaurante.
@@ -37,14 +39,17 @@ Total observado: **11 modelos/tabelas**. Não foram encontrados modelos/tabelas 
 - `orders.delivery_address_id` aponta para `addresses.id`. Em `DELIVERY`, aponta para o endereço ativo do cliente; em `PICKUP`, aponta para o endereço ativo do restaurante. Essa é uma compatibilidade temporária do schema atual; no futuro, renomear para `destination_address_id` com migração explícita.
 - `auth_codes.tentativa_id` aponta para `auth_attempts.id`.
 
-## Restrições verificadas no SQLite incluído no ZIP
+## Restrições declaradas nos modelos SQLAlchemy
 
-- `users`: `email` e `cpf` únicos.
-- `restaurants`: `cnpj` e `address_id` únicos; `email` possui restrição única e índice único explícito (`unique=True, index=True` no ORM), duplicidade de mecanismo que pode ser simplificada em migração futura.
+O ZIP analisado não contém um arquivo de banco de dados (`.db`/`.sqlite3`). As restrições abaixo foram confirmadas nos modelos SQLAlchemy; não afirmam que um banco persistido local ou de produção já esteja migrado para exatamente esse schema.
+
+- `users`: `email` e `cpf` únicos dentro da tabela; `telefone` não possui restrição `UNIQUE` no banco.
+- `restaurants`: `cnpj`, `address_id` e `email` únicos dentro da tabela; `email` possui restrição única e índice único explícito (`unique=True, index=True` no ORM), duplicidade de mecanismo que pode ser simplificada em migração futura.
+- A unicidade global de e-mail entre `users` e `restaurants` é aplicada pelos serviços da aplicação; o banco atual não consegue impor essa regra com uma restrição `UNIQUE` simples cruzando tabelas. A duplicidade de telefone também é uma regra de aplicação, que pode ser habilitada somente em ambientes não produtivos.
 - `categories`: combinação `(id_restaurante, nome)` única.
 - `orders`: `order_code` único.
 - `order_deliveries`: `pedido_id` único, garantindo no máximo uma entrega por pedido no modelo atual.
-- Chaves estrangeiras do SQLite auditado correspondem aos relacionamentos descritos acima.
+- As chaves estrangeiras declaradas nos modelos correspondem aos relacionamentos descritos acima. Para validar uma instalação persistida, inspecione o banco real e aplique migrações versionadas quando houver divergência.
 
 ## Pontos de atenção do modelo atual
 
@@ -56,6 +61,7 @@ Total observado: **11 modelos/tabelas**. Não foram encontrados modelos/tabelas 
 6. **Taxa por distância:** `restaurants.taxa_entrega_por_km` configura o adicional por km; `orders.delivery_distance_km` registra o snapshot da distância usada na cobrança. A migração aditiva `app/database/migrations.py` adiciona essas colunas aos bancos existentes de forma idempotente, sem apagar dados. `run.py` executa a verificação antes de consultar pedidos.
 7. **Destino da retirada:** `orders.delivery_address_id` permanece NOT NULL por compatibilidade com o banco atual. Em pedidos `PICKUP`, guarda o endereço do restaurante; não houve alteração física na tabela nesta entrega. Uma futura renomeação para `destination_address_id` requer migração versionada.
 8. **Sem framework de migração identificado:** `db.create_all()` é executado no arranque, mas não atualiza tabelas já existentes. Uma futura mudança estrutural exige backup e migração explícita; não apague o banco local para “atualizar” o diagrama.
+9. **Validação do schema persistido pendente:** como o ZIP não contém o banco em uso, ainda é necessário comparar o schema real no ambiente de desenvolvimento/homologação antes de declarar que o banco físico está alinhado com todos os modelos.
 
 ## Regras de consistência com o banco
 

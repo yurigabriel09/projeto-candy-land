@@ -1,4 +1,3 @@
-import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -8,6 +7,8 @@ from app.models.auth_attempt import TentativaAutenticacao
 from app.models.auth_code import CodigoAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
+from app.config.config import telefone_compartilhado_permitido
+from app.services.account_identity_service import telefone_esta_em_uso
 from app.services.email_service import EmailService
 from app.services.google_auth_service import GoogleAuthService
 from app.services.token_service import TokenService
@@ -291,10 +292,22 @@ class AuthService:
                     "status_code": status_code,
                 }
 
-            email = dados_google["email"]
+            email = (dados_google.get("email") or "").strip().lower()
+            if not email:
+                return {
+                    "success": False,
+                    "erro": "O Google não retornou um e-mail válido.",
+                    "status_code": 401,
+                }
 
-            usuarios = Usuario.query.filter_by(email=email).all()
-            restaurantes = Restaurante.query.filter_by(email=email).all()
+            # A comparação é case-insensitive para também localizar contas legadas
+            # que tenham sido persistidas antes da normalização do e-mail.
+            usuarios = Usuario.query.filter(
+                db.func.lower(Usuario.email) == email
+            ).all()
+            restaurantes = Restaurante.query.filter(
+                db.func.lower(Restaurante.email) == email
+            ).all()
 
             if (
                 len(usuarios) > 1
@@ -370,6 +383,18 @@ class AuthService:
                         "status_code": 400,
                     }
 
+                # Contas novas por OAuth seguem a mesma regra dos cadastros comuns:
+                # telefone repetido só é permitido em ambiente não produtivo.
+                if (
+                    not telefone_compartilhado_permitido(current_app.config)
+                    and telefone_esta_em_uso(telefone_normalizado)
+                ):
+                    return {
+                        "success": False,
+                        "erro": "Este celular já está vinculado a outra conta.",
+                        "status_code": 409,
+                    }
+
             tentativa = TentativaAutenticacao(
                 canal_inicial="EMAIL",
                 email=email,
@@ -439,8 +464,12 @@ class AuthService:
             restaurantes = []
 
             if email:
-                usuarios = Usuario.query.filter_by(email=email).all()
-                restaurantes = Restaurante.query.filter_by(email=email).all()
+                usuarios = Usuario.query.filter(
+                    db.func.lower(Usuario.email) == email
+                ).all()
+                restaurantes = Restaurante.query.filter(
+                    db.func.lower(Restaurante.email) == email
+                ).all()
 
             if (
                 len(usuarios) > 1
@@ -526,27 +555,15 @@ class AuthService:
                         "status_code": 400,
                     }
 
-                permitir_telefone_compartilhado = (
-                    current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
-                    or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
-                    in ("true", "1", "yes", "on")
-                )
-
-                if not permitir_telefone_compartilhado:
-                    usuario_existente = Usuario.query.filter_by(
-                        telefone=telefone_normalizado
-                    ).first()
-
-                    restaurante_existente = Restaurante.query.filter_by(
-                        telefone=telefone_normalizado
-                    ).first()
-
-                    if usuario_existente or restaurante_existente:
-                        return {
-                            "success": False,
-                            "erro": ("Este celular já está vinculado a outra conta."),
-                            "status_code": 409,
-                        }
+                if (
+                    not telefone_compartilhado_permitido(current_app.config)
+                    and telefone_esta_em_uso(telefone_normalizado)
+                ):
+                    return {
+                        "success": False,
+                        "erro": "Este celular já está vinculado a outra conta.",
+                        "status_code": 409,
+                    }
 
             # ---------------------------------------------------------
             # 5. Criamos a tentativa de autenticação.
@@ -638,13 +655,10 @@ class AuthService:
     @staticmethod
     def _finalizar_autenticacao(tentativa):
 
-        # O .env é a fonte de configuração em desenvolvimento. A leitura direta
-        # do ambiente também cobre processos que tenham carregado Config antes
-        # de a variável ser definida no ambiente de execução.
-        permitir_telefone_compartilhado = (
-            current_app.config.get("ALLOW_DUPLICATE_PHONE", False)
-            or os.getenv("ALLOW_DUPLICATE_PHONE", "").strip().lower()
-            in ("true", "1", "yes", "on")
+        # A política central bloqueia explicitamente o compartilhamento em produção,
+        # mesmo se ALLOW_DUPLICATE_PHONE estiver definido como true por engano.
+        permitir_telefone_compartilhado = telefone_compartilhado_permitido(
+            current_app.config
         )
 
         if permitir_telefone_compartilhado:
@@ -673,14 +687,26 @@ class AuthService:
                 else {}
             )
         else:
-            # Comportamento original: e-mail e telefone juntos identificam a conta.
-            usuarios_email = Usuario.query.filter_by(email=tentativa.email).all()
+            # Em produção, o e-mail continua sendo comparado sem diferenciar maiúsculas
+            # de minúsculas; o telefone é consultado para detectar conflitos legados.
+            email_verificado = (tentativa.email or "").strip().lower()
+            usuarios_email = (
+                Usuario.query.filter(
+                    db.func.lower(Usuario.email) == email_verificado
+                ).all()
+                if email_verificado
+                else []
+            )
             usuarios_telefone = Usuario.query.filter_by(
                 telefone=tentativa.telefone
             ).all()
-            restaurantes_email = Restaurante.query.filter_by(
-                email=tentativa.email
-            ).all()
+            restaurantes_email = (
+                Restaurante.query.filter(
+                    db.func.lower(Restaurante.email) == email_verificado
+                ).all()
+                if email_verificado
+                else []
+            )
             restaurantes_telefone = Restaurante.query.filter_by(
                 telefone=tentativa.telefone
             ).all()
