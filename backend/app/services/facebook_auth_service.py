@@ -10,7 +10,11 @@ class FacebookAuthService:
     GRAPH_URL = "https://graph.facebook.com"
 
     @staticmethod
-    def gerar_url_autorizacao():
+    def gerar_url_autorizacao(state):
+        state = (state or "").strip()
+        if not state:
+            raise ValueError("Estado de segurança do Facebook não informado.")
+
         client_id = os.getenv("FACEBOOK_CLIENT_ID")
         redirect_uri = os.getenv("FACEBOOK_REDIRECT_URI")
 
@@ -25,6 +29,7 @@ class FacebookAuthService:
             "redirect_uri": redirect_uri,
             "scope": "email,public_profile",
             "response_type": "code",
+            "state": state,
         }
 
         return f"{FacebookAuthService.AUTH_URL}?{urlencode(parametros)}"

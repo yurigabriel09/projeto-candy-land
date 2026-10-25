@@ -383,6 +383,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `docs/requisitos.md` — regras globais e decisões de negócio.
 - `docs/regras-pedidos.md` — estados e transições de pedido/entrega, cancelamento e pagamento.
 - `docs/teste-fumaca-mvp.md` — escopo automatizado e roteiro manual de validação do fluxo integrado do MVP.
+- `docs/oauth-local-e-producao.md` — configuração segura do Google/Facebook e roteiro para validar login real local/homologação.
 - `docs/modelo-dados.md` — modelo físico atual, lacunas e instruções de atualização.
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
