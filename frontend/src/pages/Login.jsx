@@ -34,12 +34,12 @@ function Login({ audiencia = "PERSONAL" }) {
 
         if (facebookError) {
             setErro(facebookError);
-            window.history.replaceState({}, document.title, "/login");
+            window.history.replaceState({}, document.title, window.location.pathname);
             return;
         }
 
         if (facebookTicket) {
-            window.history.replaceState({}, document.title, "/login");
+            window.history.replaceState({}, document.title, window.location.pathname);
             handleFacebookLogin(facebookTicket);
         }
     }, []);
@@ -247,7 +247,7 @@ function Login({ audiencia = "PERSONAL" }) {
             }
 
             if (resultado.dados?.novo_cadastro) {
-                navigate("/register", {
+                navigate(audiencia === "BUSINESS" ? "/register/business" : "/register/personal", {
                     state: {
                         tentativaId:
                             resultado.dados.tentativa_id ||
@@ -334,7 +334,7 @@ function Login({ audiencia = "PERSONAL" }) {
             }
 
             if (resultado.dados?.novo_cadastro) {
-                navigate("/register", {
+                navigate(audiencia === "BUSINESS" ? "/register/business" : "/register/personal", {
                     state: {
                         tentativaId:
                             resultado.dados.tentativa_id ||
@@ -497,10 +497,12 @@ function Login({ audiencia = "PERSONAL" }) {
                 <div className="auth-content">
                     {etapa === "login" && (
                         <>
-                            <h2>Entrar</h2>
+                            <h2>{audiencia === "BUSINESS" ? "Entrar como parceiro" : "Entrar"}</h2>
 
                             <p className="auth-description">
-                                Entre usando seu e-mail ou celular.
+                                {audiencia === "BUSINESS"
+                                    ? "Acesse sua doceria ou comece um cadastro de parceiro com e-mail, celular, Google ou Facebook."
+                                    : "Entre usando seu e-mail ou celular."}
                             </p>
 
                             <div className="login-type">
@@ -566,49 +568,45 @@ function Login({ audiencia = "PERSONAL" }) {
                                 </button>
                             </form>
 
-                            {audiencia !== "BUSINESS" && (
-                                <>
-                                    <div className="divider">
-                                        <span>ou</span>
+                            <div className="divider">
+                                <span>ou continue com uma conta social</span>
+                            </div>
+
+                            <div className="social-login">
+                                <div className="social-button google-button">
+                                    <div className="google-login">
+                                        <GoogleLogin
+                                            onSuccess={(credentialResponse) =>
+                                                handleGoogleLogin(credentialResponse.credential)
+                                            }
+                                            onError={() => setErro("Não foi possível entrar com o Google.")}
+                                            size="large"
+                                            shape="pill"
+                                            width="358"
+                                        />
                                     </div>
+                                </div>
 
-                                    <div className="social-login">
-                                        <div className="social-button google-button">
-                                            <div className="google-login">
-                                                <GoogleLogin
-                                                    onSuccess={(credentialResponse) =>
-                                                        handleGoogleLogin(credentialResponse.credential)
-                                                    }
-                                                    onError={() => setErro("Não foi possível entrar com o Google.")}
-                                                    size="large"
-                                                    shape="pill"
-                                                    width="358"
-                                                />
-                                            </div>
-                                        </div>
+                                <button
+                                    type="button"
+                                    className="facebook-button"
+                                    onClick={() => window.location.assign(`${API_URL}/facebook?audiencia=${encodeURIComponent(audiencia)}`)}
+                                    disabled={loading}
+                                >
+                                    <svg
+                                        className="facebook-icon"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
+                                            fill="currentColor"
+                                        />
+                                    </svg>
 
-                                        <button
-                                            type="button"
-                                            className="facebook-button"
-                                            onClick={() => window.location.assign(`${API_URL}/facebook?audiencia=${encodeURIComponent(audiencia)}`)}
-                                            disabled={loading}
-                                        >
-                                            <svg
-                                                className="facebook-icon"
-                                                viewBox="0 0 24 24"
-                                                aria-hidden="true"
-                                            >
-                                                <path
-                                                    d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
-                                                    fill="currentColor"
-                                                />
-                                            </svg>
-
-                                            <span>Continuar com Facebook</span>
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                    <span>Continuar com Facebook</span>
+                                </button>
+                            </div>
                         </>
                     )}
 

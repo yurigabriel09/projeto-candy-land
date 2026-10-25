@@ -167,6 +167,16 @@ def _app_oauth():
     return app
 
 
+def test_respostas_de_autenticacao_nao_sao_cacheadas():
+    client = _app_oauth().test_client()
+
+    response = client.post("/auth/google", json={})
+
+    assert response.status_code == 400
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Pragma"] == "no-cache"
+
+
 def _preparar_facebook(monkeypatch):
     monkeypatch.setenv("APP_ENV", "testing")
     monkeypatch.setenv("FACEBOOK_CLIENT_ID", "facebook-app-id")

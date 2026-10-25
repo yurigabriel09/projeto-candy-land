@@ -76,6 +76,19 @@ Os testes substituem as respostas dos provedores por dados simulados e verificam
 - [ ] Repetir os fluxos no ambiente de homologação HTTPS usando credenciais separadas das locais.
 - [ ] Conferir que nenhum segredo ou token aparece no Git, logs, URL compartilhada ou evidência anexada ao PR.
 
-## 6. Critério de conclusão
+## 6. Verificação do fluxo de parceiros e da sessão
+
+- [ ] Na página inicial, clicar em **Saiba mais** abre `/parceiros`; **Seja um parceiro você também!** abre `/parceiros/login`.
+- [ ] A landing `/parceiros` está formatada e oferece entrada/cadastro sem exigir uma sessão prévia.
+- [ ] Em `/parceiros/login`, aparecem as opções de e-mail/celular, Google e Facebook.
+- [ ] Um novo cadastro iniciado por Google ou Facebook, depois da verificação de celular, segue para `/register/business`; o login por e-mail/celular segue a mesma regra.
+- [ ] Uma conta BUSINESS existente entra em `/business`; uma conta PERSONAL existente continua sendo direcionada à sua área pessoal, mesmo que inicie o login pela página de parceiros.
+- [ ] `/parceiros` e `/parceiros/login` são públicos intencionalmente; as páginas operacionais `/business` e suas rotas filhas continuam protegidas por `ProtectedRoute` para o tipo `BUSINESS`.
+- [ ] Respostas dos endpoints `/auth/*` retornam `Cache-Control: no-store` e `Pragma: no-cache`.
+- [ ] Não há `console.log` imprimindo a resposta completa dos cadastros, pois ela contém o token de sessão.
+
+O token JWT continuar visível no corpo da resposta de login, inclusive na aba Network do navegador que está autenticando, é esperado no desenho atual de autenticação por bearer token. O frontend precisa receber o token para criar a sessão. Não se deve compartilhar essa resposta, salvar o token em logs ou capturas de tela. Esconder o token do DevTools sem mudar a arquitetura não é possível; usar cookie `HttpOnly` exigiria uma migração do transporte da sessão e proteção contra CSRF.
+
+## 7. Critério de conclusão
 
 OAuth só pode ser marcado como validado depois de: testes automatizados aprovados; login real com cada provedor; conta existente roteada corretamente; cancelamento e falhas tratados; configuração de homologação testada; e evidências sem dados sensíveis anexadas à entrega. A suíte com mocks, isoladamente, não atende esse critério.
