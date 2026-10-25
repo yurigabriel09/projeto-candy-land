@@ -1,4 +1,5 @@
 from app.controllers.order_controller import OrderController
+from app.controllers.payment_controller import PaymentController
 from app.utils.auth_decorator import token_required
 from flask import Blueprint, g, request
 
@@ -56,4 +57,34 @@ def atualizar_status_entrega(pedido_id):
 def cancelar_pedido(pedido_id):
     return OrderController.cancelar_pedido(
         pedido_id, int(g.current_account_id), g.current_account_type
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/pagamento", methods=["POST"])
+@token_required
+def criar_pagamento(pedido_id):
+    return PaymentController.criar_pagamento(
+        pedido_id,
+        int(g.current_account_id),
+        g.current_account_type,
+        request.headers.get("Idempotency-Key"),
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/pagamento", methods=["GET"])
+@token_required
+def consultar_pagamento(pedido_id):
+    return PaymentController.consultar_pagamento(
+        pedido_id, int(g.current_account_id), g.current_account_type
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/pagamento/mock-result", methods=["POST"])
+@token_required
+def simular_resultado_pagamento(pedido_id):
+    return PaymentController.simular_resultado(
+        pedido_id,
+        int(g.current_account_id),
+        g.current_account_type,
+        request.get_json(silent=True),
     )
