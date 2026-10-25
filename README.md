@@ -1,6 +1,6 @@
-# CandyLand — guia do projeto e estado real
+﻿# CandyLand — guia do projeto e estado real
 
-> **Atualizado em 11/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
+> **Atualizado em 25/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
 
 ## 1. Git: atualizar a máquina local, criar branches, comitar e entregar
 
@@ -382,6 +382,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 
 - `docs/requisitos.md` — regras globais e decisões de negócio.
 - `docs/regras-pedidos.md` — estados e transições de pedido/entrega, cancelamento e pagamento.
+- `docs/teste-fumaca-mvp.md` — escopo automatizado e roteiro manual de validação do fluxo integrado do MVP.
 - `docs/modelo-dados.md` — modelo físico atual, lacunas e instruções de atualização.
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
