@@ -65,3 +65,12 @@ A branch `fix/teste-integracao-mvp` foi criada a partir de `dev` após o merge d
 ## Atualização de 25/10/2026 — autenticação OAuth
 
 O PR #27 (`fix/teste-integracao-mvp`) foi mesclado em `dev` após a validação local informada: 3 testes de fumaça, 77 testes de backend e build do frontend aprovados. A nova frente `feature/oauth-validation` endurece o callback do Facebook com `state` aleatório vinculado a cookie HttpOnly/SameSite e remove logs que poderiam imprimir claims pessoais de um token Google inválido. Foram preparados testes automatizados com respostas simuladas e um roteiro de configuração. Os testes com credenciais/provedores reais ainda precisam ser executados localmente; OAuth não é marcado como validado por esses mocks.
+
+
+## Atualização de 25/10/2026 — entrada e cadastro de parceiros
+
+O PR #28 (`feature/oauth-validation`) foi integrado em `dev`, com testes simulados aprovados (13 testes OAuth; 90 no backend conforme validação local informada) e build do frontend aprovado. A revisão da experiência de parceiros encontrou a landing page sem identidade visual, ausência de botão de entrada na página pública e botões OAuth ocultos quando `audiencia="BUSINESS"`. A próxima correção adiciona uma chamada visível na página inicial, uma landing page formatada para parceiros, Google/Facebook no login de parceiros e direcionamento de novos cadastros para `/register/business`.
+
+A rota `/parceiros` e `/parceiros/login` deve permanecer pública para permitir que novos parceiros conheçam a plataforma e iniciem cadastro. A área operacional (`/business` e telas filhas) já usa `ProtectedRoute` com `tipoConta="BUSINESS"`; não deve ser aberta sem sessão empresarial válida.
+
+O token JWT aparecer no corpo da resposta de autenticação é esperado no modelo atual de bearer token do frontend. A aplicação precisa recebê-lo para iniciar a sessão, portanto ele também fica visível na aba Network do próprio navegador. A correção remove `console.log` de respostas de cadastro que poderiam imprimir o token e adiciona `Cache-Control: no-store`/`Pragma: no-cache` aos endpoints de autenticação. Isso não substitui uma futura migração para cookie `HttpOnly`, que exigiria rever o transporte da sessão e a proteção CSRF.

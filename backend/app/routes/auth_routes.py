@@ -9,6 +9,14 @@ from flask import Blueprint, current_app, redirect, request
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+
+@auth_bp.after_request
+def impedir_cache_de_respostas_de_autenticacao(response):
+    """Evita armazenar em cache respostas que podem conter dados de sessão."""
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    return response
+
 _FACEBOOK_STATE_COOKIE = "candyland_facebook_oauth_state"
 _FACEBOOK_AUDIENCE_COOKIE = "candyland_facebook_oauth_audience"
 _FACEBOOK_CALLBACK_PATH = "/auth/facebook/callback"

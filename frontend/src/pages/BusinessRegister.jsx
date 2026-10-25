@@ -193,7 +193,6 @@ function BusinessRegister() {
 
             const resultado = await createRestaurant(dados);
 
-            console.log("Cadastro empresarial realizado:", resultado);
 
             if (resultado.token) {
                 entrar({ ...resultado.restaurante, ...resultado, tipo_conta: "BUSINESS", token: resultado.token });
