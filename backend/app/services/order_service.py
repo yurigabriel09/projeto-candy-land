@@ -181,10 +181,18 @@ class OrderService:
         subtotal = Decimal("0.00")
 
         for item in items:
+            if not isinstance(item, dict):
+                raise TypeError("Cada item do pedido deve ser um objeto.")
+
             product_id = item.get("produto_id")
             quantity = item.get("quantidade")
 
-            if not isinstance(product_id, int) or not isinstance(quantity, int):
+            if (
+                isinstance(product_id, bool)
+                or not isinstance(product_id, int)
+                or isinstance(quantity, bool)
+                or not isinstance(quantity, int)
+            ):
                 raise TypeError("produto_id e quantidade devem ser inteiros.")
             if quantity <= 0:
                 raise ValueError("A quantidade deve ser maior que zero.")
@@ -216,14 +224,14 @@ class OrderService:
             items = dados.get("items")
             address_id = dados.get("delivery_address_id")
 
-            if not isinstance(restaurant_id, int):
+            if isinstance(restaurant_id, bool) or not isinstance(restaurant_id, int):
                 raise TypeError("restaurant_id é obrigatório e deve ser inteiro.")
 
             OrderService._validate_order_type(order_type)
             OrderService._validate_payment_method(payment_method)
 
             if order_type == "DELIVERY":
-                if not isinstance(address_id, int):
+                if isinstance(address_id, bool) or not isinstance(address_id, int):
                     raise TypeError(
                         "delivery_address_id é obrigatório para entrega no endereço."
                     )

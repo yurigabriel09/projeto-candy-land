@@ -62,6 +62,27 @@ class UserService:
             }
 
     @staticmethod
+    def listar_enderecos(user_id):
+        """Lista apenas os endereços ativos pertencentes ao cliente autenticado."""
+        try:
+            enderecos = (
+                Endereco.query.filter_by(id_usuario=user_id, ativo=True)
+                .order_by(Endereco.principal.desc(), Endereco.id.asc())
+                .all()
+            )
+            return {
+                "success": True,
+                "mensagem": "Endereços ativos consultados.",
+                "dados": [endereco.to_dict() for endereco in enderecos],
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao consultar os endereços do cliente.",
+                "status_code": 500,
+            }
+
+    @staticmethod
     def criar_usuario(
         nome_completo,
         email,

@@ -9,6 +9,11 @@ class OrderController:
             return make_response(
                 jsonify({"erro": "Apenas clientes podem criar pedidos."}), 403
             )
+        if not isinstance(dados, dict):
+            return make_response(
+                jsonify({"erro": "O corpo da requisição deve ser um objeto JSON."}), 400
+            )
+
         resultado = OrderService.criar_pedido(user_id, dados)
         status = 201 if resultado["success"] else resultado["status_code"]
         if not resultado["success"]:
