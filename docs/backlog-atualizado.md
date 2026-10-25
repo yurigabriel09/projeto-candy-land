@@ -9,8 +9,8 @@
 |---|---|---|---:|---|---|
 | P0 | Proteção da API e testes de autorização | Concluído, PR #25 mesclado em `dev` | 100% da tarefa de segurança entregue | Manter regressões no conjunto de testes; revisar segurança final antes de produção | `feature/api-security-hardening` |
 | P0 | Resolver identidade/e-mail e telefone compartilhado em testes | Concluído, PR #23 mesclado em `dev` | 100% da correção entregue | Preservar a regra: duplicidade só permitida em ambientes dev/testing/local e com flag ativa; em produção bloquear | `fix/auth-account-resolution` |
-| P0 | Checkout mínimo: carrinho + API + endereço + modalidade + pedido pendente | Implementação preparada na branch `feature/checkout-mvp`; validação local pendente | 80% estimado | Rodar 7 testes de integração adicionados, suíte completa e build frontend; corrigir falhas, confirmar `PENDENTE_PAGAMENTO` e abrir PR | `feature/checkout-mvp` |
-| P0 | Teste de fumaça integrado do MVP publicado | Não iniciado | 0% | Testar login, catálogo, adicionar produto, selecionar entrega/retirada, criar e consultar pedido em ambiente integrado | `fix/teste-integracao-mvp` |
+| P0 | Checkout mínimo: carrinho + API + endereço + modalidade + pedido pendente | Concluído, PR #26 mesclado em `dev` | 100% do checkout mínimo (sem cobrança real) | Manter os 7 testes de integração, suíte e build; validar no navegador no roteiro de fumaça | `feature/checkout-mvp` |
+| P0 | Teste de fumaça integrado do MVP publicado | Automação API preparada; execução real pendente | 40% estimado | Rodar `backend/tests/integration/test_mvp_smoke.py`, suíte completa e build; executar roteiro manual no browser com login local/provedor configurado e registrar evidências | `fix/teste-integracao-mvp` |
 | P0 | Validar Google OAuth local e preparar produção | Implementação existe; validação solicitada não comprovada | 40% estimado | Conferir client ID, origens, callback/redirect, token assinado/verificado, configuração separada por ambiente | `feature/google-oauth-validation` |
 | P0 | Validar Facebook OAuth, permissões e callback | Implementação existe; validação solicitada não comprovada | 40% estimado | Conferir permissões, URL de callback, URL do frontend e sucesso/cancelamento/expiração do ticket | `feature/facebook-oauth-validation` |
 | P1 | CRUD, validação e estados do pedido/entrega | Backend implementado; integração de ponta a ponta pendente | 75% estimado | Testar transições por perfil, autorização e fluxo completo com checkout | Pode integrar a `feature/checkout-mvp` apenas se necessário; não recriar serviços já existentes |
@@ -45,8 +45,18 @@
 
 ## Atualização de 25/10/2026
 
-O patch `feature/checkout-mvp` adiciona `GET /users/<id>/enderecos` com JWT e checagem de titularidade; o carrinho agora envia `restaurant_id`, `order_type`, `payment_method` e itens para `POST /pedidos`. Preços, estoque, endereço e taxa são validados no backend. Os 7 testes novos foram escritos, mas ainda devem ser executados na máquina local; não há evidência de build frontend ou smoke test concluído. O pedido criado permanece `PENDENTE_PAGAMENTO`; nenhuma cobrança é simulada.
+O PR #26 (`feature/checkout-mvp`) foi integrado em `dev`. Na validação local foram aprovados os 7 testes de checkout, os 74 testes do backend e o build do frontend. O carrinho envia `restaurant_id`, `order_type`, `payment_method` e itens para `POST /pedidos`; o backend valida preço, estoque, endereço e taxa. O pedido fica `PENDENTE_PAGAMENTO`; nenhuma cobrança é simulada. A validação real pelo navegador permanece pendente.
 
 ## Regra de conclusão
 
 Uma tarefa só deve passar para “Concluído” quando tiver: implementação no branch integrado; testes relevantes passando; fluxo de integração validado quando aplicável; documentação atualizada; e confirmação do comportamento no ambiente pretendido. “Existe endpoint” ou “compila” isoladamente não satisfaz esses critérios.
+
+
+## Atualização de 25/10/2026 — teste de fumaça
+
+Foi adicionada a suíte `backend/tests/integration/test_mvp_smoke.py` para percorrer catálogo público, endereços do cliente, criação/consulta de pedido, modalidades DELIVERY/PICKUP e recusa sem autenticação. O roteiro manual correspondente está em `docs/teste-fumaca-mvp.md`. Até a execução local e a validação do navegador serem registradas, o item permanece em andamento e não é considerado concluído.
+
+
+## Atualização de 25/10/2026 — fumaça integrada
+
+A branch `fix/teste-integracao-mvp` foi criada a partir de `dev` após o merge do PR #26. Foi preparado um teste API integrado que percorre catálogo, endereço do cliente, checkout e consulta do pedido, além de um roteiro manual. Esse patch ainda precisa ser executado na máquina local; o status do teste de fumaça permanece em andamento até essa validação e o PR correspondente.
