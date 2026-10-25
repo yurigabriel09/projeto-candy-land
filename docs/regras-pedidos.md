@@ -173,10 +173,23 @@ Sempre que este fluxo for alterado:
 | Item | Estado no código atual | Pendência para considerar concluído |
 |---|---|---|
 | Estado inicial | `OrderService.criar_pedido()` grava `PENDENTE_PAGAMENTO`; o default do modelo foi alinhado ao mesmo valor. | Adicionar testes de endpoint para garantir o estado em todas as formas de criação. |
-| Confirmação de pagamento | Existe `OrderService.confirmar_pagamento()` e a lógica reduz estoque. | Não há endpoint/webhook autenticado/verificado para acionar o método; integração de provedor ausente. |
-| Cancelamento e reposição | Serviço de cancelamento tenta repor estoque após pagamento/andamento e cancelar a entrega. | Testar estoque real, falhas transacionais e cancelamento repetido para evitar reposição em duplicidade. |
+| Confirmação de pagamento | `OrderService.confirmar_pagamento()` usa UPDATE condicional de estado, baixa condicional de estoque e transação única; repetição após pagamento não baixa novamente. | Não há endpoint/webhook de gateway autenticado e verificado; integração de provedor ausente. Executar os testes de integridade e validar no banco de destino. |
+| Cancelamento e reposição | Cancelamentos de cliente e restaurante compartilham uma transação com UPDATE condicional de status, reposição e cancelamento logístico. Cancelamento anterior ao pagamento não altera estoque. | Executar os testes adicionados, validar falhas transacionais e confirmar comportamento no banco de destino. |
 | Máquina de estados | `order_workflow_service.py` valida transições; `PUT /pedidos/<id>/entrega/status` exige token e restringe alteração ao restaurante dono. Conclusão logística sincroniza para `ENTREGUE`. | Falta tabela de histórico auditável, papel próprio de entregador e cobertura ponta a ponta. |
 | Histórico | Não há tabela própria de histórico de transições no modelo atual. | Aprovar estrutura de auditoria antes de ampliar uso operacional. |
 | Taxa de entrega | O modelo guarda `taxa_entrega_base` e `raio_entrega_km`. | A taxa do pedido ainda pode vir no payload; calcular no servidor e validar a área atendida. |
 
 A presença de métodos internos não equivale a funcionalidade acessível de ponta a ponta. O README registra os percentuais estimados e o plano para fechar essas lacunas.
+
+
+## 9. Atualização de 25/10/2026 — integridade transacional
+
+A implementação de serviço preparada para a branch `feature/payment-stock-integrity` adota as seguintes garantias:
+
+- A confirmação só reivindica um pedido que ainda esteja em `PENDENTE_PAGAMENTO`. A mudança para `PAGAMENTO_CONFIRMADO` e as baixas condicionais (`current_stock >= quantidade`) pertencem à mesma transação.
+- Uma repetição da confirmação em pedido já confirmado/em andamento é tratada como reenvio idempotente: retorna sucesso sem baixar estoque novamente. Pedido cancelado não aceita confirmação por esse método.
+- As quantidades são agregadas por produto antes da baixa. Se qualquer produto estiver ausente ou com estoque insuficiente, a operação faz rollback de todo o pedido e das baixas já tentadas naquela transação.
+- Os cancelamentos solicitados pelo cliente e pelo restaurante usam a mesma rotina. Ela condiciona a mudança ao estado anterior observado e só restaura estoque quando o pedido já ultrapassou `PENDENTE_PAGAMENTO`; estado, reposição e cancelamento logístico são commitados juntos. Se a transição já foi executada por outra chamada, a segunda não restaura estoque de novo.
+- Testes dessa regra estão em `backend/tests/business_rules/test_payment_stock_integrity.py`. A suite deve ser executada antes do merge. O teste com SQLite em memória não substitui validação concorrente no banco que será usado em produção.
+
+**Limite de escopo:** isso não é uma integração de pagamento real. A aplicação continua sem webhook de gateway verificado e sem endpoint público para confirmar pagamento; não exponha `confirmar_pagamento` a clientes até implementar a validação de autenticidade do provedor, idempotency key/evento e tratamento de reembolso/assincronismo.
