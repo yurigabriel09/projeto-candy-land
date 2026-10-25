@@ -2,7 +2,7 @@ import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "candyland_cart";
-const CARRINHO_VAZIO = { restauranteId: null, restauranteNome: null, itens: [] };
+const CARRINHO_VAZIO = { restauranteId: null, restauranteNome: null, itens: [], orderType: "DELIVERY" };
 
 function carregarCarrinhoInicial() {
     const dadosSalvos = localStorage.getItem(CART_STORAGE_KEY);
@@ -10,7 +10,14 @@ function carregarCarrinhoInicial() {
 
     try {
         const dados = JSON.parse(dadosSalvos);
-        return Array.isArray(dados?.itens) ? dados : CARRINHO_VAZIO;
+        if (!Array.isArray(dados?.itens)) return { ...CARRINHO_VAZIO };
+        return {
+            ...CARRINHO_VAZIO,
+            ...dados,
+            orderType: ["DELIVERY", "PICKUP"].includes(dados.orderType)
+                ? dados.orderType
+                : "DELIVERY",
+        };
     } catch {
         localStorage.removeItem(CART_STORAGE_KEY);
         return CARRINHO_VAZIO;
@@ -40,7 +47,12 @@ export function CartProvider({ children }) {
             );
             if (!confirmou) return;
 
-            aplicar({ restauranteId, restauranteNome, itens: [itemNovo] });
+            aplicar({
+                ...CARRINHO_VAZIO,
+                restauranteId,
+                restauranteNome,
+                itens: [itemNovo],
+            });
             return;
         }
 
@@ -54,7 +66,13 @@ export function CartProvider({ children }) {
             )
             : [...carrinho.itens, itemNovo];
 
-        aplicar({ restauranteId, restauranteNome, itens: novosItens });
+        aplicar({
+            ...carrinho,
+            restauranteId,
+            restauranteNome,
+            itens: novosItens,
+            orderType: carrinho.orderType || "DELIVERY",
+        });
     }
 
     function removerItem(idProduto) {
@@ -81,8 +99,13 @@ export function CartProvider({ children }) {
         });
     }
 
+    function atualizarTipoPedido(orderType) {
+        if (!["DELIVERY", "PICKUP"].includes(orderType)) return;
+        aplicar({ ...carrinho, orderType });
+    }
+
     function limparCarrinho() {
-        aplicar(CARRINHO_VAZIO);
+        aplicar({ ...CARRINHO_VAZIO });
     }
 
     const total = carrinho.itens.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
@@ -96,6 +119,7 @@ export function CartProvider({ children }) {
                 atualizarQuantidade,
                 removerItem,
                 limparCarrinho,
+                atualizarTipoPedido,
                 total,
                 quantidadeTotal
             }}

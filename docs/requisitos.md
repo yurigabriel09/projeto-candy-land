@@ -60,7 +60,7 @@
 - A atualização logística exige token e, no MVP atual, conta `BUSINESS` do restaurante associado ao pedido; conta de cliente e outro restaurante recebem `403`. Um perfil específico de entregador continua pendente.
 - Ao finalizar a entrega, o serviço deve atualizar `order_deliveries.status`, `concluida_em`, `orders.delivered_at` e o status principal para `ENTREGUE` na mesma transação.
 - Mudanças relevantes de estado devem guardar ator/evento, estado anterior/novo e horário. A estrutura de histórico ainda precisa ser decidida/implementada.
-- `order_type=DELIVERY` e `order_type=PICKUP` são os valores suportados para criação de pedido. A retirada usa o endereço ativo do restaurante, não cria `order_deliveries` e não pode receber atualização logística. O fluxo de checkout frontend ainda está desabilitado e não envia pedidos.
+- `order_type=DELIVERY` e `order_type=PICKUP` são os valores suportados para criação de pedido. A retirada usa o endereço ativo do restaurante, não cria `order_deliveries` e não pode receber atualização logística. O patch da branch `feature/checkout-mvp` integra o carrinho ao `POST /pedidos`, envia `DELIVERY`/`PICKUP` e registra o pedido como `PENDENTE_PAGAMENTO`; a validação local e o teste de fumaça seguem pendentes.
 
 ## 8. Comunicações e documentos fiscais
 

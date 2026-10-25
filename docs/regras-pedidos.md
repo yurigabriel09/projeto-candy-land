@@ -2,6 +2,10 @@
 
 > Documento de referência do fluxo operacional do pedido. Sempre que uma regra de negócio for alterada, este documento deve ser atualizado junto com os testes automatizados e, quando houver impacto físico, com o modelo de dados.
 
+## Checkout web mínimo
+
+O frontend consulta `GET /users/{user_id}/enderecos` (somente endereços ativos do próprio cliente) para permitir a seleção do endereço salvo. A rota exige JWT de conta `PERSONAL` e valida titularidade. A criação ocorre em `POST /pedidos`; o retorno com `status=PENDENTE_PAGAMENTO` confirma apenas o registro do pedido, não uma transação financeira.
+
 ## Modalidade do pedido: entrega ou retirada
 
 A modalidade é enviada no campo `order_type` e deve ser uma das opções:
@@ -17,7 +21,7 @@ Regras:
 - Para `DELIVERY`, `delivery_address_id` precisa ser inteiro e pertencer ao cliente autenticado.
 - Para `PICKUP`, o backend não aceita endereço de destino escolhido pelo cliente; resolve o endereço ativo do próprio restaurante. No schema atual, o ID de destino é persistido na coluna legada `orders.delivery_address_id`; a resposta distingue `delivery_address_id` e `pickup_address_id`.
 - Pedidos `PICKUP` têm taxa de entrega zerada pelo servidor mesmo se o payload enviar outra taxa, a distância fica nula e não possuem estado logístico em `order_deliveries`.
-- O checkout frontend continua desabilitado. A escolha fica persistida no carrinho e ainda deverá ser enviada ao endpoint quando o fluxo de finalização for desenvolvido.
+- O checkout web envia `restaurant_id`, `order_type`, `payment_method`, `items` (produto e quantidade) e, em `DELIVERY`, `delivery_address_id` para `POST /pedidos`. O servidor recalcula preços e taxa, valida o dono/endereço, disponibilidade/estoque e cria o pedido como `PENDENTE_PAGAMENTO`. A integração com gateway/cobrança não faz parte deste fluxo mínimo; o pedido não é considerado pago.
 - Alterar a coluna para um nome neutro (`destination_address_id`) exige migração explícita e atualização do modelo/diagrama; não apagar o banco para contornar isso.
 
 ## Cálculo da taxa para `DELIVERY`

@@ -29,6 +29,13 @@ def criar_usuario():
     return UserController.criar_usuario(dados)
 
 
+@user_bp.route("/<int:user_id>/enderecos", methods=["GET"])
+@token_required
+@account_owner_required("PERSONAL", "user_id")
+def listar_enderecos_usuario(user_id):
+    return UserController.listar_enderecos(user_id)
+
+
 @user_bp.route("/<int:user_id>", methods=["PUT"])
 @token_required
 @account_owner_required("PERSONAL", "user_id")
