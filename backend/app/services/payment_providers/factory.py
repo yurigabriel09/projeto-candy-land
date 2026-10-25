@@ -1,10 +1,4 @@
-"""Select a payment-provider adapter without coupling order logic to a gateway.
-
-The concrete adapters are intentionally not part of this patch because provider
-implementation has a separate owner/task. Until one exists, this factory fails
-closed instead of falling back to a fake payment or changing order status.
-"""
-
+"""Select a payment-provider adapter without coupling order logic to a gateway."""
 import importlib
 import os
 from typing import Any, Mapping, Optional
@@ -18,6 +12,10 @@ from app.services.payment_providers.contracts import (
 
 
 PAYMENT_PROVIDER_ADAPTERS = {
+    "mock": (
+        "app.services.payment_providers.mock_adapter",
+        "MockPaymentProvider",
+    ),
     "paypal": (
         "app.services.payment_providers.paypal_adapter",
         "PayPalPaymentProvider",
@@ -27,6 +25,7 @@ PAYMENT_PROVIDER_ADAPTERS = {
         "MercadoPagoPaymentProvider",
     ),
 }
+NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
 
 
 def get_payment_provider(
@@ -34,10 +33,10 @@ def get_payment_provider(
     *,
     config: Optional[Mapping[str, Any]] = None,
 ) -> PaymentProvider:
-    """Return the configured provider adapter or fail with a clear safe error.
+    """Return the configured adapter, failing closed when unavailable.
 
-    `config` is injectable for tests. If omitted, Flask config is preferred; the
-    environment is used only outside a Flask application context.
+    The mock provider is explicitly forbidden in production, even when selected
+    by environment variable. `config` is injectable to support isolated tests.
     """
     if config is None:
         try:
@@ -58,10 +57,19 @@ def get_payment_provider(
             "Defina PAYMENT_PROVIDER após a decisão do grupo."
         )
 
+    if selected == "mock":
+        environment = str(
+            config.get("APP_ENV", os.getenv("APP_ENV", "production"))
+        ).strip().lower()
+        if environment not in NON_PRODUCTION_ENVS:
+            raise UnsupportedPaymentProvider(
+                "O provedor mock é permitido apenas em desenvolvimento/testes."
+            )
+
     adapter = PAYMENT_PROVIDER_ADAPTERS.get(selected)
     if adapter is None:
         raise UnsupportedPaymentProvider(
-            "PAYMENT_PROVIDER deve ser 'paypal' ou 'mercadopago'."
+            "PAYMENT_PROVIDER deve ser 'none', 'mock', 'paypal' ou 'mercadopago'."
         )
 
     module_name, class_name = adapter
