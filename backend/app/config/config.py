@@ -42,6 +42,8 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-troque-em-producao")
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
     GOOGLE_CLOCK_SKEW_SECONDS = int(os.getenv("GOOGLE_CLOCK_SKEW_SECONDS", "300"))
+    # Fica desativado até o grupo escolher o gateway e o adaptador correspondente existir.
+    PAYMENT_PROVIDER = os.getenv("PAYMENT_PROVIDER", "none").strip().lower()
 
     UPLOAD_FOLDER = BASE_DIR / "uploads"
     UPLOAD_MAX_BYTES = 2 * 1024 * 1024
