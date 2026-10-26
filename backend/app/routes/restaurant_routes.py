@@ -15,6 +15,11 @@ def buscar_restaurante(restaurante_id):
     return RestaurantController.buscar_restaurante(restaurante_id)
 
 
+@restaurante_bp.route("/<int:restaurante_id>/enderecos/retirada", methods=["GET"])
+def listar_enderecos_retirada(restaurante_id):
+    return RestaurantController.listar_enderecos_retirada(restaurante_id)
+
+
 @restaurante_bp.route("", methods=["POST"])
 def criar_restaurante():
     dados = request.get_json() or {}

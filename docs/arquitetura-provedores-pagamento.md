@@ -1,12 +1,12 @@
 # Arquitetura neutra de provedores de pagamento — CandyLand
 
-**Estado:** contrato e seleção de adaptador preparados; nenhuma cobrança real está habilitada e nenhum gateway concreto foi implementado nesta entrega.
+**Estado:** contrato comum preservado; adaptador Mercado Pago Checkout Pro adicionado no código local. A integração só é utilizável após configurar o Access Token de teste e validar retorno/Webhook. O adaptador PayPal não está implementado.
 
 ## Objetivo
 
 Permitir que o grupo escolha PayPal ou Mercado Pago sem espalhar diferenças do provedor pelo `OrderService`, controllers ou checkout. O código de pedidos deve conversar com um contrato interno comum; cada integração implementa um adaptador que traduz o contrato para a API e os webhooks do provedor.
 
-Esta entrega é somente a base compartilhada. A implementação dos adaptadores PayPal e Mercado Pago permanece em tarefas separadas e com o responsável definido pelo grupo. Não implementa Checkout, criação/captura real, banco de transações, webhooks nem reembolso.
+O adaptador `mercado_pago_adapter.py` cria preferências pela Preferences API e consulta pagamentos reais no endpoint do Mercado Pago. Webhooks usam `x-signature`, consultam o pagamento autenticamente e correlacionam `external_reference` com um pedido CandyLand. O fluxo ainda depende de credenciais e de validação ponta a ponta; não habilite produção antes disso. O adaptador PayPal continua fora do código.
 
 ## Conceitos que não devem ser misturados
 
@@ -22,9 +22,9 @@ Esta entrega é somente a base compartilhada. A implementação dos adaptadores 
 - `PaymentResult`: resultado normalizado; links/artefatos de Pix ou boleto são opcionais, de acordo com o método realmente suportado.
 - `VerifiedPaymentEvent`: evento normalizado. Só pode ser produzido por um adaptador após a verificação documentada da autenticidade do webhook.
 - `PaymentProvider`: interface para criar, capturar, consultar, cancelar, reembolsar e validar webhooks.
-- `factory.py`: seleciona o adaptador pelo `PAYMENT_PROVIDER`, sem fallback silencioso para pagamentos falsos. Até o adaptador existir, a fábrica falha de forma explícita e segura.
+- `factory.py`: seleciona o adaptador pelo `PAYMENT_PROVIDER`, sem fallback silencioso para pagamentos falsos. O Mercado Pago usa `MERCADO_PAGO_ACCESS_TOKEN` apenas no backend; webhook usa `MERCADO_PAGO_WEBHOOK_SECRET`.
 
-Os adaptadores futuros planejados serão `paypal_adapter.py` (`PayPalPaymentProvider`) e `mercado_pago_adapter.py` (`MercadoPagoPaymentProvider`). Eles ainda não existem nesta entrega; selecionar um no `.env` não efetua pagamento.
+`mercado_pago_adapter.py` (`MercadoPagoPaymentProvider`) implementa Checkout Pro e é selecionado por `PAYMENT_PROVIDER=mercadopago`. `paypal_adapter.py` (`PayPalPaymentProvider`) continua futuro e não deve ser selecionado. Selecionar o Mercado Pago sem `MERCADO_PAGO_ACCESS_TOKEN` configurado retorna erro explícito.
 
 ## Comparação documentada (25/10/2026)
 
@@ -64,4 +64,4 @@ cd backend
 python.exe -m pytest tests\business_rules\test_payment_provider_contract.py -q
 ```
 
-Os testes exercitam o contrato e a seleção segura, sem acessar redes externas. Eles não comprovam credenciais, elegibilidade de conta ou transações de sandbox.
+Os testes exercitam o contrato, a criação de preferência com resposta simulada e a rejeição de assinatura inválida sem acessar a rede. Eles não comprovam credenciais reais, webhook recebido pela internet ou transações no ambiente de teste.

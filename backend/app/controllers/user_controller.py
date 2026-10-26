@@ -60,6 +60,35 @@ class UserController:
         )
 
     @staticmethod
+    def geocodificar_endereco(user_id, address_id):
+        resultado = UserService.geocodificar_endereco(user_id, address_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"], "endereco_localizado": resultado.get("endereco_localizado")}),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_coordenadas_endereco(user_id, address_id, dados):
+        resultado = UserService.atualizar_coordenadas_endereco(
+            user_id,
+            address_id,
+            dados.get("latitude"),
+            dados.get("longitude"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
     def atualizar_usuario(user_id, dados):
         if "email" in dados or "telefone" in dados:
             return make_response(

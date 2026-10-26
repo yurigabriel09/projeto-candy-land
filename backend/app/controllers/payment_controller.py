@@ -64,3 +64,17 @@ class PaymentController:
         if resultado.get("pedido"):
             body["pedido"] = resultado["pedido"]
         return make_response(jsonify(body), 200)
+    @staticmethod
+    def webhook_mercado_pago(headers, raw_body, query_data_id=None):
+        resultado = PaymentService.processar_webhook_mercado_pago(
+            headers, raw_body, query_data_id
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado.get("mensagem", "Webhook recebido."), "ok": True}),
+            200,
+        )
+

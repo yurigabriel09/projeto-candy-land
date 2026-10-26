@@ -84,6 +84,47 @@ class RestauranteService:
             }
 
     @staticmethod
+    def listar_enderecos_retirada(restaurante_id):
+        try:
+            restaurante = db.session.get(Restaurante, restaurante_id)
+            if not restaurante or not restaurante.ativo:
+                return {"success": False, "erro": "Restaurante não encontrado ou indisponível.", "status_code": 404}
+
+            from sqlalchemy import or_
+            filtro = Endereco.id_restaurante == restaurante_id
+            if restaurante.address_id:
+                filtro = or_(filtro, Endereco.id == restaurante.address_id)
+            enderecos = (
+                Endereco.query.filter(filtro, Endereco.ativo.is_(True))
+                .order_by(Endereco.principal.desc(), Endereco.id.asc())
+                .all()
+            )
+            resultado = []
+            ids_vistos = set()
+            for endereco in enderecos:
+                if endereco.id in ids_vistos:
+                    continue
+                ids_vistos.add(endereco.id)
+                resultado.append({
+                    "id": endereco.id,
+                    "cep": endereco.cep,
+                    "rua": endereco.rua,
+                    "numero": endereco.numero,
+                    "complemento": endereco.complemento,
+                    "bairro": endereco.bairro,
+                    "cidade": endereco.cidade,
+                    "estado": endereco.estado,
+                    "referencia": endereco.referencia,
+                    "latitude": float(endereco.latitude) if endereco.latitude is not None else None,
+                    "longitude": float(endereco.longitude) if endereco.longitude is not None else None,
+                    "principal": bool(endereco.principal),
+                    "ativo": bool(endereco.ativo),
+                })
+            return {"success": True, "mensagem": "Endereços de retirada consultados.", "dados": resultado}
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar os endereços do restaurante.", "status_code": 500}
+
+    @staticmethod
     def criar_restaurante(
         cnpj,
         razao_social,

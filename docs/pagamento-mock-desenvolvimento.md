@@ -4,7 +4,7 @@
 
 O adaptador `mock` permite validar o ciclo técnico de pagamento do CandyLand sem credenciais externas. Ele **não fala com PayPal/Mercado Pago, não movimenta dinheiro e não comprova uma integração real**. O uso é bloqueado pelo factory e pela camada de serviço fora de `APP_ENV=development`, `dev`, `local`, `test` ou `testing`.
 
-O `.env.example` mantém `PAYMENT_PROVIDER=none` como padrão seguro. Para executar a simulação local, configure apenas no `.env` de desenvolvimento:
+O `.env.example` deste pacote está preparado para `PAYMENT_PROVIDER=mercadopago`. Para executar os testes isolados do mock, troque temporariamente o provedor apenas no `.env` local de desenvolvimento:
 
 ```dotenv
 APP_ENV=development
@@ -41,4 +41,4 @@ A aprovação simulada chama `OrderService.confirmar_pagamento()`. A tentativa, 
 
 ## Não coberto nesta etapa
 
-Ainda faltam adaptadores de gateway real, captura/API real, credenciais de sandbox, validação criptográfica de webhook do provedor real, histórico completo de eventos, política para múltiplas tentativas após recusa, reembolso real e interface de checkout para apresentar as ações de pagamento. O mock não deve ser descrito como pagamento real nem como webhook de produção validado.
+O mock continua sem integração externa e não substitui o adaptador Mercado Pago descrito em `docs/mercado-pago-checkout-pro.md`. O adaptador de produção ainda precisa de testes ponta a ponta no sandbox, configuração de webhook HTTPS, política para múltiplas tentativas após recusa e um fluxo de cancelamento/reembolso com reconciliação de estoque. O mock nunca deve ser descrito como pagamento real.

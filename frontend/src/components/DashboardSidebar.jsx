@@ -3,11 +3,11 @@ import { useAuth } from "../context/AuthContext";
 
 const ITENS_NAV = [
     { chave: "home", rotulo: "🏠 Home", para: "/business" },
-    { chave: "pedidos", rotulo: "🧾 Pedidos", disabled: true },
+    { chave: "pedidos", rotulo: "🧾 Pedidos", para: "/business/pedidos" },
     { chave: "cardapio", rotulo: "📋 Cardápio", para: "/business/cardapio" },
-    { chave: "financeiro", rotulo: "💰 Financeiro", disabled: true },
-    { chave: "avaliacoes", rotulo: "⭐ Avaliações", disabled: true },
-    { chave: "config", rotulo: "⚙️ Config", disabled: true },
+    { chave: "financeiro", rotulo: "💰 Financeiro", para: "/business/financeiro" },
+    { chave: "avaliacoes", rotulo: "⭐ Avaliações", para: "/business/avaliacoes" },
+    { chave: "config", rotulo: "⚙️ Config", para: "/business/configuracao" },
 ];
 
 function DashboardSidebar({ ativo, nomeLoja }) {
@@ -30,26 +30,17 @@ function DashboardSidebar({ ativo, nomeLoja }) {
             </Link>
 
             <nav className="dashboard-nav">
-                {ITENS_NAV.map((item) =>
-                    item.disabled ? (
-                        <button
-                            key={item.chave}
-                            className="dashboard-nav-item"
-                            disabled
-                            title="Em breve"
-                        >
-                            {item.rotulo}
-                        </button>
-                    ) : (
-                        <button
-                            key={item.chave}
-                            className={`dashboard-nav-item ${ativo === item.chave ? "active" : ""}`}
-                            onClick={() => navigate(item.para)}
-                        >
-                            {item.rotulo}
-                        </button>
-                    )
-                )}
+                {ITENS_NAV.map((item) => (
+                    <button
+                        key={item.chave}
+                        type="button"
+                        className={`dashboard-nav-item ${ativo === item.chave ? "active" : ""}`}
+                        onClick={() => navigate(item.para)}
+                        aria-current={ativo === item.chave ? "page" : undefined}
+                    >
+                        {item.rotulo}
+                    </button>
+                ))}
             </nav>
 
             <button className="dashboard-logout" onClick={handleSair}>

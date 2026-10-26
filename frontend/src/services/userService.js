@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:5000/users";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://127.0.0.1:5000").replace(/\/+$/, "");
+const API_URL = `${API_BASE}/users`;
 
 function getToken() {
     try {
@@ -58,4 +59,29 @@ export async function deleteUser(id) {
     const resultado = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(resultado.erro || "Erro ao deletar usuário");
     return true;
+}
+
+export async function saveAddressCoordinates(userId, addressId, latitude, longitude) {
+    const response = await fetch(
+        `${API_URL}/${encodeURIComponent(userId)}/enderecos/${encodeURIComponent(addressId)}/coordenadas`,
+        {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({ latitude, longitude }),
+        },
+    );
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resultado.erro || "Não foi possível salvar as coordenadas do endereço.");
+    return resultado.dados;
+}
+
+
+export async function geocodeCustomerAddress(userId, addressId) {
+    const response = await fetch(
+        `${API_URL}/${encodeURIComponent(userId)}/enderecos/${encodeURIComponent(addressId)}/geocodificar`,
+        { method: "POST", headers: authHeaders() },
+    );
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resultado.erro || "Não foi possível localizar o endereço.");
+    return resultado.dados;
 }

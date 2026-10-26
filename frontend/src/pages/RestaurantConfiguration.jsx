@@ -147,7 +147,13 @@ function RestaurantConfiguration() {
                 setAddress((current) => ({ ...current, ...dados.endereco }));
             }
 
-            setMessage("Dados do restaurante atualizados com sucesso.");
+            setMessage("Dados salvos com sucesso! Voltando para o painel...");
+            window.setTimeout(() => {
+                navigate("/business", {
+                    replace: true,
+                    state: { successMessage: "Configuração do restaurante salva com sucesso." },
+                });
+            }, 1300);
         } catch (saveError) {
             setError(saveError.message || "Não foi possível salvar os dados.");
         } finally {

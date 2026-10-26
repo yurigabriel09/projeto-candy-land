@@ -42,8 +42,20 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-troque-em-producao")
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
     GOOGLE_CLOCK_SKEW_SECONDS = int(os.getenv("GOOGLE_CLOCK_SKEW_SECONDS", "300"))
-    # Fica desativado até o grupo escolher o gateway e o adaptador correspondente existir.
+    # Checkout Pro do Mercado Pago. O Access Token e o segredo de webhook ficam no backend.
     PAYMENT_PROVIDER = os.getenv("PAYMENT_PROVIDER", "none").strip().lower()
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    MERCADO_PAGO_ACCESS_TOKEN = os.getenv("MERCADO_PAGO_ACCESS_TOKEN", "").strip()
+    MERCADO_PAGO_WEBHOOK_SECRET = os.getenv("MERCADO_PAGO_WEBHOOK_SECRET", "").strip()
+    MERCADO_PAGO_NOTIFICATION_URL = os.getenv("MERCADO_PAGO_NOTIFICATION_URL", "").strip()
+    MERCADO_PAGO_RETURN_URL_BASE = os.getenv(
+        "MERCADO_PAGO_RETURN_URL_BASE", FRONTEND_URL
+    ).strip().rstrip("/")
+    MERCADO_PAGO_SANDBOX = _valor_verdadeiro(
+        os.getenv("MERCADO_PAGO_SANDBOX", "true")
+    )
+    # Chave restrita à API Geocoding, mantida apenas no backend.
+    GOOGLE_MAPS_GEOCODING_API_KEY = os.getenv("GOOGLE_MAPS_GEOCODING_API_KEY", "").strip()
 
     UPLOAD_FOLDER = BASE_DIR / "uploads"
     UPLOAD_MAX_BYTES = 2 * 1024 * 1024

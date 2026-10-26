@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import DashboardSidebar from "../components/DashboardSidebar";
 import { resolverImagemUrl } from "../utils/imageUrl";
@@ -30,7 +30,17 @@ function BusinessHome() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [statusVisual, setStatusVisual] = useState(null);
+    const [mensagemSucesso, setMensagemSucesso] = useState("");
+    const location = useLocation();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const mensagem = location.state?.successMessage;
+        if (!mensagem) return;
+        setMensagemSucesso(mensagem);
+        navigate(location.pathname, { replace: true, state: null });
+        window.setTimeout(() => setMensagemSucesso(""), 4500);
+    }, [location.key]);
 
     useEffect(() => {
         carregarDados();
@@ -124,6 +134,8 @@ function BusinessHome() {
                         <button type="button" className="icon-button" title="Minha conta">👤</button>
                     </div>
                 </header>
+
+                {mensagemSucesso && <p className="field-message dashboard-success-message" role="status">✓ {mensagemSucesso}</p>}
 
                 <div className="dashboard-body">
                     <div className="stats-grid">

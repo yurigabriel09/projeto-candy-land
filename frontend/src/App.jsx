@@ -17,6 +17,11 @@ import Cardapio from "./pages/Cardapio";
 import PartnerLanding from "./pages/PartnerLanding";
 import RestaurantConfiguration from "./pages/RestaurantConfiguration";
 import Cart from "./pages/Cart";
+import CheckoutResult from "./pages/CheckoutResult";
+import OrderTracking from "./pages/OrderTracking";
+import BusinessOrders from "./pages/BusinessOrders";
+import BusinessFinance from "./pages/BusinessFinance";
+import BusinessReviews from "./pages/BusinessReviews";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -115,6 +120,33 @@ function App() {
                             />
 
                             <Route
+                                path="/business/pedidos"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessOrders />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/business/financeiro"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessFinance />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/business/avaliacoes"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessReviews />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
                                 path="/business/products/new"
                                 element={
                                     <ProtectedRoute tipoConta="BUSINESS">
@@ -150,11 +182,29 @@ function App() {
                                 }
                             />
 
-                            <Route 
+                            <Route
                                 path="/cart"
                                 element={
                                     <ProtectedRoute tipoConta="PERSONAL">
                                         <Cart />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/checkout/resultado"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <CheckoutResult />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/pedidos/:orderId/acompanhar"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <OrderTracking />
                                     </ProtectedRoute>
                                 }
                             />

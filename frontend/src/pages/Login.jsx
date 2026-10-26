@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
@@ -9,7 +9,7 @@ import { countries } from "../utils/countries";
 const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "")}/auth`;
 
 function Login({ audiencia = "PERSONAL" }) {
-    const { entrar } = useAuth();
+    const { entrar, autenticado, dadosAutenticacao: sessaoAutenticacao } = useAuth();
     const [tipo, setTipo] = useState("email");
     const [valor, setValor] = useState("");
     const [codigo, setCodigo] = useState("");
@@ -27,6 +27,12 @@ function Login({ audiencia = "PERSONAL" }) {
     const navigate = useNavigate();
 
     useEffect(() => {
+        if (autenticado) {
+            const destino = sessaoAutenticacao?.tipo_conta === "BUSINESS" ? "/business" : "/home";
+            navigate(destino, { replace: true });
+            return;
+        }
+
         const parametros = new URLSearchParams(window.location.search);
 
         const facebookTicket = parametros.get("facebook_ticket");
@@ -42,7 +48,7 @@ function Login({ audiencia = "PERSONAL" }) {
             window.history.replaceState({}, document.title, window.location.pathname);
             handleFacebookLogin(facebookTicket);
         }
-    }, []);
+    }, [autenticado, sessaoAutenticacao?.tipo_conta, navigate]);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -481,6 +487,10 @@ function Login({ audiencia = "PERSONAL" }) {
 
     const nomeCanal = canalAtual === "EMAIL" ? "e-mail" : "WhatsApp";
     const segundoDado = canalAtual === "EMAIL" ? "seu e-mail" : "seu celular";
+
+    if (autenticado) {
+        return <Navigate to={sessaoAutenticacao?.tipo_conta === "BUSINESS" ? "/business" : "/home"} replace />;
+    }
 
     return (
         <main className="auth-page">

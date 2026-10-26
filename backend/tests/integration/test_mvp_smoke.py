@@ -143,6 +143,14 @@ def test_smoke_cliente_catalogo_endereco_checkout_e_consulta_pedido(app):
         assert "telefone" not in restaurante_publico
         assert "cnpj" not in restaurante_publico
 
+        enderecos_retirada_response = client.get(
+            f"/restaurantes/{restaurante.id}/enderecos/retirada"
+        )
+        assert enderecos_retirada_response.status_code == 200
+        enderecos_retirada = enderecos_retirada_response.get_json()["dados"]
+        assert len(enderecos_retirada) == 1
+        assert enderecos_retirada[0]["id"] == endereco_restaurante.id
+
         # 2. O produto é encontrado no catálogo sem expor estoque interno.
         produtos_response = client.get(
             f"/restaurantes/{restaurante.id}/produtos"
@@ -213,6 +221,12 @@ def test_smoke_cliente_catalogo_endereco_checkout_e_consulta_pedido(app):
         assert listagem_response.status_code == 200
         ids_pedidos = [item["id"] for item in listagem_response.get_json()["pedidos"]]
         assert pedido_id in ids_pedidos
+
+        # O pedido pendente pertence ao cliente, mas não deve aparecer na fila operacional do restaurante.
+        token_restaurante = _token("BUSINESS", restaurante.id, restaurante.email)
+        pedidos_restaurante = client.get("/pedidos", headers=_headers(token_restaurante))
+        assert pedidos_restaurante.status_code == 200
+        assert pedido_id not in [item["id"] for item in pedidos_restaurante.get_json()["pedidos"]]
 
         # Pedido pendente não deve dar baixa de estoque antes da confirmação de pagamento.
         db.session.refresh(produto)

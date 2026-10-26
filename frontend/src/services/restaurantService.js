@@ -30,6 +30,13 @@ export async function getRestaurant(id) {
   if (!response.ok) throw new Error(resultado.erro || "Loja não encontrada");
   return resultado.dados;
 }
+export async function getRestaurantPickupAddresses(id) {
+  const response = await fetch(`${API_URL}/${encodeURIComponent(id)}/enderecos/retirada`);
+  const resultado = await response.json();
+  if (!response.ok) throw new Error(resultado.erro || "Erro ao buscar endereços de retirada");
+  return resultado.dados || [];
+}
+
 export async function getRestaurantProducts(id) {
   const response = await fetch(`${API_URL}/${id}/produtos`);
   const resultado = await response.json();

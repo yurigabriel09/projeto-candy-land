@@ -36,6 +36,7 @@ class PaymentMethod(str, Enum):
     """Canonical CandyLand payment methods; these are not provider names."""
 
     PIX = "PIX"
+    CARD = "CARTAO"
     CREDIT_CARD = "CARTAO_CREDITO"
     DEBIT_CARD = "CARTAO_DEBITO"
     BOLETO = "BOLETO"
@@ -126,6 +127,9 @@ class PaymentResult:
     boleto_line: Optional[str] = None
     expires_at: Optional[datetime] = None
     message: Optional[str] = None
+    # Populated only when the gateway reports the actual instrument used.
+    payment_type_id: Optional[str] = None
+    payment_method_id: Optional[str] = None
 
     def __post_init__(self) -> None:
         if not str(self.provider or "").strip():
@@ -156,6 +160,8 @@ class VerifiedPaymentEvent:
     amount: Decimal
     currency: str = "BRL"
     occurred_at: Optional[datetime] = None
+    payment_type_id: Optional[str] = None
+    payment_method_id: Optional[str] = None
 
     def __post_init__(self) -> None:
         required = {
@@ -233,6 +239,9 @@ class PaymentProvider(ABC):
 
     @abstractmethod
     def verify_webhook(
-        self, headers: Mapping[str, str], raw_body: bytes
+        self,
+        headers: Mapping[str, str],
+        raw_body: bytes,
+        query_data_id: Optional[str] = None,
     ) -> VerifiedPaymentEvent:
         """Authenticate then normalize a provider webhook; reject invalid signatures."""

@@ -36,6 +36,21 @@ def listar_enderecos_usuario(user_id):
     return UserController.listar_enderecos(user_id)
 
 
+@user_bp.route("/<int:user_id>/enderecos/<int:address_id>/geocodificar", methods=["POST"])
+@token_required
+@account_owner_required("PERSONAL", "user_id")
+def geocodificar_endereco_usuario(user_id, address_id):
+    return UserController.geocodificar_endereco(user_id, address_id)
+
+
+@user_bp.route("/<int:user_id>/enderecos/<int:address_id>/coordenadas", methods=["PUT"])
+@token_required
+@account_owner_required("PERSONAL", "user_id")
+def atualizar_coordenadas_endereco(user_id, address_id):
+    dados = request.get_json(silent=True) or {}
+    return UserController.atualizar_coordenadas_endereco(user_id, address_id, dados)
+
+
 @user_bp.route("/<int:user_id>", methods=["PUT"])
 @token_required
 @account_owner_required("PERSONAL", "user_id")

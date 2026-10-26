@@ -35,7 +35,7 @@ class MockPaymentProvider(PaymentProvider):
 
     @property
     def supported_methods(self) -> FrozenSet[PaymentMethod]:
-        return frozenset({PaymentMethod.PIX, PaymentMethod.CREDIT_CARD})
+        return frozenset({PaymentMethod.PIX, PaymentMethod.CARD, PaymentMethod.CREDIT_CARD})
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
         self.validar_metodo(command.method)
@@ -86,7 +86,10 @@ class MockPaymentProvider(PaymentProvider):
         return self._store(replace(result, status=PaymentStatus.REFUNDED))
 
     def verify_webhook(
-        self, headers: Mapping[str, str], raw_body: bytes
+        self,
+        headers: Mapping[str, str],
+        raw_body: bytes,
+        query_data_id: Optional[str] = None,
     ) -> VerifiedPaymentEvent:
         raise PaymentProviderError(
             "O provedor mock não recebe webhooks HTTP. Use o endpoint de simulação "

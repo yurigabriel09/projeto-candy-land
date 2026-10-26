@@ -309,3 +309,59 @@ def test_checkout_rejeita_corpo_json_que_nao_e_objeto(app):
         assert response.status_code == 400
         assert "objeto JSON" in response.get_json()["erro"]
         assert Pedido.query.count() == 0
+
+
+def test_checkout_pickup_permite_escolher_unidade_ativa_do_restaurante(app):
+    with app.app_context():
+        cliente, _, restaurante, _, produto = _criar_cenario()
+        segunda_unidade = Endereco(
+            id_restaurante=restaurante.id,
+            cep="01310100",
+            rua="Avenida Paulista",
+            numero="1000",
+            bairro="Bela Vista",
+            cidade="São Paulo",
+            estado="SP",
+            latitude=Decimal("-23.563100"),
+            longitude=Decimal("-46.654400"),
+            tipo_endereco="COMERCIAL",
+            principal=False,
+            ativo=True,
+        )
+        db.session.add(segunda_unidade)
+        db.session.commit()
+        response = app.test_client().post(
+            "/pedidos",
+            headers=_headers(_token("PERSONAL", cliente.id)),
+            json={
+                "restaurant_id": restaurante.id,
+                "order_type": "PICKUP",
+                "payment_method": "CARTAO",
+                "pickup_address_id": segunda_unidade.id,
+                "items": [{"produto_id": produto.id, "quantidade": 1}],
+            },
+        )
+        assert response.status_code == 201, response.get_json()
+        pedido = response.get_json()["pedido"]
+        assert pedido["pickup_address_id"] == segunda_unidade.id
+        assert pedido["pickup_location"]["endereco"].startswith("Avenida Paulista")
+        assert pedido["payment_method"] == "CARTAO"
+
+
+def test_webhook_merchant_order_e_ignorado_com_200(app):
+    response = app.test_client().post(
+        "/pedidos/webhooks/mercadopago?id=45589963048&topic=merchant_order",
+        json={"id": "45589963048", "type": "merchant_order", "action": "merchant_order.updated"},
+    )
+    assert response.status_code == 200
+    assert response.get_json()["ignorado"] is True
+
+
+def test_webhook_payment_legado_sem_envelope_assinado_e_so_confirmado_sem_mudar_pedido(app):
+    response = app.test_client().post(
+        "/pedidos/webhooks/mercadopago?id=998877&topic=payment",
+        data="",
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.get_json()["ignorado"] is True

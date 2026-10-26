@@ -17,7 +17,7 @@ from app.services.order_workflow_service import (
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
-PAYMENT_METHODS = {"PIX", "CARTAO_CREDITO"}
+PAYMENT_METHODS = {"PIX", "CARTAO", "CARTAO_CREDITO"}
 ORDER_TYPES = {"DELIVERY", "PICKUP"}
 
 
@@ -35,7 +35,7 @@ class OrderService:
     @staticmethod
     def _validate_payment_method(method):
         if method not in PAYMENT_METHODS:
-            raise ValueError("payment_method deve ser PIX ou CARTAO_CREDITO.")
+            raise ValueError("payment_method deve ser PIX ou CARTAO.")
 
     @staticmethod
     def _validate_order_type(order_type):
@@ -54,10 +54,25 @@ class OrderService:
         return address
 
     @staticmethod
-    def _resolve_pickup_address(restaurant_id):
+    def _resolve_pickup_address(restaurant_id, address_id=None):
         restaurant = Restaurante.query.filter_by(id=restaurant_id).first()
         if not restaurant:
             raise ValueError("Restaurante não encontrado.")
+
+        # A pessoa pode escolher uma entre as unidades/endereço ativos. O endereço
+        # principal legado também é válido mesmo em bancos antigos sem id_restaurante.
+        if address_id is not None:
+            address = Endereco.query.filter_by(id=address_id, ativo=True).first()
+            pertence_ao_restaurante = bool(
+                address
+                and (
+                    address.id_restaurante == restaurant_id
+                    or (restaurant.address_id is not None and address.id == restaurant.address_id)
+                )
+            )
+            if not pertence_ao_restaurante:
+                raise ValueError("Selecione um endereço ativo pertencente a este restaurante.")
+            return address
 
         address = None
         if restaurant.address_id:
@@ -69,7 +84,7 @@ class OrderService:
         if not address:
             address = Endereco.query.filter_by(
                 id_restaurante=restaurant_id, ativo=True
-            ).first()
+            ).order_by(Endereco.principal.desc(), Endereco.id.asc()).first()
         if not address:
             raise ValueError(
                 "O restaurante precisa ter um endereço ativo cadastrado para retirada."
@@ -224,6 +239,7 @@ class OrderService:
             payment_method = dados.get("payment_method")
             items = dados.get("items")
             address_id = dados.get("delivery_address_id")
+            pickup_address_id = dados.get("pickup_address_id")
 
             if isinstance(restaurant_id, bool) or not isinstance(restaurant_id, int):
                 raise TypeError("restaurant_id é obrigatório e deve ser inteiro.")
@@ -243,7 +259,12 @@ class OrderService:
             else:
                 # A coluna legado delivery_address_id é obrigatória no banco. Para
                 # retirada, ela referencia o endereço ativo do próprio restaurante.
-                address_id = OrderService._resolve_pickup_address(restaurant_id).id
+                if pickup_address_id not in (None, ""):
+                    if isinstance(pickup_address_id, bool) or not isinstance(pickup_address_id, int):
+                        raise TypeError("pickup_address_id deve ser um inteiro válido.")
+                address_id = OrderService._resolve_pickup_address(
+                    restaurant_id, pickup_address_id
+                ).id
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
             # Ainda não existe motor server-side de promoções ou taxa da plataforma.
@@ -320,8 +341,14 @@ class OrderService:
                     .all()
                 )
             elif account_type == "BUSINESS":
+                # Pedidos aguardando pagamento permanecem registrados para o
+                # cliente e para reconciliação, mas não entram na fila operacional
+                # do restaurante até o gateway confirmar a compra.
                 pedidos = (
-                    Pedido.query.filter_by(restaurant_id=account_id)
+                    Pedido.query.filter(
+                        Pedido.restaurant_id == account_id,
+                        Pedido.status != "PENDENTE_PAGAMENTO",
+                    )
                     .order_by(Pedido.created_at.desc())
                     .all()
                 )
@@ -770,7 +797,46 @@ class OrderService:
 
     @staticmethod
     def _to_dict(pedido):
+        def serializar_localizacao(endereco):
+            if not endereco:
+                return None
+            partes = [endereco.rua, endereco.numero, endereco.bairro, endereco.cidade, endereco.estado, endereco.cep]
+            return {
+                "latitude": float(endereco.latitude) if endereco.latitude is not None else None,
+                "longitude": float(endereco.longitude) if endereco.longitude is not None else None,
+                "endereco": ", ".join(str(parte).strip() for parte in partes if parte and str(parte).strip()),
+            }
+
+        endereco_entrega = None
+        endereco_retirada = None
+        if pedido.order_type == "DELIVERY":
+            endereco_entrega = db.session.get(Endereco, pedido.delivery_address_id)
+        elif pedido.order_type == "PICKUP":
+            endereco_retirada = db.session.get(Endereco, pedido.delivery_address_id)
+        restaurante = db.session.get(Restaurante, pedido.restaurant_id)
+        endereco_restaurante = None
+        if restaurante:
+            if restaurante.address_id:
+                endereco_restaurante = db.session.get(Endereco, restaurante.address_id)
+            if not endereco_restaurante:
+                endereco_restaurante = Endereco.query.filter_by(id_restaurante=restaurante.id, ativo=True).first()
+
+        def serializar_item(item):
+            produto = db.session.get(Produto, item.id_produto)
+            return {
+                "id": item.id,
+                "produto_id": item.id_produto,
+                "nome_produto": produto.name if produto else f"Produto #{item.id_produto}",
+                "quantidade": item.quantidade,
+                "preco_unitario": float(item.preco_unitario),
+                "observacoes": item.observacoes,
+                "detalhes_personalizacao": item.detalhes_personalizacao,
+            }
+
         return {
+            "delivery_location": serializar_localizacao(endereco_entrega),
+            "pickup_location": serializar_localizacao(endereco_retirada),
+            "restaurant_location": serializar_localizacao(endereco_restaurante),
             "id": pedido.id,
             "order_code": pedido.order_code,
             "user_id": pedido.user_id,
@@ -820,14 +886,7 @@ class OrderService:
                 else None
             ),
             "items": [
-                {
-                    "id": item.id,
-                    "produto_id": item.id_produto,
-                    "quantidade": item.quantidade,
-                    "preco_unitario": float(item.preco_unitario),
-                    "observacoes": item.observacoes,
-                    "detalhes_personalizacao": item.detalhes_personalizacao,
-                }
+                serializar_item(item)
                 for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all()
             ],
         }

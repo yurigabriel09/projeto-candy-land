@@ -30,6 +30,13 @@ class RestaurantController:
         )
 
     @staticmethod
+    def listar_enderecos_retirada(restaurant_id):
+        resultado = RestauranteService.listar_enderecos_retirada(restaurant_id)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)
+
+    @staticmethod
     def criar_restaurante(dados):
         resultado = RestauranteService.criar_restaurante(
             cnpj=dados.get("cnpj"),
