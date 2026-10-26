@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import usePendingOrdersCount from "../hooks/usePendingOrdersCount";
 
 /**
  * Cabeçalho usado na Home pública, na Home do cliente logado e na consulta
@@ -10,8 +12,10 @@ import { useCart } from "../context/CartContext";
 function Header() {
     const { dadosAutenticacao, autenticado, sair } = useAuth();
     const { quantidadeTotal } = useCart();
+    const [contaAberta, setContaAberta] = useState(false);
     const logado =
         autenticado && dadosAutenticacao?.tipo_conta === "PERSONAL";
+    const pagamentosPendentes = usePendingOrdersCount(Boolean(logado));
 
     function handleSair() {
         // Limpa a sessão e força a navegação completa para a área pública.
@@ -51,7 +55,31 @@ function Header() {
                                 </span>
                             )}
 
-                            <Link to="/minha-conta/dados-pessoais">Minha conta</Link>
+                            <div className="site-account-menu">
+                                <button
+                                    type="button"
+                                    className="site-account-trigger"
+                                    aria-expanded={contaAberta}
+                                    aria-haspopup="true"
+                                    onClick={() => setContaAberta((aberta) => !aberta)}
+                                >
+                                    Minha conta
+                                    {pagamentosPendentes > 0 && (
+                                        <span className="cart-badge" aria-label={`${pagamentosPendentes} pedidos aguardando pagamento`}>
+                                            {pagamentosPendentes}
+                                        </span>
+                                    )}
+                                </button>
+                                {contaAberta && (
+                                    <div className="site-account-dropdown" role="menu">
+                                        <Link role="menuitem" to="/minha-conta/dados-pessoais" onClick={() => setContaAberta(false)}>Dados pessoais</Link>
+                                        <Link role="menuitem" to="/minha-conta/pagamentos-pendentes" onClick={() => setContaAberta(false)}>
+                                            <span>Pedidos e pagamentos pendentes</span>
+                                            {pagamentosPendentes > 0 && <span className="cart-badge">{pagamentosPendentes}</span>}
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
                             <button onClick={handleSair} className="btn-contorno">
                                 Sair
                             </button>

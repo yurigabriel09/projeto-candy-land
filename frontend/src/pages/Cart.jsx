@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getOrders, getPayment } from "../services/orderService";
+import { cancelOrder, createOrder, createPayment, getCustomerAddresses } from "../services/orderService";
 import { geocodeCustomerAddress } from "../services/userService";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
 
@@ -69,11 +69,7 @@ function Cart() {
     const [iniciandoPagamento, setIniciandoPagamento] = useState(false);
     const [erroCheckout, setErroCheckout] = useState("");
     const [pedidoCriado, setPedidoCriado] = useState(() => checkoutInicial?.pedido || null);
-    const [pedidosPendentes, setPedidosPendentes] = useState([]);
-    const [carregandoPendentes, setCarregandoPendentes] = useState(false);
-    const [erroPedidosPendentes, setErroPedidosPendentes] = useState("");
     const [pedidoEmOperacao, setPedidoEmOperacao] = useState(null);
-    const [mensagemPedidosPendentes, setMensagemPedidosPendentes] = useState("");
 
     // AuthContext can finish restoring a session after the first render. Re-read
     // the pending checkout once the customer ID is available so a refresh does
@@ -87,26 +83,6 @@ function Cart() {
         }
     }, [dadosAutenticacao?.id, pedidoCriado]);
 
-    const carregarPedidosPendentes = useCallback(async (silencioso = false) => {
-        if (!dadosAutenticacao?.id) return;
-        if (!silencioso) setCarregandoPendentes(true);
-        setErroPedidosPendentes("");
-        try {
-            // A fonte da verdade é o backend, não sessionStorage: a lista sobrevive
-            // ao retorno do Checkout Pro, ao refresh e à navegação para outra página.
-            const pedidos = await getOrders();
-            setPedidosPendentes((pedidos || []).filter((pedido) => pedido.status === "PENDENTE_PAGAMENTO"));
-        } catch (error) {
-            setErroPedidosPendentes(error.message || "Não foi possível carregar os pedidos aguardando pagamento.");
-        } finally {
-            if (!silencioso) setCarregandoPendentes(false);
-        }
-    }, [dadosAutenticacao?.id]);
-
-    useEffect(() => {
-        carregarPedidosPendentes();
-    }, [carregarPedidosPendentes]);
-
     useEffect(() => {
         const aoRetornarDoCheckout = () => {
             const redirecionado = sessionStorage.getItem(CHECKOUT_REDIRECTED_KEY);
@@ -116,7 +92,7 @@ function Cart() {
                 sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
             }
             sessionStorage.removeItem(CHECKOUT_REDIRECTED_KEY);
-            carregarPedidosPendentes(true);
+            window.dispatchEvent(new Event("candyland:pending-orders-updated"));
         };
         window.addEventListener("pageshow", aoRetornarDoCheckout);
         window.addEventListener("focus", aoRetornarDoCheckout);
@@ -124,7 +100,7 @@ function Cart() {
             window.removeEventListener("pageshow", aoRetornarDoCheckout);
             window.removeEventListener("focus", aoRetornarDoCheckout);
         };
-    }, [pedidoCriado, carregarPedidosPendentes]);
+    }, [pedidoCriado]);
 
     useEffect(() => {
         let ativo = true;
@@ -261,50 +237,9 @@ function Cart() {
         }
     }
 
-    async function handlePagarPedidoPendente(pedido) {
-        setErroPedidosPendentes("");
-        setMensagemPedidosPendentes("");
-        setPedidoEmOperacao(pedido.id);
-        try {
-            // Tenta reconciliar o estado real primeiro. Falha de consulta não é
-            // interpretada como pagamento recusado: o endpoint de criação é idempotente.
-            try {
-                const estadoAtual = await getPayment(pedido.id);
-                if (estadoAtual?.status === "APPROVED") {
-                    await carregarPedidosPendentes(true);
-                    setMensagemPedidosPendentes(`O pagamento do pedido ${pedido.order_code} já foi aprovado.`);
-                    return;
-                }
-                if (["REFUNDED", "ACTION_REQUIRED"].includes(estadoAtual?.status)) {
-                    throw new Error("Este pagamento exige análise antes de uma nova tentativa. Consulte o acompanhamento do pedido.");
-                }
-            } catch (error) {
-                if (error?.message?.includes("exige análise")) throw error;
-                // Pode não haver tentativa criada ainda ou o gateway pode estar temporariamente indisponível.
-            }
-
-            const chaveTentativa = `candyland-order-${pedido.id}-retry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-            const pagamento = await createPayment(pedido.id, chaveTentativa);
-            if (!pagamento?.approval_url) {
-                throw new Error(pagamento?.message || "O Mercado Pago não retornou a URL do checkout.");
-            }
-            const url = new URL(pagamento.approval_url);
-            if (url.protocol !== "https:") throw new Error("A URL do checkout não é HTTPS; o pagamento não foi aberto.");
-            sessionStorage.setItem(CHECKOUT_REDIRECTED_KEY, String(pedido.id));
-            window.location.assign(url.href);
-        } catch (error) {
-            const mensagem = error.message || "Não foi possível reabrir o pagamento.";
-            setErroPedidosPendentes(`${pedido.order_code}: ${mensagem}`);
-            await carregarPedidosPendentes(true);
-        } finally {
-            setPedidoEmOperacao(null);
-        }
-    }
-
     async function handleCancelarPedidoPendente(pedido) {
         if (!window.confirm(`Deseja desistir do pedido ${pedido.order_code}? O pedido será cancelado e não será enviado ao restaurante.`)) return;
-        setErroPedidosPendentes("");
-        setMensagemPedidosPendentes("");
+        setErroCheckout("");
         setPedidoEmOperacao(pedido.id);
         try {
             await cancelOrder(pedido.id);
@@ -312,11 +247,9 @@ function Cart() {
                 setPedidoCriado(null);
                 limparCheckoutSessao();
             }
-            await carregarPedidosPendentes(true);
-            setMensagemPedidosPendentes(`Pedido ${pedido.order_code} cancelado. Você pode montar outro carrinho quando quiser.`);
+            window.dispatchEvent(new Event("candyland:pending-orders-updated"));
         } catch (error) {
-            setErroPedidosPendentes(error.message || "Não foi possível cancelar o pedido.");
-            await carregarPedidosPendentes(true);
+            setErroCheckout(error.message || "Não foi possível cancelar o pedido.");
         } finally {
             setPedidoEmOperacao(null);
         }
@@ -367,7 +300,7 @@ function Cart() {
             setPedidoCriado(pedido);
             persistirCheckoutSessao(pedido, metodoPagamento);
             limparCarrinho();
-            await carregarPedidosPendentes(true);
+            window.dispatchEvent(new Event("candyland:pending-orders-updated"));
             // Primeiro mostramos uma confirmação do pedido. O pagamento só começa
             // quando a pessoa clicar explicitamente em “Continuar para pagamento”.
         } catch (error) {
@@ -383,46 +316,6 @@ function Cart() {
             <Header />
             <main className="container secao">
                 <h1 className="titulo-secao">Seu carrinho</h1>
-
-                {(pedidosPendentes.some((pedido) => !pedidoCriado || String(pedido.id) !== String(pedidoCriado.id)) || carregandoPendentes || erroPedidosPendentes || mensagemPedidosPendentes) && (
-                    <section className="cart-pedidos-pendentes" aria-labelledby="cart-pendentes-heading">
-                        <div className="cart-pedidos-pendentes-heading">
-                            <div>
-                                <h2 id="cart-pendentes-heading">Pedidos aguardando pagamento</h2>
-                                <p>Se você saiu do checkout ou o pagamento foi recusado, pode continuar de onde parou.</p>
-                            </div>
-                            <button type="button" className="btn-contorno" disabled={carregandoPendentes} onClick={() => carregarPedidosPendentes()}>
-                                {carregandoPendentes ? "Atualizando..." : "Atualizar"}
-                            </button>
-                        </div>
-                        {carregandoPendentes && pedidosPendentes.length === 0 && <p role="status">Carregando pedidos pendentes...</p>}
-                        {erroPedidosPendentes && <p className="cart-checkout-erro" role="alert">{erroPedidosPendentes}</p>}
-                        {mensagemPedidosPendentes && <p className="cart-endereco-validado" role="status">{mensagemPedidosPendentes}</p>}
-                        {pedidosPendentes.filter((pedido) => !pedidoCriado || String(pedido.id) !== String(pedidoCriado.id)).map((pedido) => (
-                            <article className="cart-pedido-pendente" key={pedido.id}>
-                                <div className="cart-pedido-pendente-info">
-                                    <strong>Pedido {pedido.order_code}</strong>
-                                    <span>{(pedido.items || []).map((item) => `${item.nome_produto || `Produto #${item.produto_id}`} × ${item.quantidade}`).join(", ") || "Itens do pedido"}</span>
-                                    <span>{pedido.order_type === "PICKUP" ? "Retirada no restaurante" : "Entrega no endereço"} · {pedido.payment_method === "PIX" ? "PIX" : "Cartão"}</span>
-                                    <small>Criado em {pedido.created_at ? new Date(pedido.created_at).toLocaleString("pt-BR") : "data não disponível"}</small>
-                                    <strong>{moeda.format(pedido.total || 0)}</strong>
-                                </div>
-                                <div className="cart-pedido-pendente-actions">
-                                    <button type="button" className="btn-principal" disabled={pedidoEmOperacao !== null} onClick={() => handlePagarPedidoPendente(pedido)}>
-                                        {pedidoEmOperacao === pedido.id ? "Verificando..." : "Pagar agora"}
-                                    </button>
-                                    <button type="button" className="btn-contorno cart-pedido-cancelar" disabled={pedidoEmOperacao !== null} onClick={() => handleCancelarPedidoPendente(pedido)}>
-                                        {pedidoEmOperacao === pedido.id ? "Aguarde..." : "🗑 Desistir do pedido"}
-                                    </button>
-                                    <Link to={`/pedidos/${pedido.id}/acompanhar`} className="btn-contorno">Detalhes</Link>
-                                </div>
-                            </article>
-                        ))}
-                        {!carregandoPendentes && pedidosPendentes.filter((pedido) => !pedidoCriado || String(pedido.id) !== String(pedidoCriado.id)).length === 0 && !erroPedidosPendentes && !mensagemPedidosPendentes && (
-                            <p>Você não tem outros pedidos aguardando pagamento.</p>
-                        )}
-                    </section>
-                )}
 
                 {pedidoCriado ? (
                     <section className="cart-pedido-sucesso" role="status">

@@ -27,6 +27,7 @@ import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationGuard from "./components/RegistrationGuard";
 import DadosPessoais from "./pages/DadosPessoais";
+import PendingPayments from "./pages/PendingPayments";
 
 function App() {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -100,6 +101,15 @@ function App() {
                                     </ProtectedRoute>
                                 }
 />
+
+                            <Route
+                                path="/minha-conta/pagamentos-pendentes"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <PendingPayments />
+                                    </ProtectedRoute>
+                                }
+                            />
 
                             <Route
                                 path="/business"

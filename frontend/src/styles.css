@@ -3038,3 +3038,146 @@ select:focus-visible {
     .cart-pedido-pendente-actions { justify-content: stretch; }
     .cart-pedido-pendente-actions > * { flex: 1 1 100%; text-align: center; }
 }
+
+/* Menu de conta e área separada de pagamentos que ainda aguardam aprovação. */
+.site-account-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.site-account-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 0;
+    border: 0;
+    background: transparent;
+    color: var(--texto);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.site-account-trigger:hover,
+.site-account-trigger:focus-visible {
+    color: var(--rosa);
+}
+
+.site-account-dropdown {
+    position: absolute;
+    z-index: 1000;
+    top: calc(100% + 10px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: min(300px, calc(100vw - 32px));
+    padding: 8px;
+    border: 1px solid #f1d9d0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(76, 41, 32, 0.16);
+}
+
+.site-account-dropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 9px;
+    color: var(--texto);
+    font-size: 13px;
+    line-height: 1.35;
+    text-decoration: none;
+}
+
+.site-account-dropdown a:hover,
+.site-account-dropdown a:focus-visible {
+    background: #fff2ed;
+    color: var(--rosa);
+}
+
+.conta-menu-item-pendentes {
+    text-decoration: none;
+}
+
+.conta-menu-item-pendentes > span:nth-child(2) {
+    flex: 1;
+}
+
+.pending-orders-page {
+    max-width: 1050px;
+}
+
+.pending-orders-eyebrow {
+    margin: 0 0 8px;
+    color: #ad6c62;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.pending-orders-subtitle {
+    max-width: 720px;
+    margin: -8px 0 22px;
+    color: #745d53;
+    line-height: 1.6;
+}
+
+.pending-orders-count {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #ffe3e8;
+    color: #d72c58;
+    font-size: 12px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.pending-orders-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 18px 24px;
+    text-align: center;
+}
+
+.pending-orders-empty > span {
+    display: flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e4f7ea;
+    color: #21834b;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.pending-orders-empty p {
+    max-width: 430px;
+    margin: 0 0 8px;
+    color: #745d53;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+    .site-account-dropdown {
+        right: -58px;
+    }
+    .pending-orders-page .cart-pedidos-pendentes-heading {
+        align-items: stretch;
+    }
+}

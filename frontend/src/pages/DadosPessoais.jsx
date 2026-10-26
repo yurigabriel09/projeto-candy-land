@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUser, updateUser } from "../services/userService";
+import usePendingOrdersCount from "../hooks/usePendingOrdersCount";
 
 
 function iniciais(nome) {
@@ -34,6 +35,7 @@ function mascararCpf(valor) {
 
 function DadosPessoais() {
     const { dadosAutenticacao, entrar, sair } = useAuth();
+    const pagamentosPendentes = usePendingOrdersCount(Boolean(dadosAutenticacao?.token && dadosAutenticacao?.tipo_conta === "PERSONAL"));
 
     const [usuario, setUsuario] = useState(null);
     const [nome, setNome] = useState("");
@@ -169,10 +171,11 @@ function DadosPessoais() {
                             <span className="conta-menu-numero">02</span>
                             Configurações
                         </button>
-                        <button type="button" className="conta-menu-item" disabled title="Em breve">
+                        <Link to="/minha-conta/pagamentos-pendentes" className="conta-menu-item conta-menu-item-pendentes">
                             <span className="conta-menu-numero">03</span>
-                            Pagamentos
-                        </button>
+                            <span>Pedidos e pagamentos pendentes</span>
+                            {pagamentosPendentes > 0 && <span className="cart-badge" aria-label={`${pagamentosPendentes} pedidos pendentes`}>{pagamentosPendentes}</span>}
+                        </Link>
                     </nav>
 
                     <button type="button" className="conta-menu-sair" onClick={handleSair}>
