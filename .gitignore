@@ -37,3 +37,6 @@ tempCodeRunnerFile.py
 /CandyLand_limpo.zip
 
 backend/uploads/
+
+# Executáveis locais de desenvolvimento
+/ngrok.exe

@@ -60,6 +60,7 @@ class Restaurante(db.Model):
             ),
             "horario_funcionamento": self.horario_funcionamento,
             "status": self.status,
+            "ativo": bool(self.ativo),
         }
 
     def to_dict(self):

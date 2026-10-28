@@ -61,6 +61,15 @@ def atualizar_configuracao(restaurante_id):
     return RestaurantController.atualizar_configuracao(restaurante_id, dados)
 
 
+@restaurante_bp.route("/<int:restaurante_id>/status", methods=["PATCH"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
+def atualizar_status_operacional(restaurante_id):
+    """Permite ao titular abrir/fechar apenas uma loja já liberada."""
+    dados = request.get_json(silent=True) or {}
+    return RestaurantController.atualizar_status_operacional(restaurante_id, dados)
+
+
 @restaurante_bp.route("/<int:restaurante_id>", methods=["DELETE"])
 @token_required
 @account_owner_required("BUSINESS", "restaurante_id")

@@ -11,6 +11,7 @@ from decimal import Decimal
 from typing import Any, FrozenSet, Mapping, Optional
 
 import requests
+from urllib.parse import urlparse
 
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
@@ -55,6 +56,20 @@ class MercadoPagoPaymentProvider(PaymentProvider):
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
         self.validar_metodo(command.method)
+        if command.method is PaymentMethod.PIX:
+            return self._create_pix_payment(command)
+        return_origin = urlparse(self.return_url_base)
+        host = (return_origin.hostname or "").lower()
+        if (
+            return_origin.scheme.lower() != "https"
+            or not host
+            or host in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+            or "seu-dominio-publico" in host
+        ):
+            raise PaymentProviderError(
+                "Configure MERCADO_PAGO_RETURN_URL_BASE com a URL HTTPS pública do frontend "
+                "(por exemplo, o túnel ngrok da porta 5173). Não use localhost nem a URL do backend."
+            )
         return_url = f"{self.return_url_base}/checkout/resultado?order_id={command.order_id}"
         payload: dict[str, Any] = {
             "items": [
@@ -76,10 +91,9 @@ class MercadoPagoPaymentProvider(PaymentProvider):
             },
             "payment_methods": {"excluded_payment_types": self._excluded_types(command.method)},
         }
-        # Mercado Pago só exige o retorno automático em origens HTTPS. Para o
-        # teste local em localhost, as URLs de retorno continuam configuradas.
-        if self.return_url_base.lower().startswith("https://"):
-            payload["auto_return"] = "approved"
+        # return_url_base was validated as a public HTTPS frontend URL above.
+        # Always ask Checkout Pro to return automatically after approval.
+        payload["auto_return"] = "approved"
         if self.notification_url:
             if not self.notification_url.lower().startswith("https://"):
                 raise PaymentProviderError(
@@ -112,6 +126,40 @@ class MercadoPagoPaymentProvider(PaymentProvider):
             currency="BRL",
             approval_url=approval_url,
             message="Preferência de checkout criada. Aguardando confirmação do Mercado Pago.",
+        )
+
+    def _create_pix_payment(self, command: CreatePaymentCommand) -> PaymentResult:
+        if not command.payer_email:
+            raise PaymentProviderError("O e-mail do cliente é obrigatório para gerar o Pix.")
+        payload = {
+            "transaction_amount": float(command.amount),
+            "description": f"CandyLand - Pedido {command.metadata.get('order_code', command.order_id)}",
+            "payment_method_id": "pix",
+            "external_reference": str(command.order_id),
+            "payer": {"email": command.payer_email},
+            "metadata": {"order_code": str(command.metadata.get("order_code", ""))},
+        }
+        if self.notification_url:
+            if not self.notification_url.lower().startswith("https://"):
+                raise PaymentProviderError("MERCADO_PAGO_NOTIFICATION_URL precisa usar HTTPS.")
+            payload["notification_url"] = self.notification_url
+        response = self._request(
+            "POST", "/v1/payments", payload,
+            extra_headers={"X-Idempotency-Key": command.idempotency_key},
+        )
+        transaction = ((response.get("point_of_interaction") or {}).get("transaction_data") or {})
+        payment_id = str(response.get("id") or "").strip()
+        copy_paste = str(transaction.get("qr_code") or "").strip() or None
+        qr_base64 = str(transaction.get("qr_code_base64") or "").strip() or None
+        if not payment_id or not copy_paste or not qr_base64:
+            raise PaymentProviderError("O Mercado Pago não retornou QR Code e código Pix Copia e Cola.")
+        result = self._payment_result(response)
+        return PaymentResult(
+            provider=self.provider_name, provider_payment_id=payment_id,
+            status=result.status, amount=command.amount, currency="BRL",
+            pix_copy_paste=copy_paste, pix_qr_code_base64=qr_base64,
+            approval_url=transaction.get("ticket_url"), message="Pix criado. Aguardando confirmação do Mercado Pago.",
+            payment_type_id=result.payment_type_id, payment_method_id="pix",
         )
 
     def get_payment(self, provider_payment_id: str) -> PaymentResult:
@@ -255,12 +303,16 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         amount = data.get("transaction_amount") or data.get("transaction_amount_refunded")
         if amount is None:
             raise PaymentProviderError("A resposta do Mercado Pago não contém o valor do pagamento.")
+        transaction = ((data.get("point_of_interaction") or {}).get("transaction_data") or {})
         return PaymentResult(
             provider=self.provider_name,
             provider_payment_id=str(data.get("id") or "").strip(),
             status=status,
             amount=Decimal(str(amount)).quantize(Decimal("0.01")),
             currency=str(data.get("currency_id") or "BRL"),
+            approval_url=transaction.get("ticket_url"),
+            pix_copy_paste=transaction.get("qr_code"),
+            pix_qr_code_base64=transaction.get("qr_code_base64"),
             message=str(data.get("status_detail") or data.get("status") or "Estado consultado no Mercado Pago."),
             payment_type_id=str(data.get("payment_type_id") or "").strip() or None,
             payment_method_id=str(data.get("payment_method_id") or "").strip() or None,

@@ -53,6 +53,28 @@ export async function createPayment(orderId, idempotencyKey) {
     return resultado.pagamento;
 }
 
+export async function capturePayPalPayment(orderId, paypalOrderId) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/pagamento/paypal-capture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ token: paypalOrderId }),
+        cache: "no-store",
+    });
+    const resultado = await lerResposta(response, "Não foi possível capturar o pagamento PayPal.");
+    return resultado;
+}
+
+export async function cancelPayPalPayment(orderId, data = {}) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/pagamento/paypal-cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(data),
+        cache: "no-store",
+    });
+    const resultado = await lerResposta(response, "Não foi possível cancelar o pagamento PayPal.");
+    return resultado;
+}
+
 export async function getPayment(orderId) {
     const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/pagamento`, {
         headers: authHeaders(),
@@ -60,6 +82,24 @@ export async function getPayment(orderId) {
     });
     const resultado = await lerResposta(response, "Não foi possível consultar o pagamento.");
     return resultado.pagamento;
+}
+
+export async function issueReceiptCode(orderId) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/codigo-recebimento`, {
+        method: "POST",
+        headers: authHeaders(),
+        cache: "no-store",
+    });
+    return lerResposta(response, "Não foi possível gerar o código de recebimento.");
+}
+
+export async function confirmOrderReceipt(orderId, code) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/confirmar-recebimento`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ codigo: code }),
+    });
+    return lerResposta(response, "Não foi possível confirmar o recebimento.");
 }
 
 export async function getOrder(orderId) {

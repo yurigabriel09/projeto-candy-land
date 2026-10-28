@@ -33,13 +33,13 @@ def test_create_payment_cria_preferencia_e_usa_url_sandbox(monkeypatch):
     provider = MercadoPagoPaymentProvider({
         "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",
         "MERCADO_PAGO_SANDBOX": True,
-        "MERCADO_PAGO_RETURN_URL_BASE": "http://localhost:5173",
+        "MERCADO_PAGO_RETURN_URL_BASE": "https://candyland-teste.ngrok-free.dev",
     })
     command = CreatePaymentCommand(
         order_id="17",
         idempotency_key="pedido-17-v1",
         amount=Decimal("35.50"),
-        method=PaymentMethod.PIX,
+        method=PaymentMethod.CARD,
         metadata={"order_code": "CL-ABC123"},
     )
 
@@ -54,9 +54,13 @@ def test_create_payment_cria_preferencia_e_usa_url_sandbox(monkeypatch):
     payload = chamadas[0][2]["json"]
     assert payload["external_reference"] == "17"
     assert payload["items"][0]["unit_price"] == 35.5
-    assert payload["back_urls"]["success"].startswith("http://localhost:5173/checkout/resultado")
-    assert any(item["id"] == "credit_card" for item in payload["payment_methods"]["excluded_payment_types"])
-    assert all(item["id"] != "account_money" for item in payload["payment_methods"]["excluded_payment_types"])
+    assert payload["back_urls"]["success"].startswith("https://candyland-teste.ngrok-free.dev/checkout/resultado")
+    assert payload["auto_return"] == "approved"
+    excluded_ids = {item["id"] for item in payload["payment_methods"]["excluded_payment_types"]}
+    assert "bank_transfer" in excluded_ids
+    assert "credit_card" not in excluded_ids
+    assert "debit_card" not in excluded_ids
+    assert "account_money" not in excluded_ids
 
 
 def test_webhook_exige_assinatura_e_busca_estado_real(monkeypatch):
@@ -149,7 +153,7 @@ def test_create_payment_configura_retorno_automatico_com_url_publica_https(monke
         order_id="31",
         idempotency_key="pedido-31-v1",
         amount=Decimal("12.00"),
-        method=PaymentMethod.PIX,
+        method=PaymentMethod.CARD,
         metadata={"order_code": "CL-RETURN31"},
     )
 
@@ -220,3 +224,79 @@ def test_webhook_usa_data_id_da_query_quando_body_nao_tem_data_id(monkeypatch):
     assert event.provider_payment_id == "abc123"
     assert event.order_reference == "17"
     assert event.status is PaymentStatus.PENDING
+
+
+def test_checkout_pro_rejeita_retorno_local_antes_de_criar_preferencia(monkeypatch):
+    chamadas = []
+
+    def fake_request(*args, **kwargs):
+        chamadas.append((args, kwargs))
+        raise AssertionError("O gateway não deve ser chamado com back_urls localhost")
+
+    monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)
+    provider = MercadoPagoPaymentProvider({
+        "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",
+        "MERCADO_PAGO_SANDBOX": True,
+        "MERCADO_PAGO_RETURN_URL_BASE": "http://localhost:5173",
+    })
+    command = CreatePaymentCommand(
+        order_id="19", idempotency_key="pedido-19-v1", amount=Decimal("20.00"),
+        method=PaymentMethod.CARD, metadata={"order_code": "CL-LOCAL19"},
+    )
+
+    try:
+        provider.create_payment(command)
+    except Exception as exc:
+        assert "MERCADO_PAGO_RETURN_URL_BASE" in str(exc)
+        assert "HTTPS pública do frontend" in str(exc)
+    else:
+        raise AssertionError("Checkout Pro deveria exigir URL HTTPS pública do frontend")
+    assert chamadas == []
+
+
+def test_create_pix_retorna_qr_code_e_copia_e_cola(monkeypatch):
+    chamadas = []
+    pagamento = {
+        "id": 998877,
+        "status": "pending",
+        "status_detail": "pending_waiting_payment",
+        "transaction_amount": 35.50,
+        "currency_id": "BRL",
+        "payment_type_id": "bank_transfer",
+        "payment_method_id": "pix",
+        "external_reference": "17",
+        "point_of_interaction": {"transaction_data": {
+            "qr_code": "000201PIX-COPIA-E-COLA-TESTE",
+            "qr_code_base64": "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB",
+            "ticket_url": "https://www.mercadopago.com.br/pix/998877",
+        }},
+    }
+
+    def fake_request(method, url, **kwargs):
+        chamadas.append((method, url, kwargs))
+        return FakeResponse(pagamento)
+
+    monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)
+    provider = MercadoPagoPaymentProvider({
+        "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",
+        "MERCADO_PAGO_SANDBOX": True,
+    })
+    command = CreatePaymentCommand(
+        order_id="17",
+        idempotency_key="pedido-17-pix-v1",
+        amount=Decimal("35.50"),
+        method=PaymentMethod.PIX,
+        payer_email="cliente@example.com",
+        metadata={"order_code": "CL-ABC123"},
+    )
+
+    result = provider.create_payment(command)
+
+    assert chamadas[0][0] == "POST"
+    assert chamadas[0][1].endswith("/v1/payments")
+    assert chamadas[0][2]["headers"]["X-Idempotency-Key"] == "pedido-17-pix-v1"
+    assert chamadas[0][2]["json"]["payer"]["email"] == "cliente@example.com"
+    assert result.provider_payment_id == "998877"
+    assert result.status is PaymentStatus.PENDING
+    assert result.pix_copy_paste == "000201PIX-COPIA-E-COLA-TESTE"
+    assert result.pix_qr_code_base64 == "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB"

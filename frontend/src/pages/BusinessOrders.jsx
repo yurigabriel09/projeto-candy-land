@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import DashboardSidebar from "../components/DashboardSidebar";
 import { useAuth } from "../context/AuthContext";
-import { getOrders, updateOrderStatus } from "../services/orderService";
+import { confirmOrderReceipt, getOrders, updateOrderStatus } from "../services/orderService";
 
 const LABEL = {
     PENDENTE_PAGAMENTO: "Aguardando pagamento",
@@ -28,6 +28,7 @@ function BusinessOrders() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [atualizando, setAtualizando] = useState(null);
+    const [codigosRecebimento, setCodigosRecebimento] = useState({});
 
     const carregar = useCallback(async () => {
         setCarregando(true);
@@ -48,6 +49,19 @@ function BusinessOrders() {
         } catch (error) {
             setErro(error.message || "Não foi possível atualizar o pedido.");
         } finally { setAtualizando(null); }
+    }
+
+    async function confirmarRecebimento(pedidoId) {
+        const codigo = String(codigosRecebimento[pedidoId] || "").trim();
+        if (!/^\d{6}$/.test(codigo)) { setErro("Informe o código de recebimento com seis dígitos."); return; }
+        setAtualizando(pedidoId);
+        setErro("");
+        try {
+            await confirmOrderReceipt(pedidoId, codigo);
+            setCodigosRecebimento((atuais) => ({ ...atuais, [pedidoId]: "" }));
+            await carregar();
+        } catch (error) { setErro(error.message || "Não foi possível finalizar o pedido."); }
+        finally { setAtualizando(null); }
     }
 
     return (
@@ -73,6 +87,13 @@ function BusinessOrders() {
                                         <div className="business-order-meta"><span>{pedido.order_type === "PICKUP" ? "Retirada" : "Entrega"}</span><span>Pagamento: {pedido.payment_method}</span><strong>{moeda.format(pedido.total || 0)}</strong></div>
                                         <ul>{(pedido.items || []).map((item) => <li key={item.id}>Produto #{item.produto_id} × {item.quantidade} — {moeda.format((item.preco_unitario || 0) * (item.quantidade || 0))}</li>)}</ul>
                                         {pedido.status === "PENDENTE_PAGAMENTO" && <p className="cart-aviso-checkout">Não inicie o preparo antes da confirmação do pagamento.</p>}
+                                        {(pedido.order_type === "PICKUP" && pedido.status === "PRONTO_PARA_ENTREGA") || (pedido.order_type === "DELIVERY" && pedido.status === "ENTREGUE") ? (
+                                            <div className="business-order-receipt">
+                                                <label htmlFor={`codigo-recebimento-${pedido.id}`}>Código informado pelo cliente</label>
+                                                <input id={`codigo-recebimento-${pedido.id}`} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigosRecebimento[pedido.id] || ""} onChange={(event) => setCodigosRecebimento((atuais) => ({ ...atuais, [pedido.id]: event.target.value.replace(/\D/g, "").slice(0, 6) }))} placeholder="000000" />
+                                                <button className="btn-principal" type="button" disabled={atualizando === pedido.id} onClick={() => confirmarRecebimento(pedido.id)}>{atualizando === pedido.id ? "Validando..." : "Validar código e finalizar compra"}</button>
+                                            </div>
+                                        ) : null}
                                         <footer>
                                             {prox.map((status) => <button key={status} className="btn-principal" type="button" disabled={atualizando === pedido.id} onClick={() => mudarStatus(pedido.id, status)}>{atualizando === pedido.id ? "Salvando..." : `Marcar: ${LABEL[status]}`}</button>)}
                                             {podeCancelar && <button className="btn-contorno" type="button" disabled={atualizando === pedido.id} onClick={() => mudarStatus(pedido.id, "CANCELADO")}>Cancelar pedido</button>}

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AddressCoordinates from "../components/AddressCoordinates";
+import { getAddressByCep } from "../services/addressService";
+import { maskCep } from "../utils/masks";
 import {
     getRestaurantConfiguration,
     updateRestaurantConfiguration,
@@ -49,13 +51,23 @@ function RestaurantConfiguration() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [loadingCep, setLoadingCep] = useState(false);
+    const [cepError, setCepError] = useState("");
+    const cepLookupRequest = useRef(0);
 
     useEffect(() => {
-        if (!restauranteId) return;
+        if (!Number.isInteger(restauranteId) || restauranteId <= 0) {
+            setError("Não foi possível identificar o restaurante autenticado. Entre novamente na conta empresarial.");
+            setLoading(false);
+            return undefined;
+        }
+
+        let canceled = false;
 
         async function carregarConfiguracao() {
             try {
                 const dados = await getRestaurantConfiguration(restauranteId);
+                if (canceled) return;
                 const restaurante = dados.restaurante || {};
                 const endereco = dados.endereco || {};
 
@@ -83,13 +95,16 @@ function RestaurantConfiguration() {
                     ...endereco,
                 });
             } catch (loadError) {
-                setError(loadError.message || "Não foi possível carregar os dados do restaurante.");
+                if (!canceled) {
+                    setError(loadError.message || "Não foi possível carregar os dados do restaurante.");
+                }
             } finally {
-                setLoading(false);
+                if (!canceled) setLoading(false);
             }
         }
 
         carregarConfiguracao();
+        return () => { canceled = true; };
     }, [restauranteId]);
 
     function handleChange(event) {
@@ -99,7 +114,59 @@ function RestaurantConfiguration() {
 
     function handleAddressChange(event) {
         const { name, value } = event.target;
-        const locationFields = ["cep", "rua", "numero", "bairro", "cidade", "estado"];
+
+        if (name === "cep") {
+            const cep = maskCep(value);
+            const cepLimpo = cep.replace(/\D/g, "");
+            const requestId = ++cepLookupRequest.current;
+
+            setAddress((current) => ({
+                ...current,
+                cep,
+                latitude: null,
+                longitude: null,
+            }));
+            setCepError("");
+
+            if (cepLimpo.length !== 8) {
+                setLoadingCep(false);
+                return;
+            }
+
+            setLoadingCep(true);
+            getAddressByCep(cepLimpo)
+                .then((resultado) => {
+                    if (requestId !== cepLookupRequest.current) return;
+                    setAddress((current) => {
+                        if (current.cep.replace(/\D/g, "") !== cepLimpo) return current;
+                        return {
+                            ...current,
+                            rua: resultado.address || current.rua,
+                            bairro: resultado.neighborhood || current.bairro,
+                            cidade: resultado.city || current.cidade,
+                            estado: resultado.state || current.estado,
+                            latitude: null,
+                            longitude: null,
+                        };
+                    });
+                })
+                .catch((lookupError) => {
+                    if (requestId === cepLookupRequest.current) {
+                        setCepError(lookupError.message || "Não foi possível consultar o CEP.");
+                    }
+                })
+                .finally(() => {
+                    if (requestId === cepLookupRequest.current) setLoadingCep(false);
+                });
+            return;
+        }
+
+        const locationFields = ["rua", "numero", "bairro", "cidade", "estado"];
+        if (locationFields.includes(name)) {
+            // Não deixe uma resposta ViaCEP atrasada sobrescrever a edição manual.
+            cepLookupRequest.current += 1;
+            setLoadingCep(false);
+        }
         setAddress((current) => ({
             ...current,
             [name]: value,
@@ -181,28 +248,24 @@ function RestaurantConfiguration() {
                     <p>Atualize os dados e as informações de entrega da sua doceria.</p>
                 </header>
 
-                {error && <p className="field-error">{error}</p>}
-                {message && <p className="field-message">{message}</p>}
+                {error && <p className="field-error" role="alert">{error}</p>}
+                {message && <p className="field-message" role="status">{message}</p>}
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-section">
                         <h3>Dados da empresa</h3>
-
                         <div className="form-field">
                             <label htmlFor="nome">Nome fantasia</label>
                             <input id="nome" name="nome" value={form.nome} onChange={handleChange} required />
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="razao_social">Razão social</label>
                             <input id="razao_social" name="razao_social" value={form.razao_social} onChange={handleChange} required />
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="nome_responsavel">Responsável</label>
                             <input id="nome_responsavel" name="nome_responsavel" value={form.nome_responsavel} onChange={handleChange} />
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="descricao">Descrição</label>
                             <textarea id="descricao" name="descricao" value={form.descricao} onChange={handleChange} rows="4" maxLength="255" />
@@ -211,31 +274,26 @@ function RestaurantConfiguration() {
 
                     <div className="form-section">
                         <h3>Dados de entrega</h3>
-
                         <div className="form-grid-two">
                             <div className="form-field">
                                 <label htmlFor="valor_minimo_pedido">Valor mínimo do pedido</label>
                                 <input id="valor_minimo_pedido" name="valor_minimo_pedido" type="number" min="0" step="0.01" value={form.valor_minimo_pedido} onChange={handleChange} />
                             </div>
-
                             <div className="form-field">
                                 <label htmlFor="taxa_entrega_base">Taxa base de entrega</label>
                                 <input id="taxa_entrega_base" name="taxa_entrega_base" type="number" min="0" step="0.01" value={form.taxa_entrega_base} onChange={handleChange} />
                             </div>
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="taxa_entrega_por_km">Taxa adicional por quilômetro (R$)</label>
                             <input id="taxa_entrega_por_km" name="taxa_entrega_por_km" type="number" min="0" step="0.01" value={form.taxa_entrega_por_km} onChange={handleChange} required />
                             <small>Taxa final = taxa base + distância em km × taxa por km.</small>
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="raio_entrega_km">Raio máximo de entrega (km)</label>
                             <input id="raio_entrega_km" name="raio_entrega_km" type="number" min="0.01" step="0.1" value={form.raio_entrega_km} onChange={handleChange} />
                             <small>Obrigatório para aceitar pedidos de entrega; deixe vazio somente se oferecer apenas retirada.</small>
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="horario_funcionamento">Horário de funcionamento</label>
                             <input id="horario_funcionamento" name="horario_funcionamento" value={form.horario_funcionamento} onChange={handleChange} placeholder="Ex.: Seg a Sex, 09:00 às 18:00" />
@@ -244,23 +302,33 @@ function RestaurantConfiguration() {
 
                     <div className="form-section">
                         <h3>Endereço comercial</h3>
-
                         <div className="form-grid-two">
                             <div className="form-field">
                                 <label htmlFor="config-cep">CEP</label>
-                                <input id="config-cep" name="cep" value={address.cep} onChange={handleAddressChange} />
+                                <input
+                                    id="config-cep"
+                                    name="cep"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="postal-code"
+                                    maxLength={9}
+                                    placeholder="00000-000"
+                                    value={address.cep}
+                                    onChange={handleAddressChange}
+                                    required
+                                />
+                                {loadingCep && <small className="field-message" role="status">Consultando CEP...</small>}
+                                {cepError && <small className="field-error" role="alert">{cepError}</small>}
                             </div>
                             <div className="form-field">
                                 <label htmlFor="config-numero">Número</label>
                                 <input id="config-numero" name="numero" value={address.numero} onChange={handleAddressChange} required />
                             </div>
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="config-rua">Rua</label>
                             <input id="config-rua" name="rua" value={address.rua} onChange={handleAddressChange} required />
                         </div>
-
                         <div className="form-grid-two">
                             <div className="form-field">
                                 <label htmlFor="config-complemento">Complemento</label>
@@ -271,7 +339,6 @@ function RestaurantConfiguration() {
                                 <input id="config-bairro" name="bairro" value={address.bairro} onChange={handleAddressChange} required />
                             </div>
                         </div>
-
                         <div className="form-grid-two">
                             <div className="form-field">
                                 <label htmlFor="config-cidade">Cidade</label>
@@ -282,12 +349,10 @@ function RestaurantConfiguration() {
                                 <input id="config-estado" name="estado" maxLength="2" value={address.estado} onChange={handleAddressChange} required />
                             </div>
                         </div>
-
                         <div className="form-field">
                             <label htmlFor="config-referencia">Referência</label>
                             <input id="config-referencia" name="referencia" value={address.referencia} onChange={handleAddressChange} />
                         </div>
-
                         <AddressCoordinates
                             latitude={address.latitude}
                             longitude={address.longitude}
@@ -318,7 +383,7 @@ function RestaurantConfiguration() {
                         </div>
                     </div>
 
-                    <button type="submit" className="primary-button" disabled={saving}>
+                    <button type="submit" className="primary-button" disabled={saving || loadingCep}>
                         {saving ? "Salvando..." : "Salvar alterações"}
                     </button>
                 </form>

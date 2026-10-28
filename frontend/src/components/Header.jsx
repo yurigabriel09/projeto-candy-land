@@ -73,6 +73,7 @@ function Header() {
                                 {contaAberta && (
                                     <div className="site-account-dropdown" role="menu">
                                         <Link role="menuitem" to="/minha-conta/dados-pessoais" onClick={() => setContaAberta(false)}>Dados pessoais</Link>
+                                        <Link role="menuitem" to="/minha-conta/historico-compras" onClick={() => setContaAberta(false)}>Histórico de compras</Link>
                                         <Link role="menuitem" to="/minha-conta/pagamentos-pendentes" onClick={() => setContaAberta(false)}>
                                             <span>Pedidos e pagamentos pendentes</span>
                                             {pagamentosPendentes > 0 && <span className="cart-badge">{pagamentosPendentes}</span>}

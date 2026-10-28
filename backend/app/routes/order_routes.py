@@ -5,6 +5,24 @@ from flask import Blueprint, g, jsonify, make_response, request
 
 pedido_bp = Blueprint("order", __name__, url_prefix="/pedidos")
 
+@pedido_bp.route("/webhooks/paypal", methods=["POST"])
+def webhook_paypal():
+    return PaymentController.webhook_paypal(request.headers, request.get_data(cache=True))
+
+@pedido_bp.route("/<int:pedido_id>/pagamento/paypal-cancel", methods=["POST"])
+@token_required
+def cancelar_tentativa_paypal(pedido_id):
+    return PaymentController.cancelar_tentativa_paypal(
+        pedido_id, int(g.current_account_id), g.current_account_type, request.get_json(silent=True)
+    )
+
+@pedido_bp.route("/<int:pedido_id>/pagamento/paypal-capture", methods=["POST"])
+@token_required
+def capturar_pagamento_paypal(pedido_id):
+    return PaymentController.capturar_paypal(
+        pedido_id, int(g.current_account_id), g.current_account_type, request.get_json(silent=True)
+    )
+
 
 @pedido_bp.route("/webhooks/mercadopago", methods=["POST"])
 def webhook_mercado_pago():
@@ -92,6 +110,23 @@ def atualizar_status_entrega(pedido_id):
         request.get_json(silent=True) or {},
         int(g.current_account_id),
         g.current_account_type,
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/codigo-recebimento", methods=["POST"])
+@token_required
+def emitir_codigo_recebimento(pedido_id):
+    return OrderController.emitir_codigo_recebimento(
+        pedido_id, int(g.current_account_id), g.current_account_type
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/confirmar-recebimento", methods=["POST"])
+@token_required
+def confirmar_recebimento(pedido_id):
+    return OrderController.confirmar_recebimento(
+        pedido_id, request.get_json(silent=True) or {},
+        int(g.current_account_id), g.current_account_type
     )
 
 

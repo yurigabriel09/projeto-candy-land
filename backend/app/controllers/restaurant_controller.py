@@ -10,7 +10,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
@@ -23,7 +22,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
@@ -59,7 +57,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             201,
@@ -91,14 +88,8 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
-            jsonify(
-                {
-                    "mensagem": resultado["mensagem"],
-                    "dados": resultado["dados"],
-                }
-            ),
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
         )
 
@@ -109,14 +100,21 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
-            jsonify(
-                {
-                    "mensagem": resultado["mensagem"],
-                    "dados": resultado["dados"],
-                }
-            ),
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_status_operacional(restaurant_id, dados):
+        status = dados.get("status") if isinstance(dados, dict) else None
+        resultado = RestauranteService.atualizar_status_operacional(restaurant_id, status)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
         )
 
@@ -127,7 +125,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response("", 204)
 
     @staticmethod

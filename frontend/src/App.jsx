@@ -28,6 +28,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationGuard from "./components/RegistrationGuard";
 import DadosPessoais from "./pages/DadosPessoais";
 import PendingPayments from "./pages/PendingPayments";
+import PurchaseHistory from "./pages/PurchaseHistory";
 
 function App() {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -101,6 +102,15 @@ function App() {
                                     </ProtectedRoute>
                                 }
 />
+
+                            <Route
+                                path="/minha-conta/historico-compras"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <PurchaseHistory />
+                                    </ProtectedRoute>
+                                }
+                            />
 
                             <Route
                                 path="/minha-conta/pagamentos-pendentes"

@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
-import { createPayment, getOrder, getPayment } from "../services/orderService";
+import { cancelPayPalPayment, capturePayPalPayment, createPayment, getOrder, getPayment } from "../services/orderService";
 
 const CHECKOUT_SESSION_KEY = "candyland_checkout_pending";
 
 function rotuloFormaPagamento(metodo) {
-    if (metodo === "PIX") return "PIX";
+    if (metodo === "PIX") return "Pix";
+    if (metodo === "PAYPAL") return "PayPal";
+    if (metodo === "MERCADO_PAGO") return "Mercado Pago";
     if (metodo === "CARTAO_CREDITO") return "Cartão de crédito";
     if (metodo === "CARTAO_DEBITO") return "Cartão de débito";
     if (metodo === "CARTAO") return "Cartão (aguardando identificação)";
@@ -29,6 +31,10 @@ const STATUS_LABEL = {
 function CheckoutResult() {
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get("order_id");
+    const providerRetorno = searchParams.get("provider");
+    const paypalToken = searchParams.get("token");
+    const paypalCancelled = searchParams.get("cancel") === "1";
+    const paypalCaptureStarted = useRef(false);
     const [pedido, setPedido] = useState(null);
     const [pagamento, setPagamento] = useState(null);
     const [erro, setErro] = useState("");
@@ -70,6 +76,32 @@ function CheckoutResult() {
 
     useEffect(() => { consultar(); }, [consultar, atualizacao]);
 
+    useEffect(() => {
+        if (providerRetorno === "paypal" && paypalCancelled && orderId && paypalToken && !paypalCaptureStarted.current) {
+            paypalCaptureStarted.current = true;
+            let ativo = true;
+            cancelPayPalPayment(orderId, paypalToken)
+                .then((resultado) => { if (ativo && resultado.pagamento) setPagamento(resultado.pagamento); })
+                .catch((error) => { if (ativo) setErroPagamento(error.message || "O checkout PayPal foi fechado; confira o status antes de tentar novamente."); });
+            return () => { ativo = false; };
+        }
+        if (providerRetorno !== "paypal" || paypalCancelled || !orderId || !paypalToken || paypalCaptureStarted.current) return undefined;
+        paypalCaptureStarted.current = true;
+        let ativo = true;
+        setCarregando(true);
+        capturePayPalPayment(orderId, paypalToken)
+            .then((resultado) => {
+                if (!ativo) return;
+                if (resultado.pagamento) setPagamento(resultado.pagamento);
+                if (resultado.pedido) setPedido(resultado.pedido);
+                setErroPagamento("");
+                setAtualizacao((valor) => valor + 1);
+            })
+            .catch((error) => { if (ativo) setErroPagamento(error.message || "Não foi possível concluir a captura PayPal."); })
+            .finally(() => { if (ativo) setCarregando(false); });
+        return () => { ativo = false; };
+    }, [providerRetorno, paypalCancelled, orderId, paypalToken]);
+
     async function tentarPagarNovamente() {
         if (!orderId) return;
         setErroNovaTentativa("");
@@ -78,7 +110,7 @@ function CheckoutResult() {
             const chave = `candyland-order-${orderId}-retry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
             const pagamentoNovo = await createPayment(orderId, chave);
             if (!pagamentoNovo?.approval_url) {
-                throw new Error(pagamentoNovo?.message || "O Mercado Pago não retornou a URL do checkout.");
+                throw new Error(pagamentoNovo?.message || "O provedor não retornou a URL de checkout.");
             }
             const url = new URL(pagamentoNovo.approval_url);
             if (url.protocol !== "https:") throw new Error("A URL do checkout não é HTTPS; o pagamento não foi aberto.");
@@ -121,7 +153,7 @@ function CheckoutResult() {
             <main className="container secao checkout-result">
                 <section className="cart-pedido-sucesso">
                     <h1>Resultado do pagamento</h1>
-                    {carregando && <p role="status">Consultando o Mercado Pago...</p>}
+                    {carregando && <p role="status">Consultando o provedor de pagamento...</p>}
                     {erro && <p className="cart-checkout-erro" role="alert">{erro}</p>}
                     {pedido && (
                         <>
@@ -136,12 +168,18 @@ function CheckoutResult() {
                             {pedido.order_type === "PICKUP" && <LocationMap latitude={pedido.pickup_location?.latitude} longitude={pedido.pickup_location?.longitude} label={pedido.pickup_location?.endereco || "Unidade de retirada"} />}
                             {erroPagamento && <p className="cart-aviso-checkout" role="status">Ainda não foi possível consultar uma transação no Mercado Pago: {erroPagamento}</p>}
                             {confirmado ? (
-                                <p className="field-message">O backend confirmou o pagamento e atualizou o estado do pedido.</p>
+                                <>
+                                    <p className="field-message">Pagamento confirmado pelo provedor. Seu pedido está registrado no histórico e você pode acompanhar o andamento.</p>
+                                    <div className="checkout-result-actions">
+                                        <Link to={`/pedidos/${pedido.id}/acompanhar`} className="btn-principal">Acompanhar pedido</Link>
+                                        <Link to="/minha-conta/historico-compras" className="btn-contorno">Ver histórico de compras</Link>
+                                    </div>
+                                </>
                             ) : pedido.status === "CANCELADO" ? (
                                 <p className="cart-checkout-erro">Este pedido foi cancelado. Entre em contato com o restaurante se precisar de ajuda.</p>
                             ) : pagamentoPrecisaAtencao ? (
                                 <>
-                                    <p className="cart-checkout-erro">O Mercado Pago informou <strong>{pagamento.status}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>
+                                    <p className="cart-checkout-erro">O provedor informou <strong>{pagamento.status}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>
                                     {["REJECTED", "CANCELLED"].includes(pagamento?.status) && (
                                         <button className="btn-principal" type="button" disabled={iniciandoNovaTentativa} onClick={tentarPagarNovamente}>
                                             {iniciandoNovaTentativa ? "Reabrindo pagamento..." : "Tentar pagamento novamente"}

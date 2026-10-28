@@ -28,7 +28,7 @@ def app():
         db.engine.dispose()
 
 
-def test_consulta_gateway_pendente_atualiza_referencia_sem_confirmar_pedido(app):
+def test_consulta_gateway_pendente_preserva_preferencia_sem_confirmar_pedido(app):
     with app.app_context():
         cliente = Usuario(
             nome_completo="Cliente Pagamento",
@@ -128,6 +128,7 @@ def test_consulta_gateway_pendente_atualiza_referencia_sem_confirmar_pedido(app)
         atualizada = db.session.get(PaymentAttempt, tentativa.id)
         pedido_atualizado = db.session.get(Pedido, pedido.id)
         assert resultado["success"] is True
-        assert atualizada.provider_payment_id == "payment-123"
+        # Mantém a preferência para conseguir reconciliar outra tentativa do Checkout Pro.
+        assert atualizada.provider_payment_id == f"pref:{pedido.id}:preference-123"
         assert atualizada.status == "PENDING"
         assert pedido_atualizado.status == "PENDENTE_PAGAMENTO"
