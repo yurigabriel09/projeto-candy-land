@@ -95,16 +95,13 @@ def test_factory_falha_fechada_se_nenhum_provedor_foi_selecionado():
         get_payment_provider(config={"PAYMENT_PROVIDER": "none"})
 
 
-def test_factory_carrega_mercado_pago_e_mantem_paypal_nao_implementado():
-    with pytest.raises(PaymentProviderNotImplemented, match="paypal"):
-        get_payment_provider(config={"PAYMENT_PROVIDER": "paypal"})
+def test_factory_carrega_ambos_os_provedores_reais_sem_chamar_a_rede():
+    paypal = get_payment_provider(config={"PAYMENT_PROVIDER": "paypal", "PAYPAL_CLIENT_ID": "id", "PAYPAL_CLIENT_SECRET": "secret", "PAYPAL_MODE": "sandbox"})
+    assert paypal.provider_name == "paypal"
+    assert paypal.supported_methods == frozenset({PaymentMethod.CARD})
 
     provider = get_payment_provider(
-        config={
-            "PAYMENT_PROVIDER": "mercadopago",
-            "MERCADO_PAGO_ACCESS_TOKEN": "token-de-teste",
-            "MERCADO_PAGO_SANDBOX": True,
-        }
+        config={"PAYMENT_PROVIDER": "mercadopago", "MERCADO_PAGO_ACCESS_TOKEN": "token-de-teste", "MERCADO_PAGO_SANDBOX": True}
     )
     assert provider.provider_name == "mercadopago"
     assert provider.supported_methods == frozenset({PaymentMethod.PIX, PaymentMethod.CARD, PaymentMethod.CREDIT_CARD})

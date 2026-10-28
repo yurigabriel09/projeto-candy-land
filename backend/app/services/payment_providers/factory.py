@@ -51,7 +51,7 @@ def get_payment_provider(
     )
     selected = str(selected).strip().lower()
 
-    if not selected or selected in {"none", "disabled", "off"}:
+    if not selected or selected in {"none", "disabled", "off", "auto"}:
         raise PaymentProviderNotSelected(
             "Nenhum gateway de pagamento está selecionado. "
             "Defina PAYMENT_PROVIDER após a decisão do grupo."

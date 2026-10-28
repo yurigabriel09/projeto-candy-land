@@ -4,8 +4,9 @@ import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { cancelOrder, createOrder, createPayment, getCustomerAddresses } from "../services/orderService";
-import { geocodeCustomerAddress } from "../services/userService";
+import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getPayment, getOrder } from "../services/orderService";
+import { geocodeCustomerAddress, saveAddressCoordinates } from "../services/userService";
+import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -62,6 +63,10 @@ function Cart() {
     const [erroEnderecos, setErroEnderecos] = useState("");
     const [geocodificando, setGeocodificando] = useState(false);
     const [erroGeocodificacao, setErroGeocodificacao] = useState("");
+    const [manualLatitude, setManualLatitude] = useState("");
+    const [manualLongitude, setManualLongitude] = useState("");
+    const [salvandoCoordenadas, setSalvandoCoordenadas] = useState(false);
+    const [mensagemCoordenadas, setMensagemCoordenadas] = useState("");
     const geocodificacoesTentadas = useRef(new Set());
     const criacaoPedidoEmAndamento = useRef(false);
     const [metodoPagamento, setMetodoPagamento] = useState(() => checkoutInicial?.metodoPagamento || "PIX");
@@ -69,6 +74,8 @@ function Cart() {
     const [iniciandoPagamento, setIniciandoPagamento] = useState(false);
     const [erroCheckout, setErroCheckout] = useState("");
     const [pedidoCriado, setPedidoCriado] = useState(() => checkoutInicial?.pedido || null);
+    const [pagamentoPix, setPagamentoPix] = useState(null);
+    const [pixCopiado, setPixCopiado] = useState(false);
     const [pedidoEmOperacao, setPedidoEmOperacao] = useState(null);
 
     // AuthContext can finish restoring a session after the first render. Re-read
@@ -130,6 +137,12 @@ function Cart() {
 
     const enderecoSelecionado = enderecos.find((endereco) => Number(endereco.id) === Number(enderecoId));
     const enderecoRetiradaSelecionado = enderecosRetirada.find((endereco) => Number(endereco.id) === Number(enderecoRetiradaId));
+
+    useEffect(() => {
+        setManualLatitude(enderecoSelecionado?.latitude == null ? "" : String(enderecoSelecionado.latitude));
+        setManualLongitude(enderecoSelecionado?.longitude == null ? "" : String(enderecoSelecionado.longitude));
+        setMensagemCoordenadas("");
+    }, [enderecoSelecionado?.id, enderecoSelecionado?.latitude, enderecoSelecionado?.longitude]);
 
     useEffect(() => {
         let ativo = true;
@@ -208,13 +221,52 @@ function Cart() {
         }
     }
 
+    async function salvarCoordenadasManuais() {
+        if (!dadosAutenticacao?.id || !enderecoId) {
+            setErroGeocodificacao("Selecione um endereço antes de salvar as coordenadas.");
+            return;
+        }
+        const latitude = Number(manualLatitude);
+        const longitude = Number(manualLongitude);
+        if (manualLatitude.trim() === "" || manualLongitude.trim() === ""
+            || !Number.isFinite(latitude) || !Number.isFinite(longitude)
+            || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            setErroGeocodificacao("Informe uma latitude entre -90 e 90 e uma longitude entre -180 e 180.");
+            return;
+        }
+        setSalvandoCoordenadas(true);
+        setErroGeocodificacao("");
+        setMensagemCoordenadas("");
+        try {
+            const atualizado = await saveAddressCoordinates(
+                dadosAutenticacao.id, Number(enderecoId), latitude, longitude,
+            );
+            setEnderecos((atuais) => atuais.map((endereco) =>
+                Number(endereco.id) === Number(atualizado.id) ? atualizado : endereco
+            ));
+            setManualLatitude(String(atualizado.latitude));
+            setManualLongitude(String(atualizado.longitude));
+            geocodificacoesTentadas.current.add(`${dadosAutenticacao.id}:${enderecoId}`);
+            setMensagemCoordenadas("Coordenadas salvas. O mapa e o cálculo de entrega já podem usar este endereço.");
+        } catch (error) {
+            setErroGeocodificacao(error.message || "Não foi possível salvar as coordenadas.");
+        } finally {
+            setSalvandoCoordenadas(false);
+        }
+    }
+
     async function handleIniciarPagamento(pedidoId) {
         setErroCheckout("");
         setIniciandoPagamento(true);
         try {
             const pagamento = await createPayment(pedidoId);
+            if (metodoPagamento === "PIX" && pagamento?.pix_copy_paste && pagamento?.pix_qr_code_base64) {
+                setPagamentoPix(pagamento);
+                setPixCopiado(false);
+                return;
+            }
             if (!pagamento?.approval_url) {
-                throw new Error(pagamento?.message || "O Mercado Pago não retornou a URL do checkout.");
+                throw new Error(pagamento?.message || (metodoPagamento === "PAYPAL" ? "O PayPal não retornou a URL de aprovação." : "O Mercado Pago não retornou a URL do checkout."));
             }
             const url = new URL(pagamento.approval_url);
             if (url.protocol !== "https:") {
@@ -223,7 +275,7 @@ function Cart() {
             sessionStorage.setItem(CHECKOUT_REDIRECTED_KEY, String(pedidoId));
             window.location.assign(url.href);
         } catch (error) {
-            const mensagem = error.message || "Não foi possível abrir o Mercado Pago.";
+            const mensagem = error.message || "Não foi possível iniciar o pagamento selecionado.";
             const mensagemNormalizada = mensagem.toLowerCase();
             if (mensagem.includes("MERCADO_PAGO_ACCESS_TOKEN")) {
                 setErroCheckout("Pedido criado, mas o pagamento ainda não foi iniciado: falta configurar o Access Token do Mercado Pago em backend/.env. O pedido continuará pendente; nenhuma cobrança foi realizada.");
@@ -237,6 +289,24 @@ function Cart() {
         }
     }
 
+    useEffect(() => {
+        if (!pedidoCriado?.id || metodoPagamento !== "PIX" || pedidoCriado.status !== "PENDENTE_PAGAMENTO") return undefined;
+        let ativo = true;
+        const consultarPix = async () => {
+            try {
+                const pagamento = await getPayment(pedidoCriado.id);
+                const pedidoAtual = await getOrder(pedidoCriado.id);
+                if (!ativo) return;
+                if (pagamento?.provider === "mercadopago" && pagamento?.pix_copy_paste && pagamento?.pix_qr_code_base64) setPagamentoPix(pagamento);
+                if (pedidoAtual) setPedidoCriado(pedidoAtual);
+                if (pedidoAtual && pedidoAtual.status !== "PENDENTE_PAGAMENTO") { setPagamentoPix(null); window.dispatchEvent(new Event("candyland:pending-orders-updated")); }
+            } catch { /* tentativa pode ainda não existir durante os primeiros segundos */ }
+        };
+        consultarPix();
+        const timer = window.setInterval(consultarPix, 5000);
+        return () => { ativo = false; window.clearInterval(timer); };
+    }, [pedidoCriado?.id, pedidoCriado?.status, metodoPagamento]);
+
     async function handleCancelarPedidoPendente(pedido) {
         if (!window.confirm(`Deseja desistir do pedido ${pedido.order_code}? O pedido será cancelado e não será enviado ao restaurante.`)) return;
         setErroCheckout("");
@@ -245,6 +315,8 @@ function Cart() {
             await cancelOrder(pedido.id);
             if (String(pedidoCriado?.id) === String(pedido.id)) {
                 setPedidoCriado(null);
+                setPagamentoPix(null);
+                setPixCopiado(false);
                 limparCheckoutSessao();
             }
             window.dispatchEvent(new Event("candyland:pending-orders-updated"));
@@ -263,8 +335,8 @@ function Cart() {
             setErroCheckout("Adicione pelo menos um produto antes de finalizar o pedido.");
             return;
         }
-        if (!["PIX", "CARTAO"].includes(metodoPagamento)) {
-            setErroCheckout("Selecione uma forma de pagamento válida.");
+        if (!["PIX", "PAYPAL", "MERCADO_PAGO"].includes(metodoPagamento)) {
+            setErroCheckout("Selecione Pix, PayPal ou Mercado Pago.");
             return;
         }
         if (carrinho.orderType === "DELIVERY" && !enderecoId) {
@@ -297,6 +369,8 @@ function Cart() {
         setEnviando(true);
         try {
             const pedido = await createOrder(payload);
+            setPagamentoPix(null);
+            setPixCopiado(false);
             setPedidoCriado(pedido);
             persistirCheckoutSessao(pedido, metodoPagamento);
             limparCarrinho();
@@ -324,7 +398,7 @@ function Cart() {
                         <dl>
                             <div><dt>Status</dt><dd>{pedidoCriado.status}</dd></div>
                             <div><dt>Modalidade</dt><dd>{pedidoCriado.order_type === "PICKUP" ? "Retirada no restaurante" : "Entrega no endereço"}</dd></div>
-                            <div><dt>Forma de pagamento</dt><dd>{metodoPagamento === "PIX" ? "PIX" : "Cartão"}</dd></div>
+                            <div><dt>Forma de pagamento</dt><dd>{metodoPagamento === "PIX" ? "Pix" : metodoPagamento === "PAYPAL" ? "PayPal" : "Mercado Pago"}</dd></div>
                             <div><dt>{pedidoCriado.order_type === "PICKUP" ? "Unidade para retirada" : "Endereço de entrega"}</dt><dd>{pedidoCriado.order_type === "PICKUP" ? (pedidoCriado.pickup_location?.endereco || "Endereço da unidade não disponível") : (pedidoCriado.delivery_location?.endereco || "Endereço de entrega não disponível")}</dd></div>
                             <div><dt>Subtotal</dt><dd>{moeda.format(pedidoCriado.subtotal || 0)}</dd></div>
                             <div><dt>Taxa de entrega</dt><dd>{moeda.format(pedidoCriado.delivery_fee || 0)}</dd></div>
@@ -338,9 +412,21 @@ function Cart() {
                         />
                         <p className="cart-aviso-checkout">Confira os dados acima. Ao continuar, você será levado ao ambiente seguro de pagamento. O pedido só será confirmado após a validação do pagamento pelo servidor.</p>
                         {erroCheckout && <p className="cart-checkout-erro" role="alert">{erroCheckout}</p>}
-                        <button className="btn-principal" type="button" disabled={iniciandoPagamento} onClick={() => handleIniciarPagamento(pedidoCriado.id)}>
-                            {iniciandoPagamento ? "Abrindo Mercado Pago..." : "Continuar para pagamento"}
+                        <button className="btn-principal" type="button" disabled={iniciandoPagamento || Boolean(pagamentoPix)} onClick={() => handleIniciarPagamento(pedidoCriado.id)}>
+                            {iniciandoPagamento ? "Iniciando pagamento..." : metodoPagamento === "PIX" ? (pagamentoPix ? "QR Code Pix gerado" : "Gerar Pix") : metodoPagamento === "PAYPAL" ? "Continuar para PayPal" : "Continuar para Mercado Pago"}
                         </button>
+                        {pagamentoPix && metodoPagamento === "PIX" && (
+                            <section className="cart-pagamento-pix" aria-label="Pagamento Pix">
+                                <h3>Escaneie o QR Code Pix</h3>
+                                <p>Abra o aplicativo do seu banco, escaneie o código abaixo ou copie o código Pix. O pedido só será confirmado depois da validação do Mercado Pago.</p>
+                                <img src={`data:image/jpeg;base64,${pagamentoPix.pix_qr_code_base64}`} alt="QR Code para pagamento Pix" className="cart-pix-qr" />
+                                <label htmlFor="pix-copia-cola">Pix Copia e Cola</label>
+                                <textarea id="pix-copia-cola" readOnly rows={4} value={pagamentoPix.pix_copy_paste} />
+                                <button type="button" className="btn-contorno" onClick={async () => { try { await navigator.clipboard.writeText(pagamentoPix.pix_copy_paste); setPixCopiado(true); } catch { setErroCheckout("Não foi possível copiar automaticamente. Selecione e copie o código Pix manualmente."); } }}>Copiar código Pix</button>
+                                {pixCopiado && <p role="status">Código Pix copiado.</p>}
+                                <p role="status">Status: {pagamentoPix.status === "APPROVED" ? "Pagamento confirmado" : "Aguardando confirmação"}. A tela consulta o status automaticamente.</p>
+                            </section>
+                        )}
                         <div className="checkout-result-actions">
                             <Link to={`/pedidos/${pedidoCriado.id}/acompanhar`} className="btn-contorno">Acompanhar pedido</Link>
                             <button type="button" className="btn-contorno cart-pedido-cancelar" disabled={pedidoEmOperacao !== null} onClick={() => handleCancelarPedidoPendente(pedidoCriado)}>
@@ -408,15 +494,29 @@ function Cart() {
                                         <p className="cart-endereco-validado" role="status">✓ Endereço pronto para entrega</p>
                                     ) : (
                                         <div className="cart-aviso-localizacao">
-                                            <p className="cart-aviso-checkout">A localização do endereço é verificada automaticamente para calcular a entrega. As coordenadas não precisam ser informadas aqui.</p>
+                                            <p className="cart-aviso-checkout">Este endereço ainda não tem coordenadas. Se o geocoding automático não estiver configurado, você pode informar latitude e longitude manualmente, sem contratar uma API para a demonstração.</p>
                                             {erroGeocodificacao && (
                                                 <div className="cart-checkout-erro" role="alert">
-                                                    <p>Não conseguimos localizar esse endereço automaticamente. Confira o endereço cadastrado ou tente novamente.</p>
+                                                    <p>{erroGeocodificacao}</p>
                                                     <button type="button" className="btn-contorno" disabled={geocodificando} onClick={tentarLocalizarEnderecoNovamente}>
-                                                        {geocodificando ? "Localizando..." : "Tentar novamente"}
+                                                        {geocodificando ? "Localizando..." : "Tentar geocoding novamente"}
                                                     </button>
                                                 </div>
                                             )}
+                                            <AddressCoordinates
+                                                title="Coordenadas para entrega"
+                                                latitude={manualLatitude === "" ? null : Number(manualLatitude)}
+                                                longitude={manualLongitude === "" ? null : Number(manualLongitude)}
+                                                onChange={({ latitude, longitude }) => {
+                                                    setManualLatitude(latitude == null ? "" : String(latitude));
+                                                    setManualLongitude(longitude == null ? "" : String(longitude));
+                                                    setMensagemCoordenadas("");
+                                                }}
+                                            />
+                                            <button type="button" className="btn-principal" disabled={salvandoCoordenadas || !enderecoId} onClick={salvarCoordenadasManuais}>
+                                                {salvandoCoordenadas ? "Salvando coordenadas..." : "Salvar coordenadas do endereço"}
+                                            </button>
+                                            {mensagemCoordenadas && <p className="cart-endereco-validado" role="status">{mensagemCoordenadas}</p>}
                                         </div>
                                     )
                                 )}
@@ -478,15 +578,20 @@ function Cart() {
                                 <label className={`checkout-metodo-pagamento ${metodoPagamento === "PIX" ? "selecionado" : ""}`}>
                                     <input type="radio" name="metodoPagamento" value="PIX" checked={metodoPagamento === "PIX"} onChange={() => setMetodoPagamento("PIX")} />
                                     <span className="checkout-metodo-icone" aria-hidden="true">▦</span>
-                                    <span className="checkout-metodo-texto"><strong>PIX</strong><small>Pagamento instantâneo</small></span>
+                                    <span className="checkout-metodo-texto"><strong>Pix</strong><small>QR Code e Copia e Cola</small></span>
                                 </label>
-                                <label className={`checkout-metodo-pagamento ${metodoPagamento === "CARTAO" ? "selecionado" : ""}`}>
-                                    <input type="radio" name="metodoPagamento" value="CARTAO" checked={metodoPagamento === "CARTAO"} onChange={() => setMetodoPagamento("CARTAO")} />
-                                    <span className="checkout-metodo-icone" aria-hidden="true">▰</span>
-                                    <span className="checkout-metodo-texto"><strong>Cartão</strong><small>Pagamento com cartão</small></span>
+                                <label className={`checkout-metodo-pagamento ${metodoPagamento === "PAYPAL" ? "selecionado" : ""}`}>
+                                    <input type="radio" name="metodoPagamento" value="PAYPAL" checked={metodoPagamento === "PAYPAL"} onChange={() => setMetodoPagamento("PAYPAL")} />
+                                    <span className="checkout-metodo-icone" aria-hidden="true">P</span>
+                                    <span className="checkout-metodo-texto"><strong>PayPal</strong><small>Checkout seguro PayPal</small></span>
+                                </label>
+                                <label className={`checkout-metodo-pagamento ${metodoPagamento === "MERCADO_PAGO" ? "selecionado" : ""}`}>
+                                    <input type="radio" name="metodoPagamento" value="MERCADO_PAGO" checked={metodoPagamento === "MERCADO_PAGO"} onChange={() => setMetodoPagamento("MERCADO_PAGO")} />
+                                    <span className="checkout-metodo-icone" aria-hidden="true">M</span>
+                                    <span className="checkout-metodo-texto"><strong>Mercado Pago</strong><small>Cartão via Checkout Pro</small></span>
                                 </label>
                             </div>
-                            <p className="checkout-metodo-ajuda">Você concluirá o pagamento na próxima etapa.</p>
+                            <p className="checkout-metodo-ajuda">Pix gera QR Code no CandyLand; PayPal e Mercado Pago abrem o checkout seguro do provedor.</p>
                         </fieldset>
 
                         <div className="cart-total"><span>Subtotal estimado</span><strong>{moeda.format(total)}</strong></div>

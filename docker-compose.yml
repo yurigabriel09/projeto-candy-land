@@ -32,6 +32,7 @@ services:
       context: ./frontend
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:5000}
     container_name: candyland-frontend
     ports:
       # Mantém a porta 5173 usada no projeto (origem já autorizada no Google/Facebook).

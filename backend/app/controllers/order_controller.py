@@ -1,4 +1,5 @@
 from app.services.order_service import OrderService
+from app.services.order_receipt_service import OrderReceiptService
 from flask import jsonify, make_response
 
 
@@ -86,6 +87,29 @@ class OrderController:
             jsonify({"mensagem": resultado["mensagem"], "pedido": resultado["dados"]}),
             200,
         )
+
+
+    @staticmethod
+    def emitir_codigo_recebimento(pedido_id, account_id, tipo_conta):
+        resultado = OrderReceiptService.emitir_codigo(pedido_id, account_id, tipo_conta)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({
+            "mensagem": resultado["mensagem"],
+            "codigo": resultado["codigo"],
+            "pedido_id": resultado["pedido_id"],
+            "tentativas_restantes": resultado["tentativas_restantes"],
+        }), 200)
+
+    @staticmethod
+    def confirmar_recebimento(pedido_id, dados, account_id, tipo_conta):
+        codigo = dados.get("codigo") if isinstance(dados, dict) else None
+        resultado = OrderReceiptService.confirmar_recebimento(
+            pedido_id, account_id, tipo_conta, codigo
+        )
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "pedido": resultado["pedido"]}), 200)
 
     @staticmethod
     def cancelar_pedido(pedido_id, user_id, tipo_conta):

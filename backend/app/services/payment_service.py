@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.database.database import db
 from app.models.order import Pedido
 from app.models.payment_attempt import PaymentAttempt
+from app.models.user import Usuario
 from app.services.order_service import OrderService
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
@@ -131,9 +132,14 @@ class PaymentService:
             # troca uma tentativa real nem reabre pagamento concluído/recusado.
             mock_substituivel = (
                 existing.provider == "mock"
-                and selected_provider == "mercadopago"
+                and selected_provider != "mock"
                 and environment in NON_PRODUCTION_ENVS
                 and existing.status in {PaymentStatus.PENDING.value, PaymentStatus.CREATED.value}
+            ) or (
+                existing.provider == "paypal"
+                and existing.status == PaymentStatus.CANCELLED.value
+                and existing.last_event_id == "cancelled-by-customer"
+                and selected_provider != "mock"
             )
             if mock_substituivel:
                 db.session.delete(existing)
@@ -155,16 +161,32 @@ class PaymentService:
             }
 
         try:
-            provider = get_payment_provider()
-            method = PaymentMethod(pedido.payment_method)
+            selection = str(pedido.payment_method or "").strip().upper()
+            if selected_provider == "mock":
+                provider_name = "mock"
+                method = PaymentMethod.PIX if selection == "PIX" else PaymentMethod.CREDIT_CARD
+            elif selection == "PIX":
+                provider_name, method = "mercadopago", PaymentMethod.PIX
+            elif selection == "PAYPAL":
+                provider_name, method = "paypal", PaymentMethod.CARD
+            elif selection == "MERCADO_PAGO":
+                provider_name, method = "mercadopago", PaymentMethod.CARD
+            elif selection in {"CARTAO", "CARTAO_CREDITO"}:
+                provider_name = selected_provider if selected_provider in {"paypal", "mercadopago"} else "mercadopago"
+                method = PaymentMethod.CREDIT_CARD if selection == "CARTAO_CREDITO" else PaymentMethod.CARD
+            else:
+                return {"success": False, "erro": "Forma de pagamento não suportada.", "status_code": 400}
+            provider = get_payment_provider(provider_name)
             provider.validar_metodo(method)
             amount = Decimal(str(pedido.total)).quantize(Decimal("0.01"))
+            cliente = db.session.get(Usuario, pedido.user_id)
             command = CreatePaymentCommand(
                 order_id=str(pedido.id),
                 idempotency_key=key,
                 amount=amount,
                 method=method,
                 currency="BRL",
+                payer_email=cliente.email if cliente else None,
                 metadata={"order_code": pedido.order_code},
             )
             result = provider.create_payment(command)
@@ -188,7 +210,7 @@ class PaymentService:
                 provider=result.provider,
                 provider_payment_id=result.provider_payment_id,
                 idempotency_key=key,
-                payment_method=method.value,
+                payment_method=pedido.payment_method,
                 status=result.status.value,
                 amount=result.amount,
                 currency=result.currency,
@@ -290,7 +312,7 @@ class PaymentService:
             )
         ):
             try:
-                provider = get_payment_provider()
+                provider = get_payment_provider(attempt.provider)
                 result = provider.get_payment(attempt.provider_payment_id)
                 PaymentService._registrar_resultado_gateway(
                     pedido, attempt, result, event_id=None
@@ -314,7 +336,7 @@ class PaymentService:
     ) -> Dict[str, Any]:
         """Valida assinatura, consulta pagamento na API e reconcilia o pedido."""
         try:
-            provider = get_payment_provider()
+            provider = get_payment_provider("mercadopago")
             if provider.provider_name != "mercadopago":
                 return {
                     "success": False,
@@ -564,6 +586,85 @@ class PaymentService:
             "mensagem": attempt.message,
             "dados": PaymentService._to_dict(attempt),
         }
+
+    @staticmethod
+    def cancelar_tentativa_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> Dict[str, Any]:
+        pedido, error = PaymentService._pedido_do_cliente(pedido_id, account_id, account_type)
+        if error:
+            return error
+        attempt = PaymentAttempt.query.filter_by(order_id=pedido_id).first()
+        if not attempt or attempt.provider != "paypal":
+            return {"success": False, "erro": "Não existe tentativa PayPal para este pedido.", "status_code": 404}
+        if str(paypal_order_id or "").strip() != str(attempt.provider_payment_id):
+            return {"success": False, "erro": "A ordem informada não corresponde à ordem PayPal persistida.", "status_code": 409}
+        if attempt.status == PaymentStatus.APPROVED.value or pedido.status != "PENDENTE_PAGAMENTO":
+            return {"success": False, "erro": "O pagamento já foi concluído ou o pedido não está pendente.", "status_code": 409}
+        try:
+            provider = get_payment_provider("paypal")
+            estado = provider.get_payment(attempt.provider_payment_id)
+            if estado.status is PaymentStatus.APPROVED:
+                return {"success": False, "erro": "A ordem PayPal já foi capturada; não é possível marcá-la como cancelada.", "status_code": 409}
+            attempt.status = PaymentStatus.CANCELLED.value
+            attempt.last_event_id = "cancelled-by-customer"
+            attempt.message = "Checkout PayPal cancelado pelo comprador; nenhuma captura foi solicitada."
+            db.session.commit()
+            return {"success": True, "mensagem": attempt.message, "dados": PaymentService._to_dict(attempt)}
+        except PaymentProviderError as exc:
+            db.session.rollback()
+            return {"success": False, "erro": str(exc), "status_code": 502}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao registrar cancelamento da tentativa PayPal.", "status_code": 500}
+
+    @staticmethod
+    def capturar_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> Dict[str, Any]:
+        pedido, error = PaymentService._pedido_do_cliente(pedido_id, account_id, account_type)
+        if error:
+            return error
+        attempt = PaymentAttempt.query.filter_by(order_id=pedido_id).first()
+        if not attempt or attempt.provider != "paypal":
+            return {"success": False, "erro": "Não existe tentativa PayPal para este pedido.", "status_code": 404}
+        if not paypal_order_id or str(paypal_order_id).strip() != str(attempt.provider_payment_id):
+            return {"success": False, "erro": "A ordem retornada pelo PayPal não corresponde à ordem persistida.", "status_code": 409}
+        if attempt.status == PaymentStatus.APPROVED.value:
+            return {"success": True, "mensagem": "Pagamento PayPal já capturado.", "pedido": OrderService._to_dict(pedido), "dados": PaymentService._to_dict(attempt)}
+        if pedido.status != "PENDENTE_PAGAMENTO":
+            return {"success": False, "erro": "O pedido não está pendente de pagamento.", "status_code": 409}
+        try:
+            provider = get_payment_provider("paypal")
+            result = provider.capture_payment(attempt.provider_payment_id, f"{attempt.idempotency_key}:capture")
+            return PaymentService._registrar_resultado_gateway(pedido, attempt, result, event_id=None)
+        except PaymentProviderError as exc:
+            db.session.rollback()
+            return {"success": False, "erro": str(exc), "status_code": 502}
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao registrar a captura PayPal.", "status_code": 500}
+
+    @staticmethod
+    def processar_webhook_paypal(headers: Mapping[str, str], raw_body: bytes) -> Dict[str, Any]:
+        try:
+            provider = get_payment_provider("paypal")
+            event = provider.verify_webhook(headers, raw_body)
+        except PaymentProviderError as exc:
+            message = str(exc)
+            code = 503 if "não configurado" in message.lower() else 401
+            return {"success": False, "erro": message, "status_code": code}
+        try:
+            order_id = int(event.order_reference)
+        except (TypeError, ValueError):
+            return {"success": False, "erro": "Referência externa inválida no webhook PayPal.", "status_code": 400}
+        pedido = db.session.get(Pedido, order_id)
+        attempt = PaymentAttempt.query.filter_by(order_id=order_id).first()
+        if not pedido or not attempt or attempt.provider != "paypal":
+            return {"success": False, "erro": "Não existe tentativa PayPal vinculada ao pedido.", "status_code": 404}
+        if attempt.last_event_id == event.event_id:
+            return {"success": True, "mensagem": "Webhook PayPal repetido ignorado.", "dados": PaymentService._to_dict(attempt)}
+        if str(attempt.provider_payment_id) != str(event.provider_payment_id):
+            return {"success": False, "erro": "O webhook não corresponde à ordem PayPal persistida.", "status_code": 409}
+        if event.amount != Decimal(str(pedido.total)).quantize(Decimal("0.01")) or event.currency != "BRL":
+            return {"success": False, "erro": "O valor/moeda do webhook PayPal difere do pedido.", "status_code": 409}
+        return PaymentService._registrar_resultado_gateway(pedido, attempt, event, event_id=event.event_id)
 
     @staticmethod
     def simular_resultado(

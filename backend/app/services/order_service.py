@@ -17,7 +17,7 @@ from app.services.order_workflow_service import (
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
-PAYMENT_METHODS = {"PIX", "CARTAO", "CARTAO_CREDITO"}
+PAYMENT_METHODS = {"PIX", "PAYPAL", "MERCADO_PAGO", "CARTAO", "CARTAO_CREDITO"}
 ORDER_TYPES = {"DELIVERY", "PICKUP"}
 
 
@@ -35,7 +35,7 @@ class OrderService:
     @staticmethod
     def _validate_payment_method(method):
         if method not in PAYMENT_METHODS:
-            raise ValueError("payment_method deve ser PIX ou CARTAO.")
+            raise ValueError("payment_method deve ser PIX, PAYPAL ou MERCADO_PAGO.")
 
     @staticmethod
     def _validate_order_type(order_type):
@@ -841,6 +841,7 @@ class OrderService:
             "order_code": pedido.order_code,
             "user_id": pedido.user_id,
             "restaurant_id": pedido.restaurant_id,
+            "restaurant_name": restaurante.nome if restaurante else f"Doceria #{pedido.restaurant_id}",
             "delivery_address_id": (
                 pedido.delivery_address_id if pedido.order_type == "DELIVERY" else None
             ),

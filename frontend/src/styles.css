@@ -3181,3 +3181,38 @@ select:focus-visible {
         align-items: stretch;
     }
 }
+
+
+/* Pix no checkout: QR legível no desktop e no celular. */
+.cart-pagamento-pix { margin: 22px 0; padding: 22px; border: 1px solid #c7e7d3; border-radius: 16px; background: #f6fff8; display: grid; gap: 12px; }
+.cart-pagamento-pix h3 { margin: 0; color: #185f3b; }
+.cart-pagamento-pix p { margin: 0; line-height: 1.55; }
+.cart-pagamento-pix .cart-pix-qr { width: 240px; max-width: 100%; height: auto; margin: 4px auto 10px; image-rendering: pixelated; border: 8px solid #fff; border-radius: 8px; }
+.cart-pagamento-pix textarea { width: 100%; max-width: 100%; padding: 12px; border: 1px solid #cbdcd0; border-radius: 8px; background: #fff; color: #234535; overflow-wrap: anywhere; }
+
+
+/* Histórico de compras e confirmação segura do recebimento. */
+.purchase-history-page { max-width: 1050px; }
+.purchase-history-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.purchase-history-heading p { color:#745d53; line-height:1.5; margin-top:-8px; }
+.purchase-history-list { display:grid; gap:16px; }
+.purchase-history-card { border:1px solid #f1d4c8; border-radius:18px; padding:20px; background:rgba(255,255,255,.9); box-shadow:0 8px 24px rgba(97,52,35,.05); }
+.purchase-history-card > header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.purchase-history-card > header > div { display:grid; gap:4px; }
+.purchase-history-card small { color:#745d53; }
+.purchase-history-status { border-radius:999px; padding:6px 10px; background:#fff0d9; color:#845814; font-size:12px; font-weight:700; text-align:center; }
+.purchase-history-status.is-complete { background:#e4f7ea; color:#287349; }
+.purchase-history-restaurant { margin:14px 0 6px; font-weight:700; }
+.purchase-history-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:14px; color:#745d53; }
+.purchase-history-meta strong { color:#4b1e1e; margin-left:auto; font-size:1.05rem; }
+.purchase-history-code { margin-top:16px; padding:16px; border:1px dashed #ef8b9f; border-radius:14px; background:#fff8fa; display:grid; justify-items:start; gap:8px; }
+.purchase-history-code > span { color:#745d53; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.purchase-history-code p { margin:0; color:#745d53; line-height:1.5; }
+.purchase-history-pin { font-size:2rem; letter-spacing:.2em; color:#d72c58; }
+.purchase-history-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.purchase-history-empty { border:1px solid #f1d4c8; border-radius:18px; background:#fff; padding:32px; text-align:center; display:grid; justify-items:center; gap:12px; }
+.purchase-history-empty p { color:#745d53; }
+.business-order-receipt { display:grid; grid-template-columns:minmax(180px,1fr) auto auto; align-items:center; gap:10px; padding:12px 0; }
+.business-order-receipt label { font-size:13px; font-weight:700; }
+.business-order-receipt input { width:130px; padding:10px 12px; border:1px solid #e4c8c0; border-radius:10px; font:inherit; letter-spacing:.1em; }
+@media (max-width:650px) { .purchase-history-heading,.purchase-history-card > header { flex-direction:column; } .purchase-history-meta strong { margin-left:0; } .purchase-history-actions > * { flex:1 1 100%; text-align:center; } .business-order-receipt { grid-template-columns:1fr; align-items:stretch; } .business-order-receipt input { width:auto; } }

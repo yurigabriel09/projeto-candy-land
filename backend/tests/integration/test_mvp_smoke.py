@@ -149,7 +149,7 @@ def test_smoke_cliente_catalogo_endereco_checkout_e_consulta_pedido(app):
         assert enderecos_retirada_response.status_code == 200
         enderecos_retirada = enderecos_retirada_response.get_json()["dados"]
         assert len(enderecos_retirada) == 1
-        assert enderecos_retirada[0]["id"] == endereco_restaurante.id
+        assert enderecos_retirada[0]["id"] == restaurante.address_id
 
         # 2. O produto é encontrado no catálogo sem expor estoque interno.
         produtos_response = client.get(

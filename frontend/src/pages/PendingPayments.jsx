@@ -153,7 +153,7 @@ function PendingPayments() {
                             <span aria-hidden="true">✓</span>
                             <strong>Você não tem pagamentos pendentes</strong>
                             <p>Quando criar um pedido e ainda não concluir o pagamento, ele aparecerá aqui.</p>
-                            <Link to="/home" className="btn-principal">Continuar comprando</Link>
+                            <div className="checkout-result-actions"><Link to="/minha-conta/historico-compras" className="btn-contorno">Ver histórico de compras</Link><Link to="/home" className="btn-principal">Continuar comprando</Link></div>
                         </div>
                     )}
                 </section>

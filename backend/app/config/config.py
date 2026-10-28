@@ -54,6 +54,13 @@ class Config:
     MERCADO_PAGO_SANDBOX = _valor_verdadeiro(
         os.getenv("MERCADO_PAGO_SANDBOX", "true")
     )
+    # PayPal Orders v2; segredos somente no backend. Sandbox é o padrão.
+    PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "").strip()
+    PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "").strip()
+    PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox").strip().lower()
+    PAYPAL_API_BASE = os.getenv("PAYPAL_API_BASE", "").strip()
+    PAYPAL_WEBHOOK_ID = os.getenv("PAYPAL_WEBHOOK_ID", "").strip()
+    PAYPAL_RETURN_URL_BASE = os.getenv("PAYPAL_RETURN_URL_BASE", FRONTEND_URL).strip().rstrip("/")
     # Chave restrita à API Geocoding, mantida apenas no backend.
     GOOGLE_MAPS_GEOCODING_API_KEY = os.getenv("GOOGLE_MAPS_GEOCODING_API_KEY", "").strip()
 
