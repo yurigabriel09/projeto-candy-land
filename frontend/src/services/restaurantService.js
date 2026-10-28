@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:5000/restaurantes";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const API_URL = `${API_BASE}/restaurantes`;
 
 // Função já existente — usada pelo BusinessRegister.jsx. Não foi alterada.
 export async function createRestaurant(dados) {
@@ -30,6 +31,7 @@ export async function getRestaurant(id) {
   if (!response.ok) throw new Error(resultado.erro || "Loja não encontrada");
   return resultado.dados;
 }
+
 export async function getRestaurantPickupAddresses(id) {
   const response = await fetch(`${API_URL}/${encodeURIComponent(id)}/enderecos/retirada`);
   const resultado = await response.json();
@@ -54,6 +56,7 @@ export async function getRestaurantProductsManagement(id) {
   }
   return resultado.dados;
 }
+
 function getToken() {
   try {
     const raw = localStorage.getItem("candyland_auth");
@@ -92,3 +95,15 @@ export async function updateRestaurantConfiguration(id, dados) {
   return resultado.dados;
 }
 
+export async function updateRestaurantStatus(id, status) {
+  const response = await fetch(`${API_URL}/${encodeURIComponent(id)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ status }),
+  });
+  const resultado = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Erro ao atualizar o status da loja");
+  }
+  return resultado.dados;
+}
