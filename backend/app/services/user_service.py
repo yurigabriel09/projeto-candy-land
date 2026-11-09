@@ -457,3 +457,19 @@ class UserService:
                 "erro": "Falha ao remover usuário.",
                 "status_code": 500,
             }
+
+    @staticmethod
+    def listar_enderecos_usuario(user_id):
+        try:
+            enderecos = Endereco.query.filter_by(id_usuario=user_id, ativo=True).all()
+            return {
+                "success": True,
+                "mensagem": "Endereços consultados com sucesso.",
+                "dados": [e.to_dict() for e in enderecos],
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao consultar endereços do usuário.",
+                "status_code": 500,
+            }

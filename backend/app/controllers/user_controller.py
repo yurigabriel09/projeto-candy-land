@@ -118,3 +118,15 @@ class UserController:
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
         return make_response(jsonify({"mensagem": resultado["mensagem"]}), 204)
+
+    @staticmethod
+    def listar_enderecos(user_id):
+        resultado = UserService.listar_enderecos_usuario(user_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )

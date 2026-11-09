@@ -1,3 +1,4 @@
+
 from flask import Blueprint, jsonify, make_response, request
 
 from app.controllers.user_controller import UserController
@@ -9,7 +10,8 @@ user_bp = Blueprint("user", __name__, url_prefix="/users")
 @user_bp.route("", methods=["GET"])
 @token_required
 def listar_usuarios():
-    # Ainda não existe papel ADMIN na plataforma. Não liberar leitura global de PII.
+    # Ainda não existe papel ADMIN na plataforma.
+    # Não liberar leitura global de PII.
     return make_response(
         jsonify({"erro": "Consulta global de usuários não está disponível."}), 403
     )
@@ -24,7 +26,6 @@ def buscar_usuario(user_id):
 
 @user_bp.route("", methods=["POST"])
 def criar_usuario():
-    # O serviço exige tentativa_id com e-mail e telefone já verificados.
     dados = request.get_json(silent=True) or {}
     return UserController.criar_usuario(dados)
 

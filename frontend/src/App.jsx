@@ -22,6 +22,7 @@ import OrderTracking from "./pages/OrderTracking";
 import BusinessOrders from "./pages/BusinessOrders";
 import BusinessFinance from "./pages/BusinessFinance";
 import BusinessReviews from "./pages/BusinessReviews";
+import Checkout from "./pages/Checkout";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -50,6 +51,14 @@ function App() {
                                 element={
                                     <ProtectedRoute tipoConta="PERSONAL">
                                         <Restaurant />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route 
+                                path="/checkout"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <Checkout />
                                     </ProtectedRoute>
                                 }
                             />
