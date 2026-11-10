@@ -4184,3 +4184,572 @@ select:focus-visible {
     font-size: 11px;
     font-weight: 600;
 }
+
+
+/* ---------- Cabeçalho do Parceiro ---------- */
+.partner-header {
+  background: var(--creme);
+  border-bottom: 1px solid rgba(74, 31, 29, 0.06);
+  padding: 16px 0;
+}
+
+.partner-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.partner-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.partner-logo-textos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.partner-logo-brand {
+  font-family: "Pacifico", cursive;
+  font-size: 24px;
+  color: var(--rosa);
+}
+
+.partner-logo-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--texto-suave);
+}
+
+.partner-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.partner-header-duvida {
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.btn-parceiro-entrar {
+  padding: 8px 24px;
+  border: 2px solid var(--rosa);
+  border-radius: var(--raio-pill);
+  background: #fff;
+  color: var(--rosa);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.btn-parceiro-entrar:hover {
+  background: var(--rosa);
+  color: #fff;
+}
+
+/* ---------- Hero Escuro (Visual da Imagem) ---------- */
+.partner-hero-dark {
+  background: #361513;
+  color: #fff;
+  padding: 64px 0 80px;
+}
+
+.partner-hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.partner-badge-top {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: var(--raio-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f2c7b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 24px;
+}
+
+.partner-hero-titulo {
+  font-size: clamp(36px, 4.2vw, 54px);
+  font-weight: 700;
+  line-height: 1.12;
+  margin: 0 0 20px;
+  color: #ffffff;
+}
+
+.partner-hero-titulo em {
+  font-family: "Pacifico", cursive;
+  font-style: normal;
+  font-weight: 400;
+  color: #ffcfba;
+}
+
+.partner-hero-subtitulo {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #d6beb8;
+  max-width: 480px;
+  margin: 0 0 32px;
+}
+
+.partner-hero-botoes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.btn-cadastrar-loja {
+  padding: 14px 28px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f4356e 0%, #ff7043 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 8px 20px rgba(244, 53, 110, 0.3);
+}
+
+.btn-ver-funciona {
+  padding: 14px 28px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.partner-hero-metricas {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.partner-metrica strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.partner-metrica small {
+  font-size: 12px;
+  color: #bfa69f;
+}
+
+/* ---------- Card da Direita e Badge Flutuante ---------- */
+.partner-card-frame {
+  background: #4a1f1d;
+  padding: 14px;
+  border-radius: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.partner-card-inner {
+  position: relative;
+  background: #fff0eb;
+  border-radius: 22px;
+  min-height: 340px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.partner-hero-img-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  background: linear-gradient(135deg, #ffe0d5 0%, #ffd6e0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Se a img estiver sem src, não exibe o ícone de imagem quebrada */
+.partner-hero-img[src=""] {
+  display: none;
+}
+
+.partner-float-badge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.partner-float-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.partner-float-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--rosa);
+}
+
+.partner-float-title {
+  font-size: 15px;
+  color: var(--marrom);
+}
+
+.partner-float-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gradiente);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: var(--sombra-forte);
+}
+
+@media (max-width: 900px) {
+  .partner-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Seção: Por Que Ser Parceiro ---------- */
+.partner-why-section {
+  background: var(--creme);
+  padding: 80px 0;
+}
+
+.partner-section-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--rosa);
+  margin-bottom: 12px;
+}
+
+.partner-section-title {
+  font-size: clamp(28px, 3.8vw, 42px);
+  font-weight: 700;
+  color: var(--marrom);
+  margin: 0 0 44px;
+  max-width: 640px;
+  line-height: 1.2;
+}
+
+.partner-why-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.partner-why-card {
+  background: #ffffff;
+  padding: 36px 30px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(74, 31, 29, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.partner-why-number {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff7043;
+  margin-bottom: 20px;
+}
+
+.partner-why-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--marrom);
+  margin: 0 0 10px;
+}
+
+.partner-why-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--texto-suave);
+  margin: 0;
+}
+
+/* ---------- Seção: Três Passos ---------- */
+.partner-steps-section {
+  background: #ffffff;
+  padding: 90px 0;
+}
+
+.partner-steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.partner-steps-info h2 {
+  font-size: clamp(28px, 3.8vw, 42px);
+  font-weight: 700;
+  color: var(--marrom);
+  margin: 0 0 16px;
+  line-height: 1.2;
+}
+
+.partner-steps-info p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--texto-suave);
+  margin: 0;
+}
+
+.partner-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.partner-step-item {
+  background: #fff3ec;
+  padding: 20px 24px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.partner-step-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f4356e 0%, #ff7043 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(244, 53, 110, 0.3);
+}
+
+.partner-step-item strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--marrom);
+}
+
+/* ---------- Banner CTA Final ---------- */
+.partner-cta-final-wrap {
+  padding: 60px 0 80px;
+  background: var(--creme);
+}
+
+.partner-cta-final-card {
+  background: linear-gradient(135deg, #f4356e 0%, #ff7043 100%);
+  border-radius: 32px;
+  padding: 64px 32px;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 16px 40px rgba(244, 53, 110, 0.25);
+}
+
+.partner-cta-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  opacity: 0.9;
+  margin-bottom: 14px;
+}
+
+.partner-cta-final-card h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  margin: 0 0 32px;
+  color: #ffffff;
+}
+
+.btn-cta-branco {
+  display: inline-block;
+  padding: 14px 36px;
+  background: #ffffff;
+  color: var(--rosa);
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-cta-branco:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Responsividade ---------- */
+@media (max-width: 900px) {
+  .partner-why-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .partner-steps-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+/* ---------- Tela de Login do Portal de Parceiros ---------- */
+.partner-login-page {
+  min-height: 100vh;
+  background: #361513;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.partner-login-container {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.partner-login-header {
+  margin-bottom: 24px;
+}
+
+.partner-login-header .site-logo-icone {
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  margin: 0 auto 12px;
+}
+
+.partner-login-brand {
+  font-family: "Pacifico", cursive;
+  font-size: 32px;
+  color: #ffcfba;
+  margin: 0;
+  font-weight: 400;
+}
+
+.partner-login-subbrand {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #d6beb8;
+  margin-top: 2px;
+}
+
+.partner-login-card {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 36px 32px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+
+.partner-login-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4a1f1d;
+  margin: 0 0 6px;
+}
+
+.partner-login-desc {
+  font-size: 14px;
+  color: #9b7b75;
+  margin: 0 0 24px;
+}
+
+.partner-field label {
+  color: #4a1f1d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.partner-field input {
+  background: #fff0eb;
+  border: 1px solid #f2ddd2;
+  height: 50px;
+  border-radius: 14px;
+  font-size: 15px;
+  color: #4a1f1d;
+}
+
+.partner-field input:focus {
+  border-color: #f4356e;
+  background: #ffffff;
+}
+
+.btn-partner-submit {
+  height: 52px;
+  margin-top: 20px;
+  font-size: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f4356e 0%, #ff7043 100%);
+}
+
+.partner-login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: #9b7b75;
+}
+
+.partner-register-link {
+  color: #f4356e;
+  font-weight: 700;
+}
+
+.partner-login-bottom-links {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.partner-bottom-link {
+  color: #ffcfba;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.partner-bottom-link:hover {
+  text-decoration: underline;
+}
+
+.partner-admin-link {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}

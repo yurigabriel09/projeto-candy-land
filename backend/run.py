@@ -15,7 +15,6 @@ from flask_cors import CORS
 
 NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
 
-
 def create_app():
     app = Flask(
         __name__,
@@ -24,8 +23,17 @@ def create_app():
     )
     app.config.from_object(Config)
 
-    # Permite somente a origem configurada no backend/.env; não libera qualquer site.
-    CORS(app, resources={r"/*": {"origins": app.config["FRONTEND_URL"]}})
+    # Permite origens de desenvolvimento comuns (localhost e 127.0.0.1)
+    frontend_origin = app.config.get("FRONTEND_URL", "http://localhost:5173")
+    origins_permitidas = list({
+        frontend_origin,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    })
+
+    CORS(app, resources={r"/*": {"origins": origins_permitidas}})
     db.init_app(app)
 
     @app.errorhandler(413)

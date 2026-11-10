@@ -29,15 +29,30 @@ function Checkout() {
     // Dados do PayPal
     const [emailPaypal, setEmailPaypal] = useState(dadosAutenticacao?.email || "");
 
-    // Estados de processamento
+    // Estados de processamento e sucesso
     const [processando, setProcessando] = useState(false);
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState(false);
+    const [pedidoCriadoId, setPedidoCriadoId] = useState(null);
 
     const nomeUsuario = dadosAutenticacao?.nome_completo || "Cliente Candyland";
     const ano = new Date().getFullYear();
 
-    // Obtém o token JWT salvo na sessão ou no localStorage
+    // Redirecionamento automático gerenciado pelo ciclo de vida do React
+    useEffect(() => {
+        if (sucesso) {
+            const timer = setTimeout(() => {
+                if (pedidoCriadoId) {
+                    navigate(`/pedidos/${pedidoCriadoId}/acompanhar`);
+                } else {
+                    navigate("/minha-conta/historico-compras");
+                }
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [sucesso, pedidoCriadoId, navigate]);
+
     function obterToken() {
         if (dadosAutenticacao?.token) return dadosAutenticacao.token;
         try {
@@ -48,7 +63,6 @@ function Checkout() {
         }
     }
 
-    // Obtém o ID do usuário autenticado de forma flexível
     function obterUserId() {
         if (dadosAutenticacao?.id) return dadosAutenticacao.id;
         if (dadosAutenticacao?.user_id) return dadosAutenticacao.user_id;
@@ -63,7 +77,6 @@ function Checkout() {
         }
     }
 
-    // Carrega os endereços do usuário logado ao carregar a tela
     useEffect(() => {
         async function carregarEnderecos() {
             const userId = obterUserId();
@@ -84,7 +97,6 @@ function Checkout() {
                     const lista = res.dados || [];
                     setEnderecos(lista);
 
-                    // Seleciona por padrão o endereço principal ou o primeiro disponível
                     const principal = lista.find((e) => e.principal) || lista[0];
                     if (principal) {
                         setEnderecoId(Number(principal.id));
@@ -115,7 +127,6 @@ function Checkout() {
             return;
         }
 
-        // Validações do Cartão de Crédito
         if (metodoPagamento === "CARTAO_CREDITO") {
             if (!nomeCartao.trim()) {
                 setErro("Informe o nome impresso no cartão.");
@@ -151,7 +162,6 @@ function Checkout() {
             }
         }
 
-        // Validação do PayPal
         if (metodoPagamento === "PAYPAL") {
             if (!emailPaypal.trim() || !emailPaypal.includes("@")) {
                 setErro("Informe um e-mail válido da sua conta PayPal.");
@@ -170,7 +180,6 @@ function Checkout() {
         try {
             const backendPaymentMethod = metodoPagamento === "PAYPAL" ? "CARTAO_CREDITO" : metodoPagamento;
 
-            // Prepara o payload garantindo tipos numéricos inteiros para o backend Python/Flask
             const payload = {
                 restaurant_id: Number(carrinho.restauranteId) || 1,
                 order_type: carrinho.orderType || "DELIVERY",
@@ -201,12 +210,10 @@ function Checkout() {
                 throw new Error(dados.erro || dados.mensagem || "Erro ao gravar pedido.");
             }
 
+            const idGerado = dados?.dados?.id || null;
+            setPedidoCriadoId(idGerado);
             setSucesso(true);
             limparCarrinho();
-
-            setTimeout(() => {
-                navigate("/home");
-            }, 3000);
 
         } catch (err) {
             setErro(err.message || "Ocorreu um erro ao processar seu pedido. Tente novamente.");
@@ -226,14 +233,24 @@ function Checkout() {
                             Pedido realizado com sucesso!
                         </h1>
                         <p className="checkout-success-desc">
-                            Seu pedido foi gravado no banco de dados e enviado ao restaurante.
+                            Seu pagamento foi confirmado e o pedido foi enviado ao restaurante. Redirecionando...
                         </p>
                         <div className="checkout-success-badge">
                             Status: Pagamento confirmado
                         </div>
-                        <Link to="/home" className="btn-principal">
-                            Voltar para a página inicial
-                        </Link>
+                        <button 
+                            type="button" 
+                            className="btn-principal" 
+                            onClick={() => {
+                                if (pedidoCriadoId) {
+                                    navigate(`/pedidos/${pedidoCriadoId}/acompanhar`);
+                                } else {
+                                    navigate("/minha-conta/historico-compras");
+                                }
+                            }}
+                        >
+                            Ver meu pedido agora
+                        </button>
                     </div>
                 </main>
             </div>
@@ -296,7 +313,6 @@ function Checkout() {
                     </aside>
 
                     <section className="conta-conteudo">
-                        {/* Seção de Seleção de Endereço de Entrega */}
                         {isDelivery && (
                             <div className="conta-card checkout-address-section">
                                 <div className="checkout-address-header">
@@ -356,7 +372,6 @@ function Checkout() {
                             </div>
                         )}
 
-                        {/* Seção de Métodos de Pagamento */}
                         <p className="conta-eyebrow">CARTEIRA</p>
                         <h1 className="conta-titulo checkout-titulo">Métodos de pagamento</h1>
                         <p className="conta-subtitulo checkout-subtitulo">

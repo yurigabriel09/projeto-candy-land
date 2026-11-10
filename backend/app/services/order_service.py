@@ -6,6 +6,7 @@ from app.database.database import db
 from app.models.address import Endereco
 from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
+from app.services.push_service import disparar_notificacao_pedido
 from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
@@ -294,7 +295,7 @@ class OrderService:
                 platform_fee=platform_fee,
                 total=total,
                 order_type=order_type,
-                status="PENDENTE_PAGAMENTO",
+                status="PAGAMENTO_CONFIRMADO",
                 payment_method=payment_method,
                 general_note=dados.get("general_note"),
             )

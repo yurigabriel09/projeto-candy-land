@@ -163,7 +163,6 @@ function RestaurantConfiguration() {
 
         const locationFields = ["rua", "numero", "bairro", "cidade", "estado"];
         if (locationFields.includes(name)) {
-            // Não deixe uma resposta ViaCEP atrasada sobrescrever a edição manual.
             cepLookupRequest.current += 1;
             setLoadingCep(false);
         }
