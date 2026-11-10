@@ -28,6 +28,39 @@ class UserController:
         )
 
     @staticmethod
+    def listar_enderecos(user_id):
+        resultado = UserService.listar_enderecos(user_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def cadastrar_endereco(user_id, dados):
+        resultado = UserService.cadastrar_endereco_usuario(user_id, dados)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200 if dados.get("id") else 201,
+        )
+
+    @staticmethod
+    def deletar_endereco(user_id, address_id):
+        resultado = UserService.deletar_endereco_usuario(user_id, address_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(jsonify({"mensagem": resultado["mensagem"]}), 200)
+
+    @staticmethod
     def criar_usuario(dados):
         resultado = UserService.criar_usuario(
             nome_completo=dados.get("nome_completo"),
@@ -48,12 +81,50 @@ class UserController:
         )
 
     @staticmethod
+    def geocodificar_endereco(user_id, address_id):
+        resultado = UserService.geocodificar_endereco(user_id, address_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({
+                "mensagem": resultado["mensagem"],
+                "dados": resultado["dados"],
+                "endereco_localizado": resultado.get("endereco_localizado"),
+            }),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_coordenadas_endereco(user_id, address_id, dados):
+        resultado = UserService.atualizar_coordenadas_endereco(
+            user_id,
+            address_id,
+            dados.get("latitude"),
+            dados.get("longitude"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
     def atualizar_usuario(user_id, dados):
+        if "email" in dados or "telefone" in dados:
+            return make_response(
+                jsonify({
+                    "erro": "Alteração de e-mail/telefone exige fluxo de verificação próprio."
+                }),
+                400,
+            )
         resultado = UserService.atualizar_usuario(
             user_id,
             nome_completo=dados.get("nome_completo"),
-            email=dados.get("email"),
-            telefone=dados.get("telefone"),
             data_nascimento=dados.get("data_nascimento"),
         )
         if not resultado["success"]:
@@ -73,3 +144,12 @@ class UserController:
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
         return make_response(jsonify({"mensagem": resultado["mensagem"]}), 204)
+
+    @staticmethod
+    def salvar_push_subscription(user_id, dados):
+        resultado = UserService.salvar_push_subscription(user_id, dados)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(jsonify({"mensagem": resultado["mensagem"]}), 201)

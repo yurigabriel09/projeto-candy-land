@@ -108,7 +108,6 @@ function PersonalRegister() {
 
             const resultado = await createUser(dados);
 
-            console.log("Cadastro realizado:", resultado);
 
             if (resultado.token) {
                 entrar({ ...resultado.usuario, ...resultado, tipo_conta: "PERSONAL", token: resultado.token });

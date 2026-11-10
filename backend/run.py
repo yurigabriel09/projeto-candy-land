@@ -13,6 +13,8 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 
+NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
+
 def create_app():
     app = Flask(
         __name__,
@@ -21,7 +23,17 @@ def create_app():
     )
     app.config.from_object(Config)
 
-    CORS(app)
+    # Permite origens de desenvolvimento comuns (localhost e 127.0.0.1)
+    frontend_origin = app.config.get("FRONTEND_URL", "http://localhost:5173")
+    origins_permitidas = list({
+        frontend_origin,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    })
+
+    CORS(app, resources={r"/*": {"origins": origins_permitidas}})
     db.init_app(app)
 
     @app.errorhandler(413)
@@ -63,4 +75,5 @@ with app.app_context():
     db.session.commit()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    debug_enabled = Config.APP_ENV in NON_PRODUCTION_ENVS
+    app.run(host="0.0.0.0", port=5000, debug=debug_enabled)

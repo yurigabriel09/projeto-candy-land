@@ -11,8 +11,11 @@ def listar_produtos():
 
 
 @produto_bp.route("/<int:produto_id>", methods=["GET"])
+@token_required
 def buscar_produto(produto_id):
-    return ProductController.buscar_produto(produto_id)
+    return ProductController.buscar_produto(
+        produto_id, int(g.current_account_id), g.current_account_type
+    )
 
 
 @produto_bp.route("", methods=["POST"])

@@ -9,3 +9,4 @@ SQLAlchemy==2.0.43
 PyJWT==2.9.0
 google-auth==2.40.3
 pytest==8.4.2
+pywebpush==2.0.0

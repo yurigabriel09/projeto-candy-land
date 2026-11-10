@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import DashboardSidebar from "../components/DashboardSidebar";
-import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
+import { getRestaurant, getRestaurantProductsManagement } from "../services/restaurantService";
 import { getCategories } from "../services/categoryService";
 import { updateProduct, deleteProduct } from "../services/productService";
 import { CATEGORY_TYPES } from "../utils/categoryTypes";
@@ -47,7 +47,7 @@ function Cardapio() {
             const [loja, cats, itens] = await Promise.all([
                 getRestaurant(dadosAutenticacao.id),
                 getCategories(),
-                getRestaurantProducts(dadosAutenticacao.id),
+                getRestaurantProductsManagement(dadosAutenticacao.id),
             ]);
             setRestaurante(loja);
             setStatusVisual(loja.status);

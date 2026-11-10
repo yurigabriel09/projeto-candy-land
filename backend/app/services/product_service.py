@@ -36,7 +36,7 @@ class ProductService:
             return {
                 "success": True,
                 "mensagem": "Listando os produtos cadastrados.",
-                "dados": [p.to_dict() for p in produtos],
+                "dados": [p.to_catalog_dict() for p in produtos],
             }
         except SQLAlchemyError:
             return {
@@ -46,9 +46,11 @@ class ProductService:
             }
 
     @staticmethod
-    def buscar_produto(produto_id):
+    def buscar_produto(produto_id, restaurant_id):
         try:
-            produto = Produto.query.filter_by(id=produto_id).first()
+            produto = Produto.query.filter_by(
+                id=produto_id, restaurant_id=restaurant_id
+            ).first()
             if not produto:
                 return {
                     "success": False,

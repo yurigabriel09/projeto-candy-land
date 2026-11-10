@@ -10,7 +10,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
@@ -23,11 +22,17 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
         )
+
+    @staticmethod
+    def listar_enderecos_retirada(restaurant_id):
+        resultado = RestauranteService.listar_enderecos_retirada(restaurant_id)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)
 
     @staticmethod
     def criar_restaurante(dados):
@@ -52,7 +57,6 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
             jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             201,
@@ -60,8 +64,13 @@ class RestaurantController:
 
     @staticmethod
     def atualizar_restaurante(restaurant_id, dados):
+        if "email" in dados:
+            return make_response(
+                jsonify({"erro": "Alteração de e-mail exige fluxo de verificação próprio."}),
+                400,
+            )
         resultado = RestauranteService.atualizar_restaurante(
-            restaurant_id, nome=dados.get("nome"), email=dados.get("email")
+            restaurant_id, nome=dados.get("nome")
         )
         if not resultado["success"]:
             return make_response(
@@ -79,14 +88,8 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
-            jsonify(
-                {
-                    "mensagem": resultado["mensagem"],
-                    "dados": resultado["dados"],
-                }
-            ),
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
         )
 
@@ -97,14 +100,21 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response(
-            jsonify(
-                {
-                    "mensagem": resultado["mensagem"],
-                    "dados": resultado["dados"],
-                }
-            ),
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_status_operacional(restaurant_id, dados):
+        status = dados.get("status") if isinstance(dados, dict) else None
+        resultado = RestauranteService.atualizar_status_operacional(restaurant_id, status)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
             200,
         )
 
@@ -115,12 +125,13 @@ class RestaurantController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
-
         return make_response("", 204)
 
     @staticmethod
-    def listar_produtos_restaurante(restaurante_id):
-        resultado = RestauranteService.listar_produtos_restaurante(restaurante_id)
+    def listar_produtos_restaurante(restaurante_id, incluir_estoque=False):
+        resultado = RestauranteService.listar_produtos_restaurante(
+            restaurante_id, incluir_estoque=incluir_estoque
+        )
         if not resultado["success"]:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]

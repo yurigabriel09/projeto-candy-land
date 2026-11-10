@@ -6,6 +6,7 @@ from app.database.database import db
 from app.models.address import Endereco
 from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
+from app.services.push_service import disparar_notificacao_pedido
 from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
@@ -14,9 +15,10 @@ from app.services.order_workflow_service import (
     validar_transicao_entrega,
     validar_transicao_pedido,
 )
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
-PAYMENT_METHODS = {"PIX", "CARTAO_CREDITO"}
+PAYMENT_METHODS = {"PIX", "PAYPAL", "MERCADO_PAGO", "CARTAO", "CARTAO_CREDITO"}
 ORDER_TYPES = {"DELIVERY", "PICKUP"}
 
 
@@ -34,7 +36,7 @@ class OrderService:
     @staticmethod
     def _validate_payment_method(method):
         if method not in PAYMENT_METHODS:
-            raise ValueError("payment_method deve ser PIX ou CARTAO_CREDITO.")
+            raise ValueError("payment_method deve ser PIX, PAYPAL ou MERCADO_PAGO.")
 
     @staticmethod
     def _validate_order_type(order_type):
@@ -53,10 +55,25 @@ class OrderService:
         return address
 
     @staticmethod
-    def _resolve_pickup_address(restaurant_id):
+    def _resolve_pickup_address(restaurant_id, address_id=None):
         restaurant = Restaurante.query.filter_by(id=restaurant_id).first()
         if not restaurant:
             raise ValueError("Restaurante não encontrado.")
+
+        # A pessoa pode escolher uma entre as unidades/endereço ativos. O endereço
+        # principal legado também é válido mesmo em bancos antigos sem id_restaurante.
+        if address_id is not None:
+            address = Endereco.query.filter_by(id=address_id, ativo=True).first()
+            pertence_ao_restaurante = bool(
+                address
+                and (
+                    address.id_restaurante == restaurant_id
+                    or (restaurant.address_id is not None and address.id == restaurant.address_id)
+                )
+            )
+            if not pertence_ao_restaurante:
+                raise ValueError("Selecione um endereço ativo pertencente a este restaurante.")
+            return address
 
         address = None
         if restaurant.address_id:
@@ -68,7 +85,7 @@ class OrderService:
         if not address:
             address = Endereco.query.filter_by(
                 id_restaurante=restaurant_id, ativo=True
-            ).first()
+            ).order_by(Endereco.principal.desc(), Endereco.id.asc()).first()
         if not address:
             raise ValueError(
                 "O restaurante precisa ter um endereço ativo cadastrado para retirada."
@@ -181,10 +198,18 @@ class OrderService:
         subtotal = Decimal("0.00")
 
         for item in items:
+            if not isinstance(item, dict):
+                raise TypeError("Cada item do pedido deve ser um objeto.")
+
             product_id = item.get("produto_id")
             quantity = item.get("quantidade")
 
-            if not isinstance(product_id, int) or not isinstance(quantity, int):
+            if (
+                isinstance(product_id, bool)
+                or not isinstance(product_id, int)
+                or isinstance(quantity, bool)
+                or not isinstance(quantity, int)
+            ):
                 raise TypeError("produto_id e quantidade devem ser inteiros.")
             if quantity <= 0:
                 raise ValueError("A quantidade deve ser maior que zero.")
@@ -215,15 +240,16 @@ class OrderService:
             payment_method = dados.get("payment_method")
             items = dados.get("items")
             address_id = dados.get("delivery_address_id")
+            pickup_address_id = dados.get("pickup_address_id")
 
-            if not isinstance(restaurant_id, int):
+            if isinstance(restaurant_id, bool) or not isinstance(restaurant_id, int):
                 raise TypeError("restaurant_id é obrigatório e deve ser inteiro.")
 
             OrderService._validate_order_type(order_type)
             OrderService._validate_payment_method(payment_method)
 
             if order_type == "DELIVERY":
-                if not isinstance(address_id, int):
+                if isinstance(address_id, bool) or not isinstance(address_id, int):
                     raise TypeError(
                         "delivery_address_id é obrigatório para entrega no endereço."
                     )
@@ -234,7 +260,12 @@ class OrderService:
             else:
                 # A coluna legado delivery_address_id é obrigatória no banco. Para
                 # retirada, ela referencia o endereço ativo do próprio restaurante.
-                address_id = OrderService._resolve_pickup_address(restaurant_id).id
+                if pickup_address_id not in (None, ""):
+                    if isinstance(pickup_address_id, bool) or not isinstance(pickup_address_id, int):
+                        raise TypeError("pickup_address_id deve ser um inteiro válido.")
+                address_id = OrderService._resolve_pickup_address(
+                    restaurant_id, pickup_address_id
+                ).id
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
             # Ainda não existe motor server-side de promoções ou taxa da plataforma.
@@ -264,7 +295,7 @@ class OrderService:
                 platform_fee=platform_fee,
                 total=total,
                 order_type=order_type,
-                status="PENDENTE_PAGAMENTO",
+                status="PAGAMENTO_CONFIRMADO",
                 payment_method=payment_method,
                 general_note=dados.get("general_note"),
             )
@@ -311,8 +342,14 @@ class OrderService:
                     .all()
                 )
             elif account_type == "BUSINESS":
+                # Pedidos aguardando pagamento permanecem registrados para o
+                # cliente e para reconciliação, mas não entram na fila operacional
+                # do restaurante até o gateway confirmar a compra.
                 pedidos = (
-                    Pedido.query.filter_by(restaurant_id=account_id)
+                    Pedido.query.filter(
+                        Pedido.restaurant_id == account_id,
+                        Pedido.status != "PENDENTE_PAGAMENTO",
+                    )
                     .order_by(Pedido.created_at.desc())
                     .all()
                 )
@@ -361,8 +398,38 @@ class OrderService:
         }
 
     @staticmethod
+    def _pagamento_ja_confirmado(status):
+        return status in {
+            "PAGAMENTO_CONFIRMADO",
+            "RESTAURANTE_RECEBEU",
+            "RESTAURANTE_ACEITOU",
+            "PROCESSANDO",
+            "PRONTO_PARA_ENTREGA",
+            "ENTREGUE",
+            "FINALIZADO",
+        }
+
+    @staticmethod
+    def _resultado_confirmacao_repetida(pedido):
+        if OrderService._pagamento_ja_confirmado(pedido.status):
+            return {
+                "success": True,
+                "mensagem": (
+                    "Pagamento já confirmado; nenhuma baixa duplicada de estoque foi aplicada."
+                ),
+                "dados": OrderService._to_dict(pedido),
+            }
+        if pedido.status == "CANCELADO":
+            return {
+                "success": False,
+                "erro": "Não é possível confirmar pagamento de um pedido cancelado.",
+                "status_code": 409,
+            }
+        return None
+
+    @staticmethod
     def confirmar_pagamento(pedido_id):
-        pedido = Pedido.query.filter_by(id=pedido_id).first()
+        pedido = db.session.get(Pedido, pedido_id)
         if not pedido:
             return {
                 "success": False,
@@ -370,27 +437,100 @@ class OrderService:
                 "status_code": 404,
             }
 
+        if pedido.status != "PENDENTE_PAGAMENTO":
+            repeticao = OrderService._resultado_confirmacao_repetida(pedido)
+            if repeticao is not None:
+                return repeticao
+            return {
+                "success": False,
+                "erro": "O pedido não está pendente de pagamento.",
+                "status_code": 409,
+            }
+
         try:
             validar_transicao_pedido(pedido.status, "PAGAMENTO_CONFIRMADO")
 
-            itens = ItemPedido.query.filter_by(id_pedido=pedido.id).all()
-            produtos = []
-            for item in itens:
-                product = Produto.query.filter_by(id=item.id_produto).first()
-                if not product:
-                    raise ValueError(
-                        f"Produto {item.id_produto} não encontrado para o pedido."
-                    )
-                if product.current_stock < item.quantidade:
+            # A atualização condicional funciona como uma reivindicação atômica:
+            # somente uma chamada pode mover o pedido de PENDENTE para CONFIRMADO.
+            # Em concorrência, as demais chamadas veem rowcount=0 e não debitam estoque.
+            reivindicacao = db.session.execute(
+                update(Pedido)
+                .where(
+                    Pedido.id == pedido_id,
+                    Pedido.status == "PENDENTE_PAGAMENTO",
+                )
+                .values(status="PAGAMENTO_CONFIRMADO")
+                .execution_options(synchronize_session="fetch")
+            )
+            if reivindicacao.rowcount != 1:
+                db.session.rollback()
+                db.session.expire_all()
+                pedido_atual = db.session.get(Pedido, pedido_id)
+                if not pedido_atual:
                     return {
                         "success": False,
-                        "erro": f"Estoque insuficiente para o produto {product.id}.",
+                        "erro": "Pedido não encontrado.",
+                        "status_code": 404,
+                    }
+                repeticao = OrderService._resultado_confirmacao_repetida(pedido_atual)
+                if repeticao is not None:
+                    return repeticao
+                return {
+                    "success": False,
+                    "erro": "O pedido foi alterado por outra operação; tente novamente.",
+                    "status_code": 409,
+                }
+
+            itens = ItemPedido.query.filter_by(id_pedido=pedido_id).all()
+            if not itens:
+                db.session.rollback()
+                return {
+                    "success": False,
+                    "erro": "Não é possível confirmar pagamento de um pedido sem itens.",
+                    "status_code": 409,
+                }
+
+            # Agrupar linhas repetidas do mesmo produto evita validar/debitar
+            # quantidades separadamente e mantém a operação toda-or-nada.
+            quantidades = {}
+            for item in itens:
+                if item.quantidade <= 0:
+                    db.session.rollback()
+                    return {
+                        "success": False,
+                        "erro": f"Quantidade inválida no item do produto {item.id_produto}.",
                         "status_code": 409,
                     }
-                produtos.append((product, item.quantidade))
+                quantidades[item.id_produto] = (
+                    quantidades.get(item.id_produto, 0) + item.quantidade
+                )
 
-            for product, quantity in produtos:
-                product.current_stock -= quantity
+            for produto_id, quantidade in quantidades.items():
+                produto_existente = db.session.get(Produto, produto_id)
+                if not produto_existente:
+                    db.session.rollback()
+                    return {
+                        "success": False,
+                        "erro": f"Produto {produto_id} não encontrado para o pedido.",
+                        "status_code": 409,
+                    }
+
+                baixa = db.session.execute(
+                    update(Produto)
+                    .where(
+                        Produto.id == produto_id,
+                        Produto.current_stock >= quantidade,
+                    )
+                    .values(current_stock=Produto.current_stock - quantidade)
+                    .execution_options(synchronize_session=False)
+                )
+                if baixa.rowcount != 1:
+                    db.session.rollback()
+                    return {
+                        "success": False,
+                        "erro": f"Estoque insuficiente para o produto {produto_id}.",
+                        "status_code": 409,
+                    }
 
             pedido.status = "PAGAMENTO_CONFIRMADO"
             db.session.commit()
@@ -402,10 +542,8 @@ class OrderService:
         except OrderTransitionError as exc:
             db.session.rollback()
             return {"success": False, "erro": str(exc), "status_code": 409}
-        except (ValueError, SQLAlchemyError) as exc:
+        except SQLAlchemyError:
             db.session.rollback()
-            if isinstance(exc, ValueError):
-                return {"success": False, "erro": str(exc), "status_code": 400}
             return {
                 "success": False,
                 "erro": "Falha ao confirmar pagamento.",
@@ -414,7 +552,7 @@ class OrderService:
 
     @staticmethod
     def atualizar_status(pedido_id, novo_status, account_id, account_type):
-        pedido = Pedido.query.filter_by(id=pedido_id).first()
+        pedido = db.session.get(Pedido, pedido_id)
         if not pedido:
             return {
                 "success": False,
@@ -446,25 +584,45 @@ class OrderService:
                 "status_code": 403,
             }
 
+        if novo_status == "CANCELADO":
+            return OrderService._cancelar_pedido_transacional(
+                pedido, mensagem_sucesso="Status atualizado com sucesso."
+            )
+
         try:
             validar_transicao_pedido(pedido.status, novo_status)
+            # Evita sobrescrever uma mudança simultânea de estado. Este UPDATE não
+            # modifica estoque; os cancelamentos usam a transação dedicada abaixo.
+            atualizacao = db.session.execute(
+                update(Pedido)
+                .where(Pedido.id == pedido_id, Pedido.status == pedido.status)
+                .values(status=novo_status)
+                .execution_options(synchronize_session="fetch")
+            )
+            if atualizacao.rowcount != 1:
+                db.session.rollback()
+                return {
+                    "success": False,
+                    "erro": "O pedido foi alterado por outra operação; tente novamente.",
+                    "status_code": 409,
+                }
+            pedido.status = novo_status
+            db.session.commit()
+            return {
+                "success": True,
+                "mensagem": "Status atualizado com sucesso.",
+                "dados": OrderService._to_dict(pedido),
+            }
         except OrderTransitionError as exc:
+            db.session.rollback()
             return {"success": False, "erro": str(exc), "status_code": 409}
-
-        if novo_status == "CANCELADO" and pedido.status != "PENDENTE_PAGAMENTO":
-            for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
-                product = Produto.query.filter_by(id=item.id_produto).first()
-                if product:
-                    product.current_stock += item.quantidade
-            OrderService._cancelar_entrega(pedido.id)
-
-        pedido.status = novo_status
-        db.session.commit()
-        return {
-            "success": True,
-            "mensagem": "Status atualizado com sucesso.",
-            "dados": OrderService._to_dict(pedido),
-        }
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao atualizar o status do pedido.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def cancelar_pedido(pedido_id, user_id):
@@ -476,21 +634,83 @@ class OrderService:
                 "status_code": 404,
             }
 
+        return OrderService._cancelar_pedido_transacional(pedido)
+
+    @staticmethod
+    def _cancelar_pedido_transacional(
+        pedido, mensagem_sucesso="Pedido cancelado com sucesso."
+    ):
+        status_anterior = pedido.status
         try:
-            validar_transicao_pedido(pedido.status, "CANCELADO")
+            validar_transicao_pedido(status_anterior, "CANCELADO")
         except OrderTransitionError as exc:
             return {"success": False, "erro": str(exc), "status_code": 409}
 
-        if pedido.status != "PENDENTE_PAGAMENTO":
-            for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
-                product = Produto.query.filter_by(id=item.id_produto).first()
-                if product:
-                    product.current_stock += item.quantidade
-            OrderService._cancelar_entrega(pedido.id)
+        try:
+            # Só uma requisição pode reivindicar a transição observada. A mudança
+            # de estado, a reposição de estoque e o cancelamento logístico fazem
+            # commit juntos; se qualquer parte falhar, tudo sofre rollback.
+            cancelamento = db.session.execute(
+                update(Pedido)
+                .where(
+                    Pedido.id == pedido.id,
+                    Pedido.status == status_anterior,
+                )
+                .values(status="CANCELADO")
+                .execution_options(synchronize_session="fetch")
+            )
+            if cancelamento.rowcount != 1:
+                db.session.rollback()
+                return {
+                    "success": False,
+                    "erro": "O pedido foi alterado por outra operação; atualize e tente novamente.",
+                    "status_code": 409,
+                }
 
-        pedido.status = "CANCELADO"
-        db.session.commit()
-        return {"success": True, "mensagem": "Pedido cancelado com sucesso."}
+            if status_anterior != "PENDENTE_PAGAMENTO":
+                quantidades = {}
+                for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all():
+                    if item.quantidade <= 0:
+                        db.session.rollback()
+                        return {
+                            "success": False,
+                            "erro": f"Quantidade inválida no item do produto {item.id_produto}.",
+                            "status_code": 409,
+                        }
+                    quantidades[item.id_produto] = (
+                        quantidades.get(item.id_produto, 0) + item.quantidade
+                    )
+
+                for produto_id, quantidade in quantidades.items():
+                    reposicao = db.session.execute(
+                        update(Produto)
+                        .where(Produto.id == produto_id)
+                        .values(current_stock=Produto.current_stock + quantidade)
+                        .execution_options(synchronize_session=False)
+                    )
+                    if reposicao.rowcount != 1:
+                        db.session.rollback()
+                        return {
+                            "success": False,
+                            "erro": f"Não foi possível restaurar o estoque do produto {produto_id}.",
+                            "status_code": 409,
+                        }
+
+            OrderService._cancelar_entrega(pedido.id)
+            pedido.status = "CANCELADO"
+            db.session.commit()
+            return {
+                "success": True,
+                "mensagem": mensagem_sucesso,
+                "dados": OrderService._to_dict(pedido),
+            }
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao cancelar o pedido e atualizar o estoque.",
+                "status_code": 500,
+            }
 
     @staticmethod
     def _cancelar_entrega(pedido_id):
@@ -578,11 +798,51 @@ class OrderService:
 
     @staticmethod
     def _to_dict(pedido):
+        def serializar_localizacao(endereco):
+            if not endereco:
+                return None
+            partes = [endereco.rua, endereco.numero, endereco.bairro, endereco.cidade, endereco.estado, endereco.cep]
+            return {
+                "latitude": float(endereco.latitude) if endereco.latitude is not None else None,
+                "longitude": float(endereco.longitude) if endereco.longitude is not None else None,
+                "endereco": ", ".join(str(parte).strip() for parte in partes if parte and str(parte).strip()),
+            }
+
+        endereco_entrega = None
+        endereco_retirada = None
+        if pedido.order_type == "DELIVERY":
+            endereco_entrega = db.session.get(Endereco, pedido.delivery_address_id)
+        elif pedido.order_type == "PICKUP":
+            endereco_retirada = db.session.get(Endereco, pedido.delivery_address_id)
+        restaurante = db.session.get(Restaurante, pedido.restaurant_id)
+        endereco_restaurante = None
+        if restaurante:
+            if restaurante.address_id:
+                endereco_restaurante = db.session.get(Endereco, restaurante.address_id)
+            if not endereco_restaurante:
+                endereco_restaurante = Endereco.query.filter_by(id_restaurante=restaurante.id, ativo=True).first()
+
+        def serializar_item(item):
+            produto = db.session.get(Produto, item.id_produto)
+            return {
+                "id": item.id,
+                "produto_id": item.id_produto,
+                "nome_produto": produto.name if produto else f"Produto #{item.id_produto}",
+                "quantidade": item.quantidade,
+                "preco_unitario": float(item.preco_unitario),
+                "observacoes": item.observacoes,
+                "detalhes_personalizacao": item.detalhes_personalizacao,
+            }
+
         return {
+            "delivery_location": serializar_localizacao(endereco_entrega),
+            "pickup_location": serializar_localizacao(endereco_retirada),
+            "restaurant_location": serializar_localizacao(endereco_restaurante),
             "id": pedido.id,
             "order_code": pedido.order_code,
             "user_id": pedido.user_id,
             "restaurant_id": pedido.restaurant_id,
+            "restaurant_name": restaurante.nome if restaurante else f"Doceria #{pedido.restaurant_id}",
             "delivery_address_id": (
                 pedido.delivery_address_id if pedido.order_type == "DELIVERY" else None
             ),
@@ -628,14 +888,7 @@ class OrderService:
                 else None
             ),
             "items": [
-                {
-                    "id": item.id,
-                    "produto_id": item.id_produto,
-                    "quantidade": item.quantidade,
-                    "preco_unitario": float(item.preco_unitario),
-                    "observacoes": item.observacoes,
-                    "detalhes_personalizacao": item.detalhes_personalizacao,
-                }
+                serializar_item(item)
                 for item in ItemPedido.query.filter_by(id_pedido=pedido.id).all()
             ],
         }

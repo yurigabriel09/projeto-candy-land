@@ -1,6 +1,6 @@
 ﻿# CandyLand — guia do projeto e estado real
 
-> **Atualizado em 11/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
+> **Atualizado em 25/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
 
 ## 1. Git: atualizar a máquina local, criar branches, comitar e entregar
 
@@ -121,7 +121,7 @@ O fluxo é sempre **`main` (entregas de sprint) ← `dev` (integração) ← `fe
 
 ## 2. Veredito executivo
 
-**Estado atual: MVP parcial, ainda não pronto para produção.** A base web, autenticação por código/OAuth, gestão de restaurante/produto, carrinho local e motor básico de estados de pedido existem. O fluxo de compra ainda não fecha de ponta a ponta, e há riscos de autorização na API que devem ser tratados antes de expandir o checkout.
+**Estado atual: MVP parcial, ainda não pronto para produção.** A base web, autenticação por código/OAuth, gestão de restaurante/produto, carrinho local e máquina de estados de pedido existem. O Checkout Pro do Mercado Pago foi adicionado ao pacote local de correções, mas exige credenciais de teste, confirmação do webhook/retorno e validação manual antes de ser considerado concluído.
 
 ### O que já temos
 
@@ -136,20 +136,18 @@ O fluxo é sempre **`main` (entregas de sprint) ← `dev` (integração) ← `fe
 
 ### O que impede considerar o MVP concluído
 
-1. **Segurança da API (prioridade imediata):** rotas de usuários e mutações de restaurante estão públicas no código atual; revisar leitura de dados pessoais, autenticação e autorização por papel/registro.
-2. **Checkout não fecha:** o botão `Finalizar pedido` está desabilitado e não há tela de pagamento integrada.
-3. **Confirmação do pagamento não tem rota pública/autenticada de integração:** `OrderService.confirmar_pagamento()` existe como método interno, mas não há endpoint/webhook para acioná-lo com segurança.
-4. **Histórico logístico ainda incompleto:** a rota autenticada `PUT /pedidos/<id>/entrega/status` está implementada nesta entrega; ainda falta uma tabela de histórico auditável e um perfil próprio de entregador. O estado `ENTREGA_CONCLUIDA` agora sincroniza o pedido para `ENTREGUE` na mesma transação.
-5. **Taxa de entrega:** a API calcula a taxa no servidor por Haversine, valida o raio configurado e ignora `delivery_fee` enviado pelo cliente. A distância cobrada fica registrada no pedido; a distância é em linha reta, não rota por ruas.
-6. **Catálogo inconsistente:** o botão `Adicionar` em `Itens.jsx` não chama `adicionarItem`; a inclusão funciona somente na tela do restaurante.
-7. **Testes e ferramentas:** a última validação local registrada para a frente de taxa por distância passou com 31 testes de regras de negócio em quatro arquivos (`python -m pytest tests/business_rules -q`). A suíte cobre regras, persistência, autorização de endpoint e taxa por distância, mas ainda não é end-to-end. A limpeza técnica substitui defaults `datetime.utcnow()` depreciados e encerra engines SQLite em memória sem `drop_all()` em fixtures com FKs cíclicas. Rode novamente os testes depois de aplicar essa limpeza.
-8. **Operação/documentação pendente:** faltam documentação de endpoints, diagrama de arquitetura, Docker, notificação de pedidos, emissão fiscal e integrações reais de pagamento.
+1. **Checkout e pagamento — validar no ambiente local:** o carrinho registra o pedido e solicita uma preferência do Mercado Pago Checkout Pro. É necessário configurar `MERCADO_PAGO_ACCESS_TOKEN` no backend, testar retorno e webhook assinado, e validar os fluxos de entrega/retirada.
+2. **Pagamento em homologação:** o adaptador Mercado Pago cria preferências e reconcilia pagamentos pela API/webhook. Não considerar a integração pronta sem credenciais do ambiente de teste e testes ponta a ponta. O adaptador PayPal continua fora do projeto.
+3. **Estoque pendente de fluxo transacional:** o pedido valida estoque na criação e baixa ao confirmar pagamento, mas confirmação via gateway, reentrância/idempotência e cancelamento/reembolso precisam de validação ponta a ponta.
+4. **Histórico logístico ainda incompleto:** a rota autenticada `PUT /pedidos/<id>/entrega/status` está implementada; falta tabela de histórico auditável e perfil próprio de entregador. `ENTREGA_CONCLUIDA` sincroniza o pedido para `ENTREGUE`.
+5. **Taxa de entrega:** a API calcula a taxa no servidor por Haversine, valida o raio e ignora `delivery_fee` enviado pelo cliente. A distância registrada é em linha reta, não rota por ruas.
+6. **Catálogo inconsistente:** o botão `Adicionar` em `Itens.jsx` ainda não chama `adicionarItem`; a inclusão funciona na tela do restaurante.
+7. **Teste integrado pendente:** há testes unitários e de autorização, mas a nova integração de checkout precisa de suíte completa e teste de fumaça com API/frontend iniciados juntos.
+8. **Outras integrações pendentes:** validar Docker e credenciais em ambiente de homologação; PUSH, emissão fiscal, mapa/rotas e adaptação PayPal continuam fora do escopo do Checkout Pro implementado.
 
 ### Frente recomendada para atacar primeiro
 
-**Frente 0 — segurança e testes da API.** Antes de habilitar pagamento, proteger endpoints de escrita/leitura sensível, manter apenas catálogo público explicitamente definido, testar papéis `PERSONAL` e `BUSINESS` e impedir que um cliente altere recursos de outra conta. É um bloqueio de segurança, não uma melhoria opcional.
-
-Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedido → estado `PENDENTE_PAGAMENTO` → fluxo de pagamento em sandbox/mock isolado → confirmar por endpoint autenticado/evento confiável → baixar estoque uma única vez → cancelar/repor corretamente). Paralelamente, corrigir o botão da listagem de produtos e implementar a taxa de entrega no backend.
+**Frente 1 — validar Checkout Pro em ambiente de teste.** O carrinho cria o pedido e solicita uma preferência ao Mercado Pago usando o total calculado no servidor. Complete `backend/.env`, configure o raio/coordenadas do restaurante e do cliente, valide retorno e webhook, e só então confirme o comportamento ponta a ponta. Não use credenciais de produção durante o desenvolvimento.
 
 ## 3. Tecnologias, ferramentas e integrações identificadas
 
@@ -166,7 +164,7 @@ Depois: **Frente 1 — fechar pedido sem gateway real** (carrinho → criar pedi
 | Testes | pytest 8.4.2 | 31 testes de regras de negócio em quatro arquivos passaram na validação local da frente de taxa; ainda faltam testes mais amplos de segurança, checkout e ponta a ponta. |
 | Ferramentas de desenvolvimento | Git, GitHub CLI (`gh`), PowerShell (`scripts/`), VS Code | `gh` é ferramenta externa do sistema, instalada via WinGet; não entra em `backend/requirements.txt`. As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
 | Extensões VS Code recomendadas | Python, Pylance, ESLint, Prettier e PowerShell | São recomendações de workspace, não uma afirmação de que todos já estejam instalados nos computadores da equipe. |
-| Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, gateway Mercado Pago/PayPal, push, NFe/SEFAZ, AWS | As integrações não devem ser descritas como concluídas só porque existe uma chave de configuração ou um modelo de dados. |
+| Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, PayPal, push, NFe/SEFAZ, AWS; homologação real do Mercado Pago | A existência do adaptador não comprova credenciais, webhook e transações de teste funcionando. |
 
 > **Manutenção desta seção:** ao adicionar, remover ou atualizar dependências, ajustar esta tabela e os arquivos de dependência (`backend/requirements.txt`, `frontend/package.json` e `frontend/package-lock.json`) no mesmo PR. Não colocar chaves reais no README nem no Git.
 
@@ -296,17 +294,17 @@ O código de autenticação OAuth depende de configuração válida nos painéis
 | 17 | Carrinho | Inclusão de produto no carrinho | P4 | 70% | CartContext guarda itens e a tela do restaurante chama adicionarItem. | A tela geral de itens não aciona a ação; não há validação de estoque no carrinho. Próxima ação: Conectar botão da listagem e revalidar preço/estoque no backend. |
 | 18 | Carrinho | Exclusão de produto do carrinho | P4 | 95% | Há função removerItem, botão de remoção e persistência em localStorage. | Falta cobertura automatizada de interface e reconciliação com checkout. Próxima ação: Adicionar testes de UI e limpar corretamente ao concluir/cancelar compra. |
 | 19 | Carrinho | Alteração de quantidade | P4 | 95% | Os botões +/- alteram quantidade e quantidade zero remove o item. | Falta teste de UI e validação posterior no estoque do servidor. Próxima ação: Cobrir limites e validar novamente no endpoint de pedido. |
-| 20 | Checkout | Escolha da forma de pagamento | P5 | 25% | A API aceita PIX e CARTAO_CREDITO ao criar pedido. | Não existe tela de checkout funcional; o botão Finalizar pedido está desabilitado. Próxima ação: Criar tela de checkout e persistir a opção escolhida após validação do pedido. |
-| 21 | Checkout | Integração de pagamento com cartão | P5 | 5% | Existe modelo customer_cards para referência tokenizada; não há gateway conectado. | Não há integração Mercado Pago/PayPal nem webhook de confirmação. Próxima ação: Escolher provedor, implementar criação de pagamento, webhook idempotente e testes sandbox. |
-| 22 | Checkout | Seleção do tipo de entrega | P5 | 75% | Carrinho permite escolher `DELIVERY` ou `PICKUP`, salva a opção e o backend valida o tipo; retirada usa o endereço ativo do restaurante e não gera taxa/registro logístico. | A finalização segue desabilitada e ainda não envia essa opção à API. Próxima ação: integrar seleção ao checkout quando a tarefa de finalização for iniciada. |
+| 20 | Checkout | Escolha da forma de pagamento | P5 | 80% estimado | O carrinho oferece PIX ou cartão pelo Checkout Pro e cria a preferência no backend depois de persistir o pedido. | Validar as duas opções com credenciais de teste e conferir se o Mercado Pago aplica os tipos de pagamento permitidos. |
+| 21 | Checkout | Integração de pagamento com cartão | P5 | 50% estimado | Adaptador Mercado Pago Checkout Pro cria preferência e permite checkout hospedado por cartão; estado é consultado no backend e pode ser atualizado por webhook assinado. | Falta homologação ponta a ponta no Sandbox, validar notificações e tratar reembolso/cancelamento financeiro. Não coletar cartão diretamente no CandyLand. |
+| 22 | Checkout | Seleção do tipo de entrega | P5 | 85% estimado | Carrinho permite escolher `DELIVERY` ou `PICKUP`; há UI para salvar coordenadas do endereço do cliente e configuração do raio/taxa no restaurante. | Validar entrega/retirada localmente; a conta do restaurante precisa ter endereço comercial, coordenadas e raio válidos. Haversine é linha reta, não rota viária. |
 | 23 | Checkout | Notificação push de novo pedido | P5 | 0% | Não há fluxo push identificado. | Sem provedor, registro de token de dispositivo ou evento de pedido novo. Próxima ação: Definir estratégia de notificação e implementar após o ciclo de pedido estável. |
 | 24 | Checkout | Envio de nota fiscal PDF por e-mail | P5 | 0% | Não foi encontrada emissão fiscal ou geração de PDF de nota. | Integração fiscal e documento não existem. Próxima ação: Definir requisito fiscal e integração aprovada antes de implementar. |
-| 25 | Pedidos | CRUD, validações, testes, estoque e persistência | P5 | 65% | Serviço cria/lista/consulta/cancela pedidos, valida transições e expõe atualização de estado principal e logístico. | Não existe endpoint de confirmação de pagamento, update/delete genérico, histórico de estados nem testes suficientes de estoque/duplicidade. Próxima ação: proteger confirmação de pagamento e ampliar testes transacionais. |
+| 25 | Pedidos | CRUD, validações, testes, estoque e persistência | P5 | 80% estimado | Criação/listagem/detalhe/cancelamento e máquinas de estado existem; o adaptador de pagamento chama a confirmação interna e baixa estoque de forma transacional após aprovação. O painel agora lista pedidos e permite transições de restaurante implementadas. | Ainda falta validar a jornada completa com o Sandbox, histórico auditável, eventos push e tratamento financeiro de estorno. |
 | 26 | Entrega | Push a cada mudança de status | P6 | 0% | Não há integração push ligada à máquina de estados. | Nenhum evento de notificação para transições. Próxima ação: Criar eventos de domínio e provedor após persistência confiável dos estados. |
 | 27 | Entrega | Alteração/persistência do status do pedido e entrega | P6 | 80% | Há máquina de estados, rota autenticada para `PUT /pedidos/<id>/entrega/status`, autorização para o restaurante dono do pedido e sincronização transacional de `ENTREGA_CONCLUIDA` para `ENTREGUE`. | Histórico de transições e papel de entregador ainda não existem; falta teste ponta a ponta e política para atualização por motorista. Próxima ação: decidir tabela de auditoria e perfil de ator. |
 | 28 | Entrega | Tela de acompanhamento da entrega | P6 | 0% | Não há tela de acompanhamento identificada em App.jsx. | Falta UX de timeline/estado e atualização em tempo real ou polling. Próxima ação: Criar tela após endpoint de entrega e contrato de status estáveis. |
 | 29 | Entrega | Código de validação do entregador | P6 | 0% | Não há modelo, endpoint ou interface de código de retirada/entrega. | Faltam geração segura, expiração e validação única. Próxima ação: Definir regra do código e registrar tentativa/consumo. |
-| 30 | Restaurante | Painel do restaurante | P5 | 40% | Existe home de parceiros e telas de cardápio, produto, categoria e configuração. | Não há tela/fluxo operacional completo para receber e atualizar pedidos. Próxima ação: Priorizar painel de pedidos após proteger rotas de escrita. |
+| 30 | Restaurante | Painel do restaurante | P5 | 60% estimado | Home, cardápio e configuração existem; navegação de Pedidos e Financeiro está ligada às APIs existentes. Avaliações abre uma página explicando que o módulo real ainda não foi implementado. | Testar as telas e validar pedidos pagos em ambiente integrado; notificações PUSH e avaliações persistidas continuam pendentes. |
 | 31 | Infraestrutura | AWS (IA/Lambda/banco) | P7 | 0% | Não foram encontrados manifests ou código de deploy AWS. | Sem arquitetura cloud, pipeline, secrets management ou ambiente de homologação. Próxima ação: Definir requisitos não funcionais e infraestrutura somente após estabilizar MVP. |
 | 32 | Fiscal | NFe / SEFAZ | P7 | 0% | Nenhuma integração SEFAZ/emissão NFe identificada. | Falta levantamento fiscal e provedor homologado. Próxima ação: Levantar obrigações fiscais e escolher solução autorizada. |
 | 33 | Relatórios | Esboço de três relatórios | P7 | 0% | Não foram localizados protótipos de relatórios no repositório. | Faltam perguntas de negócio, público e métricas. Próxima ação: Definir relatórios com stakeholders e critérios de aceite. |
@@ -314,15 +312,15 @@ O código de autenticação OAuth depende de configuração válida nos painéis
 | 35 | Comunicação | SMS/WhatsApp/e-mail automáticos | P7 | 25% | Serviços Brevo e Twilio/WhatsApp existem para código de autenticação. | Notificações de pedido/entrega e tratamento de falha não estão conectados ao ciclo do pedido. Próxima ação: Generalizar eventos/notificações com retries, logs e templates. |
 | 36 | Integrações | Integração automática com redes sociais | P7 | 0% | Não foi encontrada integração operacional de publicação. | Escopo, plataformas e permissões não definidos. Próxima ação: Definir objetivo e APIs antes de priorizar. |
 | 37 | Mapas | Cálculo de caminho mínimo Google Maps | P7 | 5% | Há campos latitude/longitude e configuração de chave de Maps no exemplo. | Não existe chamada de Routes/Distance Matrix nem cálculo de rota no código. Próxima ação: Implementar cálculo server-side com tratamento de limites e testes. |
-| 38 | Pagamento | Cartões / Mercado Pago | P5 | 10% | Há modalidade de cartão e modelo de cartão tokenizado planejado. | Não há SDK, criação de cobrança, webhook nem vínculo pagamento-pedido. Próxima ação: Escolher Mercado Pago ou PayPal; evitar dados brutos de cartão no CandyLand. |
+| 38 | Pagamento | Cartões / Mercado Pago | P5 | 50% estimado | Preferência do Checkout Pro e consulta de pagamento são implementadas no adaptador Mercado Pago; o checkout de cartão ocorre no ambiente hospedado do gateway. | Necessário configurar Access Token de teste, concluir testes e configurar Webhook HTTPS; PayPal não será usado nesta integração. |
 | 39 | Mobile | Aplicativo mobile | P7 | 0% | O projeto atual contém frontend React web, não app mobile. | Sem projeto Android/iOS ou estratégia PWA declarada. Próxima ação: Reavaliar após validar uso e fluxo web MVP. |
 | 40 | Operação | Leitor de código de barras | P7 | 0% | Não há leitor/fluxo de barcode identificado. | Hardware, UX e caso de uso não definidos. Próxima ação: Definir se é para estoque ou venda e especificar equipamento/API. |
 | 41 | Operação | Painel/dispositivo de chamada para retirada | P7 | 0% | Não há fluxo de pedido para retirada nem painel de chamada. | Depende da decisão de entrega/retirada e de um estado de pronto. Próxima ação: Definir fluxo RETIRADA antes do painel. |
-| 42 | Pagamento | Pagamento via Pix | P5 | 5% | PIX é aceito como valor de payment_method no backend. | Sem geração de QR Code Pix, cobrança, confirmação ou conciliação. Próxima ação: Implementar Pix por gateway e webhook idempotente no fluxo de checkout. |
+| 42 | Pagamento | Pagamento via Pix | P5 | 50% estimado | O pedido pode iniciar Checkout Pro com PIX selecionado e o backend verifica o estado de pagamento no Mercado Pago. | Validar teste de PIX, retorno, webhook e estados pendente/aprovado/recusado com uma conta compradora de teste. |
 | 43 | Operação | Leitor de QR Code | P7 | 0% | Não há leitura de QR Code em frontend ou backend. | Uso e validação do conteúdo não definidos. Próxima ação: Definir caso de uso e regra de segurança. |
-| 44 | Estoque | Estoque, baixa após pagamento e reposição em cancelamento | P5 | 60% | Produto mantém current_stock; pedido valida quantidade; confirmar_pagamento debita e cancelamento após pagamento repõe. | Confirmação não está exposta por rota, teste de estoque é insuficiente e concorrência não foi validada. Próxima ação: Adicionar endpoint autenticado/webhook, transação e testes de duplicidade/concor­rência. |
+| 44 | Estoque | Estoque, baixa após pagamento e reposição em cancelamento | P5 | 80% estimado | Produto mantém `current_stock`; a confirmação do pedido já debita estoque e o cancelamento repõe com a rotina transacional/idempotente. O webhook de pagamento consulta a API antes da confirmação. | Validar concorrência e os caminhos reais no Sandbox; reembolso externo exige reconciliação manual de pedido/estoque nesta versão. |
 | 45 | Catálogo | Sugestão de produtos | P7 | 0% | Não foi encontrado recomendador nem regra de produtos relacionados. | Sem critérios (popularidade, categoria ou histórico) e sem interface. Próxima ação: Começar por recomendações simples por categoria quando houver dados. |
-| 46 | Entrega | Taxa de entrega por distância | P5 | 75% | Taxa calculada no backend: taxa base + distância Haversine × taxa por km, dentro do raio do restaurante. | Falta validar UX ponta a ponta e disponibilizar edição de coordenadas para endereços antigos (gerenciamento de endereços está atribuído a outro integrante); Haversine mede linha reta, não rota viária. |
+| 46 | Entrega | Taxa de entrega por distância | P5 | 85% estimado | Taxa calculada no backend por Haversine, dentro do raio do restaurante; tela de configuração do restaurante já permite definir raio/taxas e o carrinho agora permite salvar coordenadas do cliente. | Testar endereços reais no ambiente local; continua sem cálculo de rota viária pelo Google Maps. |
 
 ## 7. Planejamento por responsável — Sprint 3 (23/09 a 19/10/2026)
 
@@ -350,7 +348,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 | Sprint 3 (23/09–19/10) | Pedidos | CRUD - Backend (Código Python) | `—` | `backend/app/routes/order_routes.py; backend/app/services/order_service.py` | Theofilo Fernandes de Mesquita | Concluído (informado) | 70%; create/list/detail/status/cancel e endpoint de status logístico existem; confirmação de pagamento segue sem rota. | 2026-10-07 |
 | Sprint 3 (23/09–19/10) | Pedidos | Regras de fluxo, cancelamento e estoque (Código Python) | `feature/orders-crud` | `backend/app/services/order_workflow_service.py; backend/app/services/order_service.py` | Theofilo Fernandes de Mesquita | Concluído (informado) | 70%; transições e serviços de estoque existem; confirmação por provedor e testes de estoque/duplicidade ainda faltam. | 2026-10-07 |
 | Sprint 3 (23/09–19/10) | Cadastro Usuário | Tela de Dados - Informações Pessoais - Frontend (Código React) | `—` | `frontend/src/pages/PersonalRegister.jsx` | Maria Eduarda Gomes Romera | Em andamento (50% informado) | 70% estimado pelo código; consolidada aqui para eliminar a linha duplicada conflitante na planilha. | 2026-10-07 |
-| Sprint 3 (23/09–19/10) | Pedidos | Implementação da seleção do tipo de entrega (Código Python/React) | `feature/tipo-entrega-pedido` (integrada em `dev`) | `Cart.jsx; CartContext.jsx; order_service.py; test_order_type.py` | Theofilo Fernandes de Mesquita | Integrada em `dev`; checkout pendente | 75%; seleção persistida no carrinho e suporte `DELIVERY`/`PICKUP` na API. Falta integrar ao checkout, que permanece desabilitado. | 2026-10-19 |
+| Sprint 3 (23/09–19/10) | Pedidos | Implementação da seleção do tipo de entrega (Código Python/React) | `feature/tipo-entrega-pedido` (integrada em `dev`) | `Cart.jsx; CartContext.jsx; order_service.py; test_order_type.py` | Theofilo Fernandes de Mesquita | Base integrada; integração checkout na branch `feature/checkout-mvp` | 75%; `DELIVERY`/`PICKUP` já existiam no backend/carrinho; patch liga a escolha ao `POST /pedidos`. Requer testes locais e PR. | 2026-10-25 |
 | Sprint 3 (23/09–19/10) | Pedidos | Integração e persistência dos estados do pedido e entrega (Código Python) | `feature/persistencia-status-entrega` (integrada em `dev`) | `order_routes.py; order_controller.py; order_service.py; test_order_delivery_persistence.py` | Theofilo Fernandes de Mesquita | Integrada em `dev` | 80%; endpoint autenticado com autorização por restaurante, persistência e sincronização do estado final. Falta histórico auditável, papel de entregador e validação ponta a ponta. | 2026-10-19 |
 | Sprint 3 (23/09–19/10) | Pedidos | Implementação do cálculo da taxa de entrega por distância (Python/React/SQLAlchemy) | `feature/taxa-entrega-distancia` (esta branch) | `order_service.py; restaurant_service.py; AddressCoordinates.jsx; test_delivery_fee.py; migrations.py` | Theofilo Fernandes de Mesquita | Implementado nesta branch; aguarda testes e PR | 75%; taxa calculada no servidor, coordenadas e configuração adicionadas, migração aditiva e testes; checkout completo e UX com endereços reais continuam pendentes. | 2026-10-19 |
 | Sprint 3 (23/09–19/10) | Produto | Inserir fluxo de adicionar foto para o produto cadastrado (Código Python/React) | `—` | `Produto.image_url; ProductForm.jsx` | Yuri Gabriel Conceição Gonçalves | Não iniciado | 30%; campo URL existe, não há upload/armazenamento de arquivo. | 2026-10-19 |
@@ -374,7 +372,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 
 ## 9. Decisões pendentes do grupo
 
-1. **Gateway de pagamento:** o plano cita PayPal, enquanto o escopo cita Mercado Pago. Escolher uma integração inicial; Pix/cartão são modalidades, gateways são provedores.
+1. **Gateway de pagamento:** decisão tomada neste pacote: Mercado Pago Checkout Pro. PayPal não será implementado neste fluxo; Pix e cartão são modalidades selecionadas dentro do checkout hospedado.
 2. **Entrega vs. retirada:** este branch implementa `DELIVERY` e `PICKUP` como proposta para o MVP, com taxa zero e sem fluxo logístico para retirada. A equipe deve ratificar a regra antes do merge; o painel de chamada continua fora desta tarefa.
 3. **Taxa de entrega:** regra definida: taxa base + (distância Haversine em linha reta × taxa por km), arredondada a centavos. O backend valida o raio e não aceita taxa enviada pelo cliente. Cliente e restaurante precisam cadastrar coordenadas válidas; o cálculo por rota viária continua fora do escopo desta regra.
 4. **Histórico/auditoria do pedido:** definir se será tabela própria de eventos e quais atores podem executar cada transição.
@@ -384,6 +382,8 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 
 - `docs/requisitos.md` — regras globais e decisões de negócio.
 - `docs/regras-pedidos.md` — estados e transições de pedido/entrega, cancelamento e pagamento.
+- `docs/teste-fumaca-mvp.md` — escopo automatizado e roteiro manual de validação do fluxo integrado do MVP.
+- `docs/oauth-local-e-producao.md` — configuração segura do Google/Facebook e roteiro para validar login real local/homologação.
 - `docs/modelo-dados.md` — modelo físico atual, lacunas e instruções de atualização.
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
@@ -393,8 +393,10 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `limpar_e_gerar_zip.cmd` e `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.
 
 
-### Compartilhar celular entre conta pessoal e restaurante (desenvolvimento)
+### Compartilhar celular entre conta pessoal e restaurante (somente desenvolvimento/testes)
 
-No `backend/.env`, configure `ALLOW_DUPLICATE_PHONE=true` e reinicie completamente o backend. Com essa opção ativa, o celular pode ser usado por uma conta `PERSONAL` e uma conta `BUSINESS`; o e-mail verificado identifica qual conta está sendo acessada. Para criar uma nova conta pessoal, use um e-mail diferente do e-mail cadastrado no restaurante. Se o e-mail informado já pertence ao restaurante, o login continuará identificando a conta como `BUSINESS`, pois o e-mail é o identificador da conta neste modo.
+No `backend/.env`, use `APP_ENV=development` e `ALLOW_DUPLICATE_PHONE=true`; depois reinicie o backend. Assim, uma conta `PERSONAL` e uma conta `BUSINESS` podem compartilhar o mesmo celular. O e-mail verificado continua único globalmente e é o que define a conta autenticada.
 
-Valores aceitos como verdadeiros: `true`, `1`, `yes` e `on`. Desative essa opção em produção.
+**Produção:** configure `APP_ENV=production`. Nesse ambiente o backend bloqueia a duplicidade mesmo que `ALLOW_DUPLICATE_PHONE=true` tenha sido definido por engano. Se `APP_ENV` não estiver configurado, o backend assume `production` por segurança. Valores aceitos para a flag booleana: `true`, `1`, `yes` e `on`.
+
+A regra é aplicada ao cadastro por e-mail/WhatsApp, ao cadastro via OAuth e à alteração do telefone de um usuário. A validação do e-mail é global entre clientes e restaurantes.

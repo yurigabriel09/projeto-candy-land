@@ -1,5 +1,5 @@
 from app.controllers.restaurant_controller import RestaurantController
-from app.utils.auth_decorator import token_required
+from app.utils.auth_decorator import account_owner_required, token_required
 from flask import Blueprint, g, request
 
 restaurante_bp = Blueprint("restaurant", __name__, url_prefix="/restaurantes")
@@ -15,6 +15,11 @@ def buscar_restaurante(restaurante_id):
     return RestaurantController.buscar_restaurante(restaurante_id)
 
 
+@restaurante_bp.route("/<int:restaurante_id>/enderecos/retirada", methods=["GET"])
+def listar_enderecos_retirada(restaurante_id):
+    return RestaurantController.listar_enderecos_retirada(restaurante_id)
+
+
 @restaurante_bp.route("", methods=["POST"])
 def criar_restaurante():
     dados = request.get_json() or {}
@@ -22,6 +27,8 @@ def criar_restaurante():
 
 
 @restaurante_bp.route("/<int:restaurante_id>", methods=["PUT"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
 def atualizar_restaurante(restaurante_id):
     dados = request.get_json() or {}
     return RestaurantController.atualizar_restaurante(restaurante_id, dados)
@@ -54,7 +61,18 @@ def atualizar_configuracao(restaurante_id):
     return RestaurantController.atualizar_configuracao(restaurante_id, dados)
 
 
+@restaurante_bp.route("/<int:restaurante_id>/status", methods=["PATCH"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
+def atualizar_status_operacional(restaurante_id):
+    """Permite ao titular abrir/fechar apenas uma loja já liberada."""
+    dados = request.get_json(silent=True) or {}
+    return RestaurantController.atualizar_status_operacional(restaurante_id, dados)
+
+
 @restaurante_bp.route("/<int:restaurante_id>", methods=["DELETE"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
 def deletar_restaurante(restaurante_id):
     return RestaurantController.deletar_restaurante(restaurante_id)
 
@@ -62,3 +80,13 @@ def deletar_restaurante(restaurante_id):
 @restaurante_bp.route("/<int:restaurante_id>/produtos", methods=["GET"])
 def listar_produtos_restaurante(restaurante_id):
     return RestaurantController.listar_produtos_restaurante(restaurante_id)
+
+
+@restaurante_bp.route("/<int:restaurante_id>/produtos/gerenciamento", methods=["GET"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
+def listar_produtos_restaurante_gerenciamento(restaurante_id):
+    """Detalhes internos do estoque disponíveis somente ao restaurante titular."""
+    return RestaurantController.listar_produtos_restaurante(
+        restaurante_id, incluir_estoque=True
+    )

@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:5000/produtos";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const API_URL = `${API_BASE}/produtos`;
 
 function getToken() {
     try {
@@ -27,9 +28,9 @@ export async function getProductsByRestaurant(restauranteId) {
 }
 
 export async function getProduct(id) {
-    const response = await fetch(`${API_URL}/${id}`);
-    if (!response.ok) throw new Error("Produto não encontrado");
-    const resultado = await response.json();
+    const response = await fetch(`${API_URL}/${id}`, { headers: authHeaders() });
+    const resultado = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resultado.erro || "Produto não encontrado");
     return resultado.produto;
 }
 
@@ -50,7 +51,7 @@ export async function updateProduct(id, dados) {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(dados),
     });
-    const resultado = await response.json();  
+    const resultado = await response.json();
     if (!response.ok) throw new Error(resultado.erro || "Erro ao atualizar produto");
     return resultado.produto;
 }

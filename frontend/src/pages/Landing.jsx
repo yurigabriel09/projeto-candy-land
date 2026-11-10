@@ -138,9 +138,17 @@ function Landing() {
               Cadastre sua confeitaria ou doceria e alcance milhares de
               amantes de doce.
             </p>
-            <button onClick={() => navigate("/login")} className="btn-branco">
-              Saiba mais
-            </button>
+            <div className="banner-acoes">
+              <button onClick={() => navigate("/parceiros")} className="btn-branco">
+                Saiba mais
+              </button>
+              <button
+                onClick={() => navigate("/parceiros/login")}
+                className="btn-parceiro-outline"
+              >
+                Seja um parceiro você também!
+              </button>
+            </div>
           </div>
         </div>
       </section>

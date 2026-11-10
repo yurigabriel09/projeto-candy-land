@@ -1,6 +1,5 @@
 import os
 
-import jwt
 from app.config.config import Config
 from google.auth.transport import requests
 from google.oauth2 import id_token
@@ -25,34 +24,8 @@ class GoogleAuthService:
                 clock_skew_in_seconds=Config.GOOGLE_CLOCK_SKEW_SECONDS,
             )
         except ValueError as erro:
-            # Diagnóstico seguro: mostramos apenas claims públicos do ID token,
-            # nunca a credencial completa. Isso permite identificar mismatch
-            # de audience/issuer/expiração sem expor o token.
-            try:
-                claims = jwt.decode(
-                    credential,
-                    options={
-                        "verify_signature": False,
-                        "verify_aud": False,
-                    },
-                )
-                print(
-                    "[GoogleAuthService] diagnóstico:",
-                    {
-                        "aud": claims.get("aud"),
-                        "azp": claims.get("azp"),
-                        "iss": claims.get("iss"),
-                        "exp": claims.get("exp"),
-                        "email": claims.get("email"),
-                    },
-                )
-            except jwt.PyJWTError as diagnostico_erro:
-                print(
-                    "[GoogleAuthService] não foi possível ler claims do token:",
-                    diagnostico_erro,
-                )
-
-            print(f"[GoogleAuthService] falha na validação: {erro}")
+            # Não registrar a credencial nem claims do token. Claims não assinados
+            # não são confiáveis e podem conter dados pessoais.
             raise ValueError("Credencial do Google inválida.") from erro
 
         if not dados.get("email"):

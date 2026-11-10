@@ -1,4 +1,5 @@
 import { useState } from "react";
+import LocationMap from "./LocationMap";
 
 function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenadas do endereço" }) {
     const [locationError, setLocationError] = useState("");
@@ -76,6 +77,7 @@ function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenada
                 {locating ? "Obtendo localização..." : "Usar localização atual"}
             </button>
             {locationError && <p className="field-error" role="alert">{locationError}</p>}
+            <LocationMap latitude={latitude} longitude={longitude} label={title} />
         </section>
     );
 }

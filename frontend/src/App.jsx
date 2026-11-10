@@ -17,11 +17,19 @@ import Cardapio from "./pages/Cardapio";
 import PartnerLanding from "./pages/PartnerLanding";
 import RestaurantConfiguration from "./pages/RestaurantConfiguration";
 import Cart from "./pages/Cart";
+import CheckoutResult from "./pages/CheckoutResult";
+import OrderTracking from "./pages/OrderTracking";
+import BusinessOrders from "./pages/BusinessOrders";
+import BusinessFinance from "./pages/BusinessFinance";
+import BusinessReviews from "./pages/BusinessReviews";
+import Checkout from "./pages/Checkout";
 
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationGuard from "./components/RegistrationGuard";
 import DadosPessoais from "./pages/DadosPessoais";
+import PendingPayments from "./pages/PendingPayments";
+import PurchaseHistory from "./pages/PurchaseHistory";
 
 function App() {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -43,6 +51,14 @@ function App() {
                                 element={
                                     <ProtectedRoute tipoConta="PERSONAL">
                                         <Restaurant />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route 
+                                path="/checkout"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <Checkout />
                                     </ProtectedRoute>
                                 }
                             />
@@ -97,6 +113,24 @@ function App() {
 />
 
                             <Route
+                                path="/minha-conta/historico-compras"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <PurchaseHistory />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/minha-conta/pagamentos-pendentes"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <PendingPayments />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
                                 path="/business"
                                 element={
                                     <ProtectedRoute tipoConta="BUSINESS">
@@ -110,6 +144,33 @@ function App() {
                                 element={
                                     <ProtectedRoute tipoConta="BUSINESS">
                                         <Cardapio />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/business/pedidos"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessOrders />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/business/financeiro"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessFinance />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/business/avaliacoes"
+                                element={
+                                    <ProtectedRoute tipoConta="BUSINESS">
+                                        <BusinessReviews />
                                     </ProtectedRoute>
                                 }
                             />
@@ -150,11 +211,29 @@ function App() {
                                 }
                             />
 
-                            <Route 
+                            <Route
                                 path="/cart"
                                 element={
                                     <ProtectedRoute tipoConta="PERSONAL">
                                         <Cart />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/checkout/resultado"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <CheckoutResult />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/pedidos/:orderId/acompanhar"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <OrderTracking />
                                     </ProtectedRoute>
                                 }
                             />
