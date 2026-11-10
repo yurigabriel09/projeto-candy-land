@@ -78,11 +78,18 @@ class CandyLandFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
-        runCatching {
-            NotificationManagerCompat.from(this).notify(
-                orderId?.hashCode() ?: System.currentTimeMillis().toInt(),
-                notification
-            )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            runCatching {
+                NotificationManagerCompat.from(this).notify(
+                    orderId?.hashCode() ?: System.currentTimeMillis().toInt(),
+                    notification
+                )
+            }
         }
     }
 }

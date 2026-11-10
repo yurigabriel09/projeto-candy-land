@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.candyland.mobile.BuildConfig
 import com.candyland.mobile.data.ApiProvider
@@ -292,38 +292,62 @@ private fun AuthenticationScreen(
         }
     }
 
+    
     fun startGoogleLogin() {
         if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()) {
-            error = "O login Google ainda não foi configurado. Informe CANDYLAND_GOOGLE_WEB_CLIENT_ID em mobile/local.properties e use o mesmo ID em GOOGLE_CLIENT_ID no backend."
+            error = "O login Google não está configurado. Confira CANDYLAND_GOOGLE_WEB_CLIENT_ID em mobile/local.properties."
             return
         }
+
         scope.launch {
             busy = true
             error = null
             info = null
+
             runCatching {
-                val googleOption = GetGoogleIdOption.Builder()
-                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-                    .setFilterByAuthorizedAccounts(false)
-                    .setAutoSelectEnabled(false)
-                    .build()
+                // Fluxo próprio do botão "Continuar com Google".
+                val googleOption = GetSignInWithGoogleOption.Builder(
+                    BuildConfig.GOOGLE_WEB_CLIENT_ID
+                ).build()
+
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleOption)
                     .build()
+
                 val result = credentialManager.getCredential(context, request)
                 val credential = result.credential
-                if (credential !is CustomCredential || credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    throw IllegalStateException("O Google não retornou uma credencial de identidade válida.")
+
+                if (
+                    credential !is CustomCredential ||
+                    credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    throw IllegalStateException(
+                        "O Google não retornou uma credencial de identidade válida."
+                    )
                 }
-                val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
+
+                val idToken = GoogleIdTokenCredential
+                    .createFrom(credential.data)
+                    .idToken
+
                 socialProvider = "GOOGLE"
                 socialCredential = idToken
-                ApiProvider.unwrap(ApiProvider.api.authenticateGoogle(GoogleAuthRequest(credential = idToken)))
-            }.onSuccess { continueSocialAuthentication(it) }
-                .onFailure { error = it.message ?: "Não foi possível entrar com o Google." }
+
+                ApiProvider.unwrap(
+                    ApiProvider.api.authenticateGoogle(
+                        GoogleAuthRequest(credential = idToken)
+                    )
+                )
+            }.onSuccess { response ->
+                continueSocialAuthentication(response)
+            }.onFailure { cause ->
+                error = cause.message ?: "Não foi possível entrar com o Google."
+            }
+
             busy = false
         }
     }
+
 
     fun startFacebookLogin() {
         runCatching {
