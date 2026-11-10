@@ -19,6 +19,7 @@ def impedir_cache_de_respostas_de_autenticacao(response):
 
 _FACEBOOK_STATE_COOKIE = "candyland_facebook_oauth_state"
 _FACEBOOK_AUDIENCE_COOKIE = "candyland_facebook_oauth_audience"
+_FACEBOOK_PLATFORM_COOKIE = "candyland_facebook_oauth_platform"
 _FACEBOOK_CALLBACK_PATH = "/auth/facebook/callback"
 _NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
 
@@ -31,11 +32,31 @@ def _facebook_cookie_secure():
 
 
 def _redirecionar_login_facebook(**parametros):
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
-    audiencia = request.cookies.get(_FACEBOOK_AUDIENCE_COOKIE, "PERSONAL")
-    caminho_login = "/parceiros/login" if audiencia == "BUSINESS" else "/login"
-    resposta = redirect(f"{frontend_url}{caminho_login}?" + urlencode(parametros))
-    for nome_cookie in (_FACEBOOK_STATE_COOKIE, _FACEBOOK_AUDIENCE_COOKIE):
+    plataforma = request.cookies.get(_FACEBOOK_PLATFORM_COOKIE, "WEB").upper()
+    if plataforma == "ANDROID":
+        # URI fixo e controlado pela configuração do backend: nunca aceitar
+        # redirect_uri arbitrário vindo do aplicativo.
+        mobile_uri = os.getenv(
+            "FACEBOOK_MOBILE_REDIRECT_URI",
+            "com.candyland.mobile://oauth/facebook",
+        ).strip()
+        mobile_parametros = {}
+        if parametros.get("facebook_ticket"):
+            mobile_parametros["ticket"] = parametros["facebook_ticket"]
+        if parametros.get("facebook_error"):
+            mobile_parametros["error"] = parametros["facebook_error"]
+        destino = mobile_uri + ("?" + urlencode(mobile_parametros) if mobile_parametros else "")
+        resposta = redirect(destino)
+    else:
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+        audiencia = request.cookies.get(_FACEBOOK_AUDIENCE_COOKIE, "PERSONAL")
+        caminho_login = "/parceiros/login" if audiencia == "BUSINESS" else "/login"
+        resposta = redirect(f"{frontend_url}{caminho_login}?" + urlencode(parametros))
+
+    cookies_para_limpar = [_FACEBOOK_STATE_COOKIE, _FACEBOOK_AUDIENCE_COOKIE]
+    if request.cookies.get(_FACEBOOK_PLATFORM_COOKIE):
+        cookies_para_limpar.append(_FACEBOOK_PLATFORM_COOKIE)
+    for nome_cookie in cookies_para_limpar:
         resposta.delete_cookie(
             nome_cookie,
             path=_FACEBOOK_CALLBACK_PATH,
@@ -75,13 +96,19 @@ def autenticar_facebook():
         audiencia = request.args.get("audiencia", "PERSONAL").strip().upper()
         if audiencia not in {"PERSONAL", "BUSINESS"}:
             audiencia = "PERSONAL"
+        plataforma = request.args.get("platform", "WEB").strip().upper()
+        if plataforma not in {"WEB", "ANDROID"}:
+            plataforma = "WEB"
 
         url = FacebookAuthService.gerar_url_autorizacao(state)
         resposta = redirect(url)
-        for nome_cookie, valor_cookie in (
+        cookies_oauth = [
             (_FACEBOOK_STATE_COOKIE, state),
             (_FACEBOOK_AUDIENCE_COOKIE, audiencia),
-        ):
+        ]
+        if plataforma == "ANDROID":
+            cookies_oauth.append((_FACEBOOK_PLATFORM_COOKIE, "ANDROID"))
+        for nome_cookie, valor_cookie in cookies_oauth:
             resposta.set_cookie(
                 nome_cookie,
                 valor_cookie,

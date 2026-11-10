@@ -18,6 +18,30 @@ export async function createRestaurant(dados) {
 
 // Funções novas — necessárias para a Home e a tela de consulta de itens
 // mostrarem as lojas cadastradas de verdade.
+export async function geocodeRestaurantAddress(endereco, options = {}) {
+  const { mode = "configuration", restaurantId, attemptId, signal } = options;
+  const isRegistration = mode === "registration";
+  const url = isRegistration
+    ? `${API_URL}/geocodificar-endereco/cadastro`
+    : `${API_URL}/${encodeURIComponent(restaurantId)}/geocodificar-endereco`;
+  const headers = { "Content-Type": "application/json", ...(isRegistration ? {} : authHeaders()) };
+  const body = isRegistration
+    ? { tentativa_id: attemptId, endereco }
+    : { endereco };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal,
+  });
+  const resultado = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Não foi possível localizar o endereço no mapa.");
+  }
+  return resultado.dados;
+}
+
 export async function getRestaurants() {
   const response = await fetch(API_URL);
   const resultado = await response.json();

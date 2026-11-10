@@ -4,6 +4,7 @@ from app.database.migrations import migrar_taxa_entrega_por_distancia
 from app.models.delivery import EntregaPedido
 from app.models.order import Pedido
 from app.routes.auth_routes import auth_bp
+from app.routes.device_routes import device_bp
 from app.routes.category_routes import categoria_bp
 from app.routes.order_routes import pedido_bp
 from app.routes.product_routes import produto_bp
@@ -35,6 +36,7 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(restaurante_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(device_bp)
     app.register_blueprint(produto_bp)
     app.register_blueprint(categoria_bp)
     app.register_blueprint(pedido_bp)

@@ -23,6 +23,19 @@ ORDER_TYPES = {"DELIVERY", "PICKUP"}
 
 class OrderService:
     @staticmethod
+    def _notificar_status_pedido(pedido, status_anterior=None):
+        # A notificação é externa à transação: falha no FCM nunca desfaz o pedido.
+        try:
+            from app.services.push_notification_service import PushNotificationService
+            PushNotificationService.notificar_pedido(pedido, status_anterior)
+        except Exception:
+            try:
+                from flask import current_app
+                current_app.logger.exception("Falha inesperada ao notificar pedido.")
+            except Exception:
+                pass
+
+    @staticmethod
     def _money(value, field):
         try:
             result = Decimal(str(value))
@@ -316,6 +329,7 @@ class OrderService:
                 )
 
             db.session.commit()
+            OrderService._notificar_status_pedido(pedido, None)
             return {
                 "success": True,
                 "mensagem": "Pedido criado com sucesso!",
@@ -531,8 +545,10 @@ class OrderService:
                         "status_code": 409,
                     }
 
+            status_anterior = "PENDENTE_PAGAMENTO"
             pedido.status = "PAGAMENTO_CONFIRMADO"
             db.session.commit()
+            OrderService._notificar_status_pedido(pedido, status_anterior)
             return {
                 "success": True,
                 "mensagem": "Pagamento confirmado e estoque atualizado.",
@@ -590,6 +606,7 @@ class OrderService:
 
         try:
             validar_transicao_pedido(pedido.status, novo_status)
+            status_anterior = pedido.status
             # Evita sobrescrever uma mudança simultânea de estado. Este UPDATE não
             # modifica estoque; os cancelamentos usam a transação dedicada abaixo.
             atualizacao = db.session.execute(
@@ -607,6 +624,7 @@ class OrderService:
                 }
             pedido.status = novo_status
             db.session.commit()
+            OrderService._notificar_status_pedido(pedido, status_anterior)
             return {
                 "success": True,
                 "mensagem": "Status atualizado com sucesso.",
@@ -698,6 +716,7 @@ class OrderService:
             OrderService._cancelar_entrega(pedido.id)
             pedido.status = "CANCELADO"
             db.session.commit()
+            OrderService._notificar_status_pedido(pedido, status_anterior)
             return {
                 "success": True,
                 "mensagem": mensagem_sucesso,
@@ -756,7 +775,8 @@ class OrderService:
                 db.session.add(entrega)
                 db.session.flush()
 
-            validar_transicao_entrega(entrega.status, novo_status)
+            status_entrega_anterior = entrega.status
+            validar_transicao_entrega(status_entrega_anterior, novo_status)
             if pedido.status == "CANCELADO" and novo_status != "CANCELADO":
                 raise OrderTransitionError(
                     "Um pedido cancelado não pode retomar a entrega."
@@ -779,6 +799,20 @@ class OrderService:
                 entrega.cancelada_em = db.func.now()
 
             db.session.commit()
+            try:
+                from app.services.push_notification_service import PushNotificationService
+                PushNotificationService.notificar_pedido(
+                    pedido,
+                    status_entrega_anterior,
+                    status_atual=novo_status,
+                    tipo_evento="ENTREGA",
+                )
+            except Exception:
+                try:
+                    from flask import current_app
+                    current_app.logger.exception("Falha ao notificar mudança da entrega.")
+                except Exception:
+                    pass
             return {
                 "success": True,
                 "mensagem": "Status da entrega atualizado com sucesso.",

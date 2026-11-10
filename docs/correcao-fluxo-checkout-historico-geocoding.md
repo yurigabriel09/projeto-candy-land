@@ -20,7 +20,7 @@ O resultado da URL de retorno não é prova de pagamento. A tela consulta o pedi
 
 ## Código de recebimento
 
-Após pagamento confirmado, o cliente pode obter um PIN de seis dígitos na compra. O banco armazena somente um hash derivado com `SECRET_KEY`; o PIN não é gravado em texto puro. O restaurante responsável valida o PIN no painel. Para `PICKUP`, a validação só ocorre quando o pedido está `PRONTO_PARA_ENTREGA`; para `DELIVERY`, o pedido deve primeiro atingir `ENTREGUE`. Depois de validado, o pedido passa a `FINALIZADO`. Cinco tentativas inválidas bloqueiam o PIN até o cliente gerar um novo código.
+Após pagamento confirmado, o cliente pode obter um PIN de seis dígitos na compra. O banco armazena somente um hash derivado com `SECRET_KEY`; o PIN não é gravado em texto puro. O restaurante responsável valida o PIN no painel. Para `PICKUP` e `DELIVERY`, a caixa de confirmação aparece quando o pedido está `PRONTO_PARA_ENTREGA` (e também aceita pedidos de entrega que já tenham chegado a `ENTREGUE`). Com o PIN correto, o backend registra `ENTREGUE` quando necessário, marca a entrega logística como `ENTREGA_CONCLUIDA` e conclui `FINALIZADO` na mesma transação. Cinco tentativas inválidas bloqueiam o PIN até o cliente gerar um novo código.
 
 A aplicação não possui atualmente um papel próprio de entregador. Portanto, a validação de entrega está no painel do restaurante como fluxo MVP; se houver um app de entregador, o contrato de permissão precisa ser estendido para uma identidade de entrega dedicada.
 
@@ -33,3 +33,8 @@ A Home filtrava `loja.ativo`, mas o serializer público `Restaurante.to_catalog_
 O código retornava 503 quando `GOOGLE_MAPS_GEOCODING_API_KEY` não estava configurada. Para utilizar o Google Geocoding, é necessário ativar billing no projeto Google Cloud e habilitar a API; as solicitações são cobradas conforme o volume e SKU, então configure cotas para controlar custos. Documentação oficial: https://developers.google.com/maps/documentation/geocoding/usage-and-billing?hl=pt-br.
 
 Para a demonstração não é obrigatório contratar Google Geocoding: o checkout agora permite informar e salvar latitude/longitude manualmente no próprio endereço ou usar a localização do navegador quando o dispositivo estiver no local correto. Depois de salvar, o mapa e o cálculo de distância usam as coordenadas persistidas e a aplicação não precisa geocodificar aquele endereço novamente. A renderização do mapa usa OpenStreetMap.
+
+
+## Geolocalização dos endereços comerciais
+
+O cadastro empresarial e a configuração do restaurante agora consultam o backend para geocodificar o endereço depois que rua, número, cidade e estado estiverem preenchidos. A chave `GOOGLE_MAPS_GEOCODING_API_KEY` permanece somente em `backend/.env`; não é enviada ao navegador. Ao localizar o endereço, o formulário exibe o mapa com o marcador e oculta os campos de latitude/longitude. Se a chave estiver ausente, o serviço falhar ou não encontrar o endereço, a tela revela os campos manuais e a opção de usar a localização do navegador. As coordenadas digitadas ou recebidas pelo geocoding são salvas junto do endereço quando o formulário é enviado.

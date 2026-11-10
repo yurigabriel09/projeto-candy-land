@@ -3212,7 +3212,11 @@ select:focus-visible {
 .purchase-history-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
 .purchase-history-empty { border:1px solid #f1d4c8; border-radius:18px; background:#fff; padding:32px; text-align:center; display:grid; justify-items:center; gap:12px; }
 .purchase-history-empty p { color:#745d53; }
-.business-order-receipt { display:grid; grid-template-columns:minmax(180px,1fr) auto auto; align-items:center; gap:10px; padding:12px 0; }
+.business-order-receipt { display:grid; grid-template-columns:minmax(220px,1fr) minmax(150px,auto) minmax(120px,auto) auto; align-items:center; gap:10px; margin:14px 0; padding:14px; border:1px dashed #ef8b9f; border-radius:12px; background:#fff8fa; }
+.business-order-receipt-copy { display:grid; gap:4px; }
+.business-order-receipt-copy strong { color:#4b211f; font-size:13px; }
+.business-order-receipt-copy small { color:#745d53; line-height:1.45; }
 .business-order-receipt label { font-size:13px; font-weight:700; }
 .business-order-receipt input { width:130px; padding:10px 12px; border:1px solid #e4c8c0; border-radius:10px; font:inherit; letter-spacing:.1em; }
-@media (max-width:650px) { .purchase-history-heading,.purchase-history-card > header { flex-direction:column; } .purchase-history-meta strong { margin-left:0; } .purchase-history-actions > * { flex:1 1 100%; text-align:center; } .business-order-receipt { grid-template-columns:1fr; align-items:stretch; } .business-order-receipt input { width:auto; } }
+@media (max-width:900px) { .business-order-receipt { grid-template-columns:1fr 1fr; } .business-order-receipt-copy { grid-column:1 / -1; } }
+@media (max-width:650px) { .purchase-history-heading,.purchase-history-card > header { flex-direction:column; } .purchase-history-meta strong { margin-left:0; } .purchase-history-actions > * { flex:1 1 100%; text-align:center; } .business-order-receipt { grid-template-columns:1fr; align-items:stretch; } .business-order-receipt-copy { grid-column:auto; } .business-order-receipt input { width:auto; } }

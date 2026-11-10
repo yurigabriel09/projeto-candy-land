@@ -1,6 +1,6 @@
-﻿# CandyLand — guia do projeto e estado real
+# CandyLand — guia do projeto e estado real
 
-> **Atualizado em 25/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
+> **Atualizado em 31/10/2026.** Este README é a fonte de orientação do repositório. Os percentuais são uma estimativa de entrega por funcionalidade baseada no código e na documentação presentes nesta cópia — não são cobertura de testes nem confirmação de aceite do grupo.
 
 ## 1. Git: atualizar a máquina local, criar branches, comitar e entregar
 
@@ -400,3 +400,9 @@ No `backend/.env`, use `APP_ENV=development` e `ALLOW_DUPLICATE_PHONE=true`; dep
 **Produção:** configure `APP_ENV=production`. Nesse ambiente o backend bloqueia a duplicidade mesmo que `ALLOW_DUPLICATE_PHONE=true` tenha sido definido por engano. Se `APP_ENV` não estiver configurado, o backend assume `production` por segurança. Valores aceitos para a flag booleana: `true`, `1`, `yes` e `on`.
 
 A regra é aplicada ao cadastro por e-mail/WhatsApp, ao cadastro via OAuth e à alteração do telefone de um usuário. A validação do e-mail é global entre clientes e restaurantes.
+
+## Aplicativo Android (Kotlin)
+
+O aplicativo Android nativo está em `mobile/` e deve ser aberto como projeto independente no Android Studio. Ele consome diretamente as rotas Flask existentes de autenticação por código, docerias, produtos, endereços, pedidos e pagamentos. O backend também registra tokens de dispositivos e envia eventos pelo Firebase Cloud Messaging (FCM) depois das transações de mudança de status.
+
+Consulte [`mobile/README.md`](mobile/README.md) para sincronizar o Gradle, configurar o endereço da API e habilitar o Firebase. Sem `google-services.json` no app e sem a conta de serviço FCM no backend, o fluxo de compra continua disponível, mas as notificações push não serão entregues.

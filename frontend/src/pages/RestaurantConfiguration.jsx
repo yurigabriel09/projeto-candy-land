@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AddressCoordinates from "../components/AddressCoordinates";
 import { getAddressByCep } from "../services/addressService";
 import { maskCep } from "../utils/masks";
+import useRestaurantAddressGeocoding from "../hooks/useRestaurantAddressGeocoding";
 import {
     getRestaurantConfiguration,
     updateRestaurantConfiguration,
@@ -54,6 +55,14 @@ function RestaurantConfiguration() {
     const [loadingCep, setLoadingCep] = useState(false);
     const [cepError, setCepError] = useState("");
     const cepLookupRequest = useRef(0);
+    const geocodeState = useRestaurantAddressGeocoding({
+        endereco: address,
+        mode: "configuration",
+        restaurantId: restauranteId,
+        onCoordinates: ({ latitude, longitude }) => {
+            setAddress((current) => ({ ...current, latitude, longitude }));
+        },
+    });
 
     useEffect(() => {
         if (!Number.isInteger(restauranteId) || restauranteId <= 0) {
@@ -123,6 +132,10 @@ function RestaurantConfiguration() {
             setAddress((current) => ({
                 ...current,
                 cep,
+                rua: "",
+                bairro: "",
+                cidade: "",
+                estado: "",
                 latitude: null,
                 longitude: null,
             }));
@@ -174,16 +187,20 @@ function RestaurantConfiguration() {
         }));
     }
 
-    function handleLocationChange({ latitude, longitude }) {
+    const handleLocationChange = useCallback(({ latitude, longitude }) => {
         setAddress((current) => ({
             ...current,
             latitude,
             longitude,
         }));
-    }
+    }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
+        if (geocodeState.showManualCoordinates && (address.latitude == null || address.longitude == null)) {
+            setError("A localização automática falhou. Informe latitude e longitude para salvar o endereço do restaurante.");
+            return;
+        }
         setSaving(true);
         setMessage("");
         setError("");
@@ -353,11 +370,22 @@ function RestaurantConfiguration() {
                             <label htmlFor="config-referencia">Referência</label>
                             <input id="config-referencia" name="referencia" value={address.referencia} onChange={handleAddressChange} />
                         </div>
+                        {geocodeState.geocoding && (
+                            <p className="field-message" role="status">Localizando o endereço no mapa automaticamente...</p>
+                        )}
+                        {geocodeState.geocodingError && (
+                            <div className="field-error" role="alert">
+                                <p>{geocodeState.geocodingError}</p>
+                                {(address.latitude == null || address.longitude == null) && <button type="button" className="secondary-button" onClick={geocodeState.retryGeocoding}>Tentar geocodificação novamente</button>}
+                            </div>
+                        )}
                         <AddressCoordinates
                             latitude={address.latitude}
                             longitude={address.longitude}
                             onChange={handleLocationChange}
-                            title="Coordenadas do endereço comercial"
+                            title="Localização do endereço comercial"
+                            showManualFields={geocodeState.showManualCoordinates}
+                            showMapPlaceholder={geocodeState.showManualCoordinates}
                         />
                     </div>
 
@@ -383,7 +411,7 @@ function RestaurantConfiguration() {
                         </div>
                     </div>
 
-                    <button type="submit" className="primary-button" disabled={saving || loadingCep}>
+                    <button type="submit" className="primary-button" disabled={saving || loadingCep || geocodeState.geocoding}>
                         {saving ? "Salvando..." : "Salvar alterações"}
                     </button>
                 </form>

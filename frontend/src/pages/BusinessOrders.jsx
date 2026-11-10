@@ -87,11 +87,15 @@ function BusinessOrders() {
                                         <div className="business-order-meta"><span>{pedido.order_type === "PICKUP" ? "Retirada" : "Entrega"}</span><span>Pagamento: {pedido.payment_method}</span><strong>{moeda.format(pedido.total || 0)}</strong></div>
                                         <ul>{(pedido.items || []).map((item) => <li key={item.id}>Produto #{item.produto_id} × {item.quantidade} — {moeda.format((item.preco_unitario || 0) * (item.quantidade || 0))}</li>)}</ul>
                                         {pedido.status === "PENDENTE_PAGAMENTO" && <p className="cart-aviso-checkout">Não inicie o preparo antes da confirmação do pagamento.</p>}
-                                        {(pedido.order_type === "PICKUP" && pedido.status === "PRONTO_PARA_ENTREGA") || (pedido.order_type === "DELIVERY" && pedido.status === "ENTREGUE") ? (
-                                            <div className="business-order-receipt">
-                                                <label htmlFor={`codigo-recebimento-${pedido.id}`}>Código informado pelo cliente</label>
+                                        {(pedido.status === "PRONTO_PARA_ENTREGA" || (pedido.order_type === "DELIVERY" && pedido.status === "ENTREGUE")) ? (
+                                            <div className="business-order-receipt" aria-label="Confirmação do recebimento">
+                                                <div className="business-order-receipt-copy">
+                                                    <strong>Confirmar recebimento do pedido</strong>
+                                                    <small>Peça ao cliente o código de seis dígitos exibido no histórico de compras e valide-o para finalizar o pedido.</small>
+                                                </div>
+                                                <label htmlFor={`codigo-recebimento-${pedido.id}`}>Código de recebimento</label>
                                                 <input id={`codigo-recebimento-${pedido.id}`} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigosRecebimento[pedido.id] || ""} onChange={(event) => setCodigosRecebimento((atuais) => ({ ...atuais, [pedido.id]: event.target.value.replace(/\D/g, "").slice(0, 6) }))} placeholder="000000" />
-                                                <button className="btn-principal" type="button" disabled={atualizando === pedido.id} onClick={() => confirmarRecebimento(pedido.id)}>{atualizando === pedido.id ? "Validando..." : "Validar código e finalizar compra"}</button>
+                                                <button className="btn-principal" type="button" disabled={atualizando === pedido.id} onClick={() => confirmarRecebimento(pedido.id)}>{atualizando === pedido.id ? "Validando..." : "Confirmar recebimento e finalizar pedido"}</button>
                                             </div>
                                         ) : null}
                                         <footer>

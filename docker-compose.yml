@@ -13,6 +13,8 @@ services:
       DATABASE_URL: sqlite:////app/instance/candyland.db
     volumes:
       - candyland-db:/app/instance
+      # Credencial FCM fica fora da imagem e somente leitura. Crie backend/secrets antes de ativar.
+      - ./backend/secrets:/app/secrets:ro
     healthcheck:
       test:
         [
