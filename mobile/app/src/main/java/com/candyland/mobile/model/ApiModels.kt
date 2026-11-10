@@ -23,7 +23,9 @@ data class SocialAuthResponse(
     val precisa_telefone: Boolean = false,
     val email: String? = null,
     val telefone: String? = null,
-    val erro: String? = null
+    val erro: String? = null,
+    // Contas existentes podem concluir o login social sem abrir uma nova tentativa OTP.
+    val dados: AuthFinalData? = null
 )
 data class AuthVerifyResponse(
     val success: Boolean = false,

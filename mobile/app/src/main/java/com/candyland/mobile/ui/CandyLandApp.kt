@@ -247,6 +247,12 @@ private fun AuthenticationScreen(
     }
 
     fun continueSocialAuthentication(response: SocialAuthResponse) {
+        // Login social de conta já existente retorna a sessão diretamente.
+        response.dados?.let {
+            acceptAuth(it)
+            return
+        }
+
         email = response.email ?: email
         phone = response.telefone ?: phone
         attemptId = response.tentativa_id.orEmpty()
@@ -403,7 +409,7 @@ private fun AuthenticationScreen(
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "A confirmação da conta utiliza dois fatores: o contato escolhido agora e o segundo contato solicitado na próxima etapa.",
+                    "Para entrar em uma conta existente, basta confirmar o canal escolhido. Se ainda não tiver cadastro, vamos solicitar os dados de contato que faltarem.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -435,8 +441,8 @@ private fun AuthenticationScreen(
             }
             2 -> {
                 val secondLabel = if (secondChannel == "EMAIL") "e-mail" else "celular"
-                Text("Informe seu segundo contato", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text(info ?: "Para proteger sua conta, precisamos confirmar também seu $secondLabel.")
+                Text("Complete seus dados de contato", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(info ?: "Como esta conta ainda não existe, informe seu $secondLabel para concluir o cadastro.")
                 OutlinedTextField(
                     value = secondValue,
                     onValueChange = { secondValue = it; error = null },
