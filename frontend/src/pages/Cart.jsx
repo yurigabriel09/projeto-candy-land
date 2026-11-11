@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
@@ -10,6 +10,19 @@ import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+// Estimativas exibidas ao cliente (ainda não vêm do backend)
+const TEMPO_ENTREGA = "25–40 min";
+const TEMPO_RETIRADA = "20–30 min";
+
+// Monta o texto de um endereço: "Rua das Flores, 123 - Apto 4 · Centro · São Paulo/SP"
+function formatarEndereco(endereco) {
+    if (!endereco) return "";
+    const ruaNumero = [endereco.rua, endereco.numero].filter(Boolean).join(", ");
+    const comComplemento = endereco.complemento ? `${ruaNumero} - ${endereco.complemento}` : ruaNumero;
+    const cidadeUf = [endereco.cidade, endereco.estado].filter(Boolean).join("/");
+    return [comComplemento, endereco.bairro, cidadeUf].filter(Boolean).join(" · ");
+}
 
 // Helper para montar a URL completa da foto se for um caminho relativo
 function obterUrlImagem(url) {
@@ -25,6 +38,55 @@ function Cart() {
     const [cupom, setCupom] = useState("");
     const [cupomAplicado, setCupomAplicado] = useState(false);
     const [mensagemCupom, setMensagemCupom] = useState("");
+
+    const { dadosAutenticacao } = useAuth();
+    const [enderecoEntrega, setEnderecoEntrega] = useState(null);   // endereço principal do cliente
+    const [enderecoRetirada, setEnderecoRetirada] = useState(null); // endereço do restaurante
+    const [carregandoEnderecos, setCarregandoEnderecos] = useState(false);
+    const [erroEnderecos, setErroEnderecos] = useState("");
+
+    const ehRetirada = carrinho.orderType === "PICKUP";
+
+    // Endereço do restaurante (retirada) — muda se o restaurante do carrinho mudar
+    useEffect(() => {
+        if (!carrinho.restauranteId) {
+            setEnderecoRetirada(null);
+            return;
+        }
+        let cancelado = false;
+        setCarregandoEnderecos(true);
+        setErroEnderecos("");
+        getRestaurantPickupAddresses(carrinho.restauranteId)
+            .then((lista) => {
+                if (!cancelado) setEnderecoRetirada(lista.find((e) => e.principal) || lista[0] || null);
+            })
+            .catch(() => {
+                if (!cancelado) setErroEnderecos("Não foi possível carregar o endereço de retirada.");
+            })
+            .finally(() => {
+                if (!cancelado) setCarregandoEnderecos(false);
+            });
+        return () => {
+            cancelado = true;
+        };
+    }, [carrinho.restauranteId]);
+
+    // Endereço do cliente (entrega) — só se estiver logado
+    useEffect(() => {
+        const userId = dadosAutenticacao?.id || dadosAutenticacao?.user_id || dadosAutenticacao?.usuario?.id;
+        if (!userId) return;
+        let cancelado = false;
+        getCustomerAddresses(userId)
+            .then((lista) => {
+                if (!cancelado) setEnderecoEntrega(lista.find((e) => e.principal) || lista[0] || null);
+            })
+            .catch(() => {
+                // sem endereço aqui não é erro: o cliente escolhe no checkout
+            });
+        return () => {
+            cancelado = true;
+        };
+    }, [dadosAutenticacao]);
 
     function handleAplicarCupom(e) {
         e.preventDefault();
@@ -98,7 +160,11 @@ function Cart() {
                                     <span className="cart-restaurante-icone">🍰</span>
                                     <div>
                                         <h3>{carrinho.restauranteNome || "Restaurante"}</h3>
-                                        <p>Entrega estimada em 25–40 min</p>
+                                        <p>
+                                            {ehRetirada
+                                                ? `Pronto para retirada em ${TEMPO_RETIRADA}`
+                                                : `Entrega estimada em ${TEMPO_ENTREGA}`}
+                                        </p>
                                     </div>
                                 </div>
                                 <Link
@@ -185,7 +251,11 @@ function Cart() {
                                         </div>
                                         <div className="cart-entrega-textos">
                                             <strong>Receber em casa</strong>
-                                            <small>Informe seu endereço na finalização</small>
+                                            <small>
+                                                {enderecoEntrega
+                                                    ? formatarEndereco(enderecoEntrega)
+                                                    : "Informe seu endereço na finalização"}
+                                            </small>
                                         </div>
                                     </button>
 
@@ -199,9 +269,39 @@ function Cart() {
                                         </div>
                                         <div className="cart-entrega-textos">
                                             <strong>Retirar na loja</strong>
-                                            <small>Sem taxa · Pronto em 20–30 min</small>
+                                            <small>Sem taxa · Pronto em {TEMPO_RETIRADA}</small>
                                         </div>
                                     </button>
+                                </div>
+
+                                {/* Detalhe da opção escolhida */}
+                                <div className="cart-entrega-detalhe" aria-live="polite">
+                                    {ehRetirada ? (
+                                        <>
+                                            <span className="cart-entrega-detalhe-titulo">📍 Retire em</span>
+                                            {carregandoEnderecos ? (
+                                                <p>Carregando endereço do restaurante...</p>
+                                            ) : enderecoRetirada ? (
+                                                <p>{formatarEndereco(enderecoRetirada)}</p>
+                                            ) : (
+                                                <p>{erroEnderecos || "O restaurante ainda não cadastrou um endereço de retirada."}</p>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="cart-entrega-detalhe-titulo">🏠 Entregar em</span>
+                                            {enderecoEntrega ? (
+                                                <p>
+                                                    {formatarEndereco(enderecoEntrega)}{" "}
+                                                    <Link to="/minha-conta/dados-pessoais" className="cart-entrega-detalhe-link">
+                                                        Alterar
+                                                    </Link>
+                                                </p>
+                                            ) : (
+                                                <p>Você escolhe ou cadastra o endereço na próxima etapa.</p>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -234,9 +334,11 @@ function Cart() {
                                     </div>
                                     <div className="resumo-linha">
                                         <span>Taxa de entrega</span>
-                                        <strong className="texto-verde">
-                                            {carrinho.orderType === "PICKUP" ? "Grátis" : "Grátis"}
-                                        </strong>
+                                        {ehRetirada ? (
+                                            <strong className="texto-verde">Grátis</strong>
+                                        ) : (
+                                            <strong>Calculada no pagamento</strong>
+                                        )}
                                     </div>
 
                                     <div className="resumo-divisor"></div>

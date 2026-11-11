@@ -4758,3 +4758,35 @@ select:focus-visible {
   color: rgba(255, 255, 255, 0.4);
   font-size: 12px;
 }
+
+/* Detalhe da opção escolhida (entrega / retirada) — Cart.jsx */
+.cart-entrega-detalhe {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px dashed var(--borda);
+    border-radius: var(--raio);
+    background: #fff5f2;
+}
+
+.cart-entrega-detalhe-titulo {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rosa);
+}
+
+.cart-entrega-detalhe p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--texto);
+}
+
+.cart-entrega-detalhe-link {
+    margin-left: 6px;
+    font-weight: 700;
+    color: var(--rosa);
+    text-decoration: underline;
+}
