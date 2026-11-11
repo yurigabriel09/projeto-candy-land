@@ -1,7 +1,7 @@
 import { useState } from "react";
 import LocationMap from "./LocationMap";
 
-function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenadas do endereço" }) {
+function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenadas do endereço", showManualFields = true, showMapPlaceholder = true }) {
     const [locationError, setLocationError] = useState("");
     const [locating, setLocating] = useState(false);
 
@@ -44,8 +44,9 @@ function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenada
     return (
         <section className="address-coordinates" aria-label={title}>
             <h4>{title}</h4>
-            <p>Informe as coordenadas do endereço cadastrado. Use a localização atual somente se estiver no local correto; também é possível preencher manualmente.</p>
-            <div className="form-grid-two">
+            {showManualFields && <p>Não conseguimos localizar este endereço automaticamente. Informe as coordenadas ou use a localização atual somente se estiver fisicamente no endereço correto.</p>}
+            {!showManualFields && latitude != null && longitude != null && <p>Endereço localizado automaticamente. Confira o marcador no mapa abaixo.</p>}
+            {showManualFields && <div className="form-grid-two">
                 <div className="form-field">
                     <label htmlFor={`${title.replace(/\W+/g, "-").toLowerCase()}-latitude`}>Latitude</label>
                     <input
@@ -72,12 +73,14 @@ function AddressCoordinates({ latitude, longitude, onChange, title = "Coordenada
                         placeholder="Ex.: -46.633308"
                     />
                 </div>
-            </div>
-            <button type="button" className="secondary-button" onClick={useCurrentLocation} disabled={locating}>
+            </div>}
+            {showManualFields && <button type="button" className="secondary-button" onClick={useCurrentLocation} disabled={locating}>
                 {locating ? "Obtendo localização..." : "Usar localização atual"}
-            </button>
+            </button>}
             {locationError && <p className="field-error" role="alert">{locationError}</p>}
-            <LocationMap latitude={latitude} longitude={longitude} label={title} />
+            {((latitude != null && latitude !== "" && longitude != null && longitude !== "") || showMapPlaceholder) && (
+                <LocationMap latitude={latitude} longitude={longitude} label={title} />
+            )}
         </section>
     );
 }

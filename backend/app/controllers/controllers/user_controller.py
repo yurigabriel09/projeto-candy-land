@@ -1,0 +1,120 @@
+from app.services.user_service import UserService
+from flask import jsonify, make_response
+
+
+class UserController:
+    @staticmethod
+    def listar_usuarios():
+        resultado = UserService.listar_usuarios()
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def buscar_usuario(user_id):
+        resultado = UserService.buscar_usuario(user_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def listar_enderecos(user_id):
+        resultado = UserService.listar_enderecos(user_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def criar_usuario(dados):
+        resultado = UserService.criar_usuario(
+            nome_completo=dados.get("nome_completo"),
+            email=dados.get("email"),
+            telefone=dados.get("telefone"),
+            cpf=dados.get("cpf"),
+            tentativa_id=dados.get("tentativa_id"),
+            data_nascimento=dados.get("data_nascimento"),
+            endereco=dados.get("endereco"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            201,
+        )
+
+    @staticmethod
+    def geocodificar_endereco(user_id, address_id):
+        resultado = UserService.geocodificar_endereco(user_id, address_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"], "endereco_localizado": resultado.get("endereco_localizado")}),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_coordenadas_endereco(user_id, address_id, dados):
+        resultado = UserService.atualizar_coordenadas_endereco(
+            user_id,
+            address_id,
+            dados.get("latitude"),
+            dados.get("longitude"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def atualizar_usuario(user_id, dados):
+        if "email" in dados or "telefone" in dados:
+            return make_response(
+                jsonify({"erro": "Alteração de e-mail/telefone exige fluxo de verificação próprio."}),
+                400,
+            )
+        resultado = UserService.atualizar_usuario(
+            user_id,
+            nome_completo=dados.get("nome_completo"),
+            # Alterações de e-mail/telefone exigem fluxo de verificação próprio.
+            data_nascimento=dados.get("data_nascimento"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
+    def deletar_usuario(user_id):
+        resultado = UserService.deletar_usuario(user_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(jsonify({"mensagem": resultado["mensagem"]}), 204)

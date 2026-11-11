@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { maskCep, maskCpf, maskCnpj } from "../utils/masks";
 import VerifiedPhoneInput from "../components/VerifiedPhoneInput";
 import AddressCoordinates from "../components/AddressCoordinates";
 import { isValidCep, isValidCnpj, isValidCpf, isValidEmail, isValidPhone } from "../utils/validators";
 import { getAddressByCep } from "../services/addressService";
+import useRestaurantAddressGeocoding from "../hooks/useRestaurantAddressGeocoding";
 import { createRestaurant } from "../services/restaurantService";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,13 +37,37 @@ function BusinessRegister() {
     const [cepError, setCepError] = useState("");
     const [loadingCep, setLoadingCep] = useState(false);
     const [loading, setLoading] = useState(false);
+    const cepLookupRequest = useRef(0);
+
+    const geocodeState = useRestaurantAddressGeocoding({
+        endereco: {
+            cep: form.cep,
+            rua: form.address,
+            numero: form.number,
+            bairro: form.neighborhood,
+            cidade: form.city,
+            estado: form.state,
+            latitude: form.latitude,
+            longitude: form.longitude,
+        },
+        mode: "registration",
+        attemptId: dadosAutenticacao.tentativaId,
+        onCoordinates: ({ latitude, longitude }) => {
+            setForm((current) => ({ ...current, latitude, longitude }));
+        },
+    });
 
     async function handleCepChange(event) {
         const value = maskCep(event.target.value);
 
+        const requestId = ++cepLookupRequest.current;
         setForm((currentForm) => ({
             ...currentForm,
             cep: value,
+            address: "",
+            neighborhood: "",
+            city: "",
+            state: "",
             latitude: null,
             longitude: null,
         }));
@@ -52,14 +77,14 @@ function BusinessRegister() {
         const cleanCep = value.replace(/\D/g, "");
 
         if (cleanCep.length !== 8) {
+            setLoadingCep(false);
             return;
         }
 
         try {
             setLoadingCep(true);
-
             const address = await getAddressByCep(cleanCep);
-
+            if (requestId !== cepLookupRequest.current) return;
             setForm((currentForm) => ({
                 ...currentForm,
                 cep: value,
@@ -71,9 +96,9 @@ function BusinessRegister() {
                 longitude: null,
             }));
         } catch (error) {
-            setCepError("CEP não encontrado.");
+            if (requestId === cepLookupRequest.current) setCepError(error.message || "CEP não encontrado.");
         } finally {
-            setLoadingCep(false);
+            if (requestId === cepLookupRequest.current) setLoadingCep(false);
         }
     }
 
@@ -90,7 +115,11 @@ function BusinessRegister() {
             formattedValue = maskCpf(value);
         }
 
-        const addressFields = ["cep", "address", "number", "neighborhood", "city", "state"];
+        const addressFields = ["address", "number", "neighborhood", "city", "state"];
+        if (addressFields.includes(name)) {
+            cepLookupRequest.current += 1;
+            setLoadingCep(false);
+        }
         setForm((currentForm) => ({
             ...currentForm,
             [name]: formattedValue,
@@ -100,6 +129,11 @@ function BusinessRegister() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+
+        if (loadingCep || geocodeState.geocoding) {
+            alert("Aguarde a consulta do CEP e a localização do endereço no mapa.");
+            return;
+        }
 
         if (!isValidCnpj(form.cnpj)) {
             alert("Informe um CNPJ válido.");
@@ -163,6 +197,11 @@ function BusinessRegister() {
 
         if (!form.state.trim()) {
             alert("Informe o estado.");
+            return;
+        }
+
+        if (geocodeState.showManualCoordinates && (form.latitude == null || form.longitude == null)) {
+            alert("A localização automática falhou. Informe latitude e longitude para concluir o cadastro empresarial.");
             return;
         }
 
@@ -417,16 +456,27 @@ function BusinessRegister() {
 
                     <div className="form-section">
                         <h3>Localização para cálculo de entrega</h3>
+                        {geocodeState.geocoding && (
+                            <p className="field-message" role="status">Localizando o endereço no mapa automaticamente...</p>
+                        )}
+                        {geocodeState.geocodingError && (
+                            <div className="field-error" role="alert">
+                                <p>{geocodeState.geocodingError}</p>
+                                {(form.latitude == null || form.longitude == null) && <button type="button" className="secondary-button" onClick={geocodeState.retryGeocoding}>Tentar geocodificação novamente</button>}
+                            </div>
+                        )}
                         <AddressCoordinates
                             latitude={form.latitude}
                             longitude={form.longitude}
                             onChange={({ latitude, longitude }) => setForm((current) => ({ ...current, latitude, longitude }))}
-                            title="Coordenadas do restaurante"
+                            title="Localização do restaurante"
+                            showManualFields={geocodeState.showManualCoordinates}
+                            showMapPlaceholder={geocodeState.showManualCoordinates}
                         />
                     </div>
 
-                    <button type="submit" className="primary-button" disabled={loading}>
-                        {loading ? "Criando empresa..." : "Criar conta empresarial"}
+                    <button type="submit" className="primary-button" disabled={loading || loadingCep || geocodeState.geocoding}>
+                        {loading ? "Criando empresa..." : geocodeState.geocoding ? "Localizando endereço..." : "Criar conta empresarial"}
                     </button>
                 </form>
             </section>
