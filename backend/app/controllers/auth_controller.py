@@ -46,13 +46,14 @@ class AuthController:
     def verificar_codigo(dados):
         tentativa_id = dados.get("tentativa_id", "")
         codigo = dados.get("codigo", "").strip()
+        tipo_conta = dados.get("tipo_conta") or dados.get("audiencia")
 
         if not tentativa_id or not codigo:
             return make_response(
                 jsonify({"erro": "Tentativa e código são obrigatórios."}), 400
             )
 
-        resultado = AuthService.verificar_codigo(tentativa_id, codigo)
+        resultado = AuthService.verificar_codigo(tentativa_id, codigo, tipo_conta=tipo_conta)
 
         if not resultado["success"]:
             return make_response(

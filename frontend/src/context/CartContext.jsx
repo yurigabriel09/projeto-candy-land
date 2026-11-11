@@ -2,7 +2,12 @@ import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "candyland_cart";
-const CARRINHO_VAZIO = { restauranteId: null, restauranteNome: null, itens: [], orderType: "DELIVERY" };
+const CARRINHO_VAZIO = {
+    restauranteId: null,
+    restauranteNome: null,
+    itens: [],
+    orderType: "DELIVERY"
+};
 
 function carregarCarrinhoInicial() {
     const dadosSalvos = localStorage.getItem(CART_STORAGE_KEY);
@@ -10,14 +15,14 @@ function carregarCarrinhoInicial() {
 
     try {
         const dados = JSON.parse(dadosSalvos);
-        if (!Array.isArray(dados?.itens)) return { ...CARRINHO_VAZIO };
-        return {
-            ...CARRINHO_VAZIO,
-            ...dados,
-            orderType: ["DELIVERY", "PICKUP"].includes(dados.orderType)
-                ? dados.orderType
-                : "DELIVERY",
-        };
+        if (Array.isArray(dados?.itens)) {
+            return {
+                ...CARRINHO_VAZIO,
+                ...dados,
+                orderType: dados.orderType || "DELIVERY"
+            };
+        }
+        return CARRINHO_VAZIO;
     } catch {
         localStorage.removeItem(CART_STORAGE_KEY);
         return CARRINHO_VAZIO;
@@ -33,14 +38,17 @@ export function CartProvider({ children }) {
     }
 
     function adicionarItem(produto, restauranteId, restauranteNome) {
+        // Captura qualquer propriedade de imagem enviada pelo objeto do produto
+        const imagemUrl = produto.image_url || produto.imagem_url || produto.foto_url || produto.imagem || produto.foto || null;
+
         const itemNovo = {
-            id_produto: produto.id_produto,
-            nome: produto.nome_produto,
-            preco: Number(produto.preco_produto),
+            id_produto: produto.id_produto || produto.id,
+            nome: produto.nome_produto || produto.nome || produto.name,
+            preco: Number(produto.preco_produto || produto.preco || produto.price),
+            imagem_url: imagemUrl,
             quantidade: 1
         };
 
-        // Trocar de restaurante esvazia o carrinho atual (a pergunta fica fora do setState)
         if (carrinho.restauranteId && carrinho.restauranteId !== restauranteId) {
             const confirmou = window.confirm(
                 "Seu carrinho tem itens de outro restaurante. Deseja esvaziar e adicionar este novo item?"
@@ -53,15 +61,16 @@ export function CartProvider({ children }) {
                 restauranteNome,
                 itens: [itemNovo],
             });
+            aplicar({ ...CARRINHO_VAZIO, restauranteId, restauranteNome, itens: [itemNovo] });
             return;
         }
 
-        const itemExistente = carrinho.itens.find((i) => i.id_produto === produto.id_produto);
+        const itemExistente = carrinho.itens.find((i) => i.id_produto === itemNovo.id_produto);
 
         const novosItens = itemExistente
             ? carrinho.itens.map((i) =>
-                i.id_produto === produto.id_produto
-                    ? { ...i, quantidade: i.quantidade + 1 }
+                i.id_produto === itemNovo.id_produto
+                    ? { ...i, quantidade: i.quantidade + 1, imagem_url: i.imagem_url || imagemUrl }
                     : i
             )
             : [...carrinho.itens, itemNovo];
@@ -73,16 +82,12 @@ export function CartProvider({ children }) {
             itens: novosItens,
             orderType: carrinho.orderType || "DELIVERY",
         });
+        aplicar({ ...carrinho, restauranteId, restauranteNome, itens: novosItens });
     }
 
     function removerItem(idProduto) {
         const novosItens = carrinho.itens.filter((i) => i.id_produto !== idProduto);
-
-        aplicar(
-            novosItens.length === 0
-                ? CARRINHO_VAZIO
-                : { ...carrinho, itens: novosItens }
-        );
+        aplicar(novosItens.length === 0 ? CARRINHO_VAZIO : { ...carrinho, itens: novosItens });
     }
 
     function atualizarQuantidade(idProduto, quantidade) {
@@ -90,7 +95,6 @@ export function CartProvider({ children }) {
             removerItem(idProduto);
             return;
         }
-
         aplicar({
             ...carrinho,
             itens: carrinho.itens.map((i) =>
@@ -118,6 +122,7 @@ export function CartProvider({ children }) {
                 adicionarItem,
                 atualizarQuantidade,
                 removerItem,
+                atualizarTipoPedido,
                 limparCarrinho,
                 atualizarTipoPedido,
                 total,

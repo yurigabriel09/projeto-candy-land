@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUser, updateUser } from "../services/userService";
-import usePendingOrdersCount from "../hooks/usePendingOrdersCount";
-
+import { getAddressByCep } from "../services/addressService";
+import { maskCep } from "../utils/masks";
 
 function iniciais(nome) {
     const partes = (nome || "").trim().split(/\s+/).filter(Boolean);
@@ -33,9 +33,61 @@ function mascararCpf(valor) {
     return `***.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-**`;
 }
 
+const EMPTY_ADDRESS_FORM = {
+    id: null,
+    cep: "",
+    rua: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    referencia: "",
+    latitude: null,
+    longitude: null,
+    principal: false,
+};
+
+async function obterCoordenadasEmSegundoPlano(rua, numero, bairro, cidade, estado, cep) {
+    try {
+        const enderecoCompleto = encodeURIComponent(`${rua} ${numero}, ${bairro}, ${cidade} - ${estado}, Brasil`);
+        const resposta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${enderecoCompleto}`);
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            if (dados && dados.length > 0) {
+                return {
+                    latitude: Number(dados[0].lat),
+                    longitude: Number(dados[0].lon)
+                };
+            }
+        }
+    } catch (e) {
+        console.warn("Geocodificação por endereço falhou, tentando por CEP...", e);
+    }
+
+    try {
+        const cepLimpo = cep.replace(/\D/g, "");
+        const queryCep = encodeURIComponent(`${cepLimpo}, Brasil`);
+        const respostaCep = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${queryCep}`);
+        if (respostaCep.ok) {
+            const dadosCep = await respostaCep.json();
+            if (dadosCep && dadosCep.length > 0) {
+                return {
+                    latitude: Number(dadosCep[0].lat),
+                    longitude: Number(dadosCep[0].lon)
+                };
+            }
+        }
+    } catch (e) {
+        console.warn("Geocodificação por CEP falhou:", e);
+    }
+
+    return { latitude: null, longitude: null };
+}
+
 function DadosPessoais() {
     const { dadosAutenticacao, entrar, sair } = useAuth();
-    const pagamentosPendentes = usePendingOrdersCount(Boolean(dadosAutenticacao?.token && dadosAutenticacao?.tipo_conta === "PERSONAL"));
+    const userId = dadosAutenticacao?.id;
 
     const [usuario, setUsuario] = useState(null);
     const [nome, setNome] = useState("");
@@ -45,9 +97,32 @@ function DadosPessoais() {
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState("");
 
+    const [enderecos, setEnderecos] = useState([]);
+    const [carregandoEnderecos, setCarregandoEnderecos] = useState(false);
+    const [exibirFormEndereco, setExibirFormEndereco] = useState(false);
+    const [formEndereco, setFormEndereco] = useState(EMPTY_ADDRESS_FORM);
+    const [salvandoEndereco, setSalvandoEndereco] = useState(false);
+    const [erroEndereco, setErroEndereco] = useState("");
+    const [sucessoEndereco, setSucessoEndereco] = useState("");
+    const [loadingCep, setLoadingCep] = useState(false);
+    const cepLookupRequest = useRef(0);
+
+    function obterToken() {
+        if (dadosAutenticacao?.token) return dadosAutenticacao.token;
+        try {
+            const raw = localStorage.getItem("candyland_auth");
+            return raw ? JSON.parse(raw).token : null;
+        } catch {
+            return null;
+        }
+    }
+
+    const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+
     useEffect(() => {
         carregar();
-    }, []);
+        carregarEnderecos();
+    }, [userId]);
 
     function aplicar(dados) {
         setUsuario(dados);
@@ -56,15 +131,36 @@ function DadosPessoais() {
     }
 
     async function carregar() {
+        if (!userId) return;
         setCarregando(true);
         setErro("");
         try {
-            const dados = await getUser(dadosAutenticacao.id);
+            const dados = await getUser(userId);
             aplicar(dados);
         } catch (error) {
             setErro(error.message || "Não foi possível carregar seus dados.");
         } finally {
             setCarregando(false);
+        }
+    }
+
+    async function carregarEnderecos() {
+        const token = obterToken();
+        if (!userId || !token) return;
+
+        setCarregandoEnderecos(true);
+        try {
+            const resposta = await fetch(`${apiBase}/users/${userId}/enderecos`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (resposta.ok) {
+                const res = await resposta.json();
+                setEnderecos(res.dados || []);
+            }
+        } catch (e) {
+            console.error("Erro ao carregar endereços:", e);
+        } finally {
+            setCarregandoEnderecos(false);
         }
     }
 
@@ -87,11 +183,6 @@ function DadosPessoais() {
             return;
         }
 
-        if (usuario.data_nascimento && !nascimento) {
-            setErro("A data de nascimento não pode ficar vazia.");
-            return;
-        }
-
         const alteracoes = {};
         if (nomeAlterado) alteracoes.nome_completo = nome.trim();
         if (nascimentoAlterado && nascimento) alteracoes.data_nascimento = nascimento;
@@ -102,16 +193,168 @@ function DadosPessoais() {
         try {
             const atualizado = await updateUser(usuario.id, alteracoes);
             aplicar(atualizado);
-
-            // A sessão guarda o nome de quando a pessoa entrou. Atualizamos
-            // para o cabeçalho do site mostrar o nome novo, mantendo o token.
             entrar({ ...dadosAutenticacao, nome_completo: atualizado.nome_completo });
-
             setSucesso("Dados atualizados com sucesso.");
         } catch (error) {
             setErro(error.message || "Não foi possível salvar. Tente novamente.");
         } finally {
             setSalvando(false);
+        }
+    }
+
+    function handleNovoEndereco() {
+        setFormEndereco(EMPTY_ADDRESS_FORM);
+        setErroEndereco("");
+        setSucessoEndereco("");
+        setExibirFormEndereco(true);
+    }
+
+    function handleEditarEndereco(end) {
+        setFormEndereco({
+            id: end.id,
+            cep: maskCep(end.cep || ""),
+            rua: end.rua || "",
+            numero: end.numero || "",
+            complemento: end.complemento || "",
+            bairro: end.bairro || "",
+            cidade: end.cidade || "",
+            estado: end.estado || "",
+            referencia: end.referencia || "",
+            latitude: end.latitude ?? null,
+            longitude: end.longitude ?? null,
+            principal: end.principal || false,
+        });
+        setErroEndereco("");
+        setSucessoEndereco("");
+        setExibirFormEndereco(true);
+    }
+
+    function handleAddressFormChange(e) {
+        const { name, value, type, checked } = e.target;
+        const val = type === "checkbox" ? checked : value;
+
+        if (name === "cep") {
+            const cepFormatado = maskCep(value);
+            const cepLimpo = cepFormatado.replace(/\D/g, "");
+            const requestId = ++cepLookupRequest.current;
+
+            setFormEndereco((curr) => ({ ...curr, cep: cepFormatado }));
+
+            if (cepLimpo.length !== 8) {
+                setLoadingCep(false);
+                return;
+            }
+
+            setLoadingCep(true);
+            getAddressByCep(cepLimpo)
+                .then((resultado) => {
+                    if (requestId !== cepLookupRequest.current) return;
+                    setFormEndereco((curr) => ({
+                        ...curr,
+                        rua: resultado.address || curr.rua,
+                        bairro: resultado.neighborhood || curr.bairro,
+                        cidade: resultado.city || curr.cidade,
+                        estado: resultado.state || curr.estado,
+                    }));
+                })
+                .catch(() => {})
+                .finally(() => {
+                    if (requestId === cepLookupRequest.current) setLoadingCep(false);
+                });
+            return;
+        }
+
+        setFormEndereco((curr) => ({ ...curr, [name]: val }));
+    }
+
+    async function handleSalvarEndereco(e) {
+        e.preventDefault();
+        setErroEndereco("");
+        setSucessoEndereco("");
+
+        const token = obterToken();
+        if (!token) {
+            setErroEndereco("Sessão expirada. Faça login novamente.");
+            return;
+        }
+
+        setSalvandoEndereco(true);
+
+        try {
+            let lat = formEndereco.latitude;
+            let lng = formEndereco.longitude;
+
+            if (lat === null || lng === null) {
+                const coordsAuto = await obterCoordenadasEmSegundoPlano(
+                    formEndereco.rua,
+                    formEndereco.numero,
+                    formEndereco.bairro,
+                    formEndereco.cidade,
+                    formEndereco.estado,
+                    formEndereco.cep
+                );
+                lat = coordsAuto.latitude;
+                lng = coordsAuto.longitude;
+            }
+
+            const payload = {
+                id: formEndereco.id || null,
+                cep: formEndereco.cep.replace(/\D/g, ""),
+                rua: formEndereco.rua,
+                numero: formEndereco.numero,
+                complemento: formEndereco.complemento,
+                bairro: formEndereco.bairro,
+                cidade: formEndereco.cidade,
+                estado: formEndereco.estado.toUpperCase(),
+                referencia: formEndereco.referencia,
+                latitude: lat,
+                longitude: lng,
+                principal: formEndereco.principal,
+            };
+
+            const resposta = await fetch(`${apiBase}/users/${userId}/enderecos`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const contentType = resposta.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error(`Erro no servidor (${resposta.status} ${resposta.statusText}). O backend precisa aceitar o método POST na rota /users/${userId}/enderecos.`);
+            }
+
+            const dados = await resposta.json();
+            if (!resposta.ok || (dados.success !== undefined && !dados.success)) {
+                throw new Error(dados.erro || dados.mensagem || "Erro ao salvar endereço.");
+            }
+
+            setSucessoEndereco(formEndereco.id ? "Endereço atualizado com sucesso!" : "Endereço cadastrado com sucesso!");
+            setExibirFormEndereco(false);
+            setFormEndereco(EMPTY_ADDRESS_FORM);
+            await carregarEnderecos();
+        } catch (err) {
+            setErroEndereco(err.message || "Erro ao salvar endereço.");
+        } finally {
+            setSalvandoEndereco(false);
+        }
+    }
+
+    async function handleExcluirEndereco(id) {
+        if (!window.confirm("Deseja realmente remover este endereço?")) return;
+        const token = obterToken();
+        try {
+            const resposta = await fetch(`${apiBase}/users/${userId}/enderecos/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (resposta.ok) {
+                await carregarEnderecos();
+            }
+        } catch (e) {
+            console.error("Erro ao excluir endereço:", e);
         }
     }
 
@@ -167,15 +410,6 @@ function DadosPessoais() {
                             <span className="conta-menu-numero">01</span>
                             Dados pessoais
                         </button>
-                        <button type="button" className="conta-menu-item" disabled title="Em breve">
-                            <span className="conta-menu-numero">02</span>
-                            Configurações
-                        </button>
-                        <Link to="/minha-conta/pagamentos-pendentes" className="conta-menu-item conta-menu-item-pendentes">
-                            <span className="conta-menu-numero">03</span>
-                            <span>Pedidos e pagamentos pendentes</span>
-                            {pagamentosPendentes > 0 && <span className="cart-badge" aria-label={`${pagamentosPendentes} pedidos pendentes`}>{pagamentosPendentes}</span>}
-                        </Link>
                     </nav>
 
                     <button type="button" className="conta-menu-sair" onClick={handleSair}>
@@ -187,10 +421,10 @@ function DadosPessoais() {
                     <p className="conta-eyebrow">MINHA CONTA</p>
                     <h1 className="conta-titulo">Dados pessoais</h1>
                     <p className="conta-subtitulo">
-                        Mantenha seus dados atualizados para receber pedidos sem imprevistos.
+                        Mantenha seus dados e endereços atualizados para receber seus pedidos sem imprevistos.
                     </p>
 
-                    <form className="conta-card" onSubmit={handleSubmit}>
+                    <form className="conta-card" onSubmit={handleSubmit} style={{ marginBottom: "32px" }}>
                         <div className="conta-foto">
                             <span className="conta-avatar conta-avatar-grande">
                                 {iniciais(usuario.nome_completo)}
@@ -198,12 +432,7 @@ function DadosPessoais() {
                             <div className="conta-foto-textos">
                                 <strong>Foto de perfil</strong>
                                 <p>PNG ou JPG com até 5 MB</p>
-                                <button
-                                    type="button"
-                                    className="btn-contorno"
-                                    disabled
-                                    title="Em breve: o envio de foto ainda não está disponível"
-                                >
+                                <button type="button" className="btn-contorno" disabled>
                                     Alterar foto
                                 </button>
                             </div>
@@ -232,7 +461,6 @@ function DadosPessoais() {
                                     value={formatarCelular(usuario.telefone)}
                                     readOnly
                                 />
-                                <small>Usado no login por WhatsApp. Alteração com verificação em breve.</small>
                             </div>
 
                             <div className="conta-campo conta-campo-cheio">
@@ -243,7 +471,6 @@ function DadosPessoais() {
                                     value={usuario.email || ""}
                                     readOnly
                                 />
-                                <small>Usado no login por código. Alteração com verificação em breve.</small>
                             </div>
 
                             <div className="conta-campo">
@@ -279,6 +506,196 @@ function DadosPessoais() {
                             </button>
                         </div>
                     </form>
+
+                    <div className="conta-card">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                            <div>
+                                <p className="conta-eyebrow">ENTREGA</p>
+                                <h2 style={{ margin: 0, fontSize: "22px" }}>Meus Endereços</h2>
+                            </div>
+                            {!exibirFormEndereco && (
+                                <button type="button" className="btn-principal btn-pequeno" onClick={handleNovoEndereco}>
+                                    + Adicionar Endereço
+                                </button>
+                            )}
+                        </div>
+
+                        {sucessoEndereco && <p className="auth-success" role="status">{sucessoEndereco}</p>}
+
+                        {exibirFormEndereco && (
+                            <form onSubmit={handleSalvarEndereco} style={{ background: "#fff5f2", padding: "20px", borderRadius: "16px", marginBottom: "24px", border: "1px solid var(--borda)" }}>
+                                <h3 style={{ marginTop: 0, marginBottom: "16px" }}>
+                                    {formEndereco.id ? "Editar Endereço" : "Novo Endereço de Entrega"}
+                                </h3>
+
+                                {erroEndereco && <p className="auth-error" role="alert">{erroEndereco}</p>}
+
+                                <div className="form-grid-two">
+                                    <div className="form-field">
+                                        <label htmlFor="end-cep">CEP</label>
+                                        <input
+                                            id="end-cep"
+                                            name="cep"
+                                            value={formEndereco.cep}
+                                            onChange={handleAddressFormChange}
+                                            placeholder="00000-000"
+                                            maxLength={9}
+                                            required
+                                        />
+                                        {loadingCep && <small className="field-message">Buscando CEP...</small>}
+                                    </div>
+                                    <div className="form-field">
+                                        <label htmlFor="end-numero">Número</label>
+                                        <input
+                                            id="end-numero"
+                                            name="numero"
+                                            value={formEndereco.numero}
+                                            onChange={handleAddressFormChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="end-rua">Rua / Logradouro</label>
+                                    <input
+                                        id="end-rua"
+                                        name="rua"
+                                        value={formEndereco.rua}
+                                        onChange={handleAddressFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-grid-two">
+                                    <div className="form-field">
+                                        <label htmlFor="end-complemento">Complemento (opcional)</label>
+                                        <input
+                                            id="end-complemento"
+                                            name="complemento"
+                                            value={formEndereco.complemento}
+                                            onChange={handleAddressFormChange}
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label htmlFor="end-bairro">Bairro</label>
+                                        <input
+                                            id="end-bairro"
+                                            name="bairro"
+                                            value={formEndereco.bairro}
+                                            onChange={handleAddressFormChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-grid-two">
+                                    <div className="form-field">
+                                        <label htmlFor="end-cidade">Cidade</label>
+                                        <input
+                                            id="end-cidade"
+                                            name="cidade"
+                                            value={formEndereco.cidade}
+                                            onChange={handleAddressFormChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label htmlFor="end-estado">UF</label>
+                                        <input
+                                            id="end-estado"
+                                            name="estado"
+                                            value={formEndereco.estado}
+                                            onChange={handleAddressFormChange}
+                                            maxLength={2}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="end-referencia">Ponto de referência (opcional)</label>
+                                    <input
+                                        id="end-referencia"
+                                        name="referencia"
+                                        value={formEndereco.referencia}
+                                        onChange={handleAddressFormChange}
+                                        placeholder="Ex.: Próximo à padaria"
+                                    />
+                                </div>
+
+                                <div className="form-field" style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "12px" }}>
+                                    <input
+                                        type="checkbox"
+                                        id="end-principal"
+                                        name="principal"
+                                        checked={formEndereco.principal}
+                                        onChange={handleAddressFormChange}
+                                        style={{ width: "18px", height: "18px" }}
+                                    />
+                                    <label htmlFor="end-principal" style={{ margin: 0, cursor: "pointer" }}>
+                                        Definir como endereço principal
+                                    </label>
+                                </div>
+
+                                <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+                                    <button type="submit" className="primary-button" disabled={salvandoEndereco}>
+                                        {salvandoEndereco ? "Salvando..." : "Salvar Endereço"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn-contorno"
+                                        onClick={() => setExibirFormEndereco(false)}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {carregandoEnderecos ? (
+                            <p className="mensagem-carregando">Carregando seus endereços...</p>
+                        ) : enderecos.length === 0 ? (
+                            <p className="mensagem-vazia">Nenhum endereço cadastrado. Adicione um para poder receber entregas em casa.</p>
+                        ) : (
+                            <div className="checkout-address-list">
+                                {enderecos.map((end) => (
+                                    <div key={end.id} className="checkout-address-card">
+                                        <div className="checkout-address-card-inner">
+                                            <div>
+                                                <strong className="checkout-address-text-street">
+                                                    {end.rua}, {end.numero} {end.complemento ? `(${end.complemento})` : ""}
+                                                </strong>
+                                                <small className="checkout-address-text-details">
+                                                    {end.bairro} — {end.cidade}/{end.estado} · CEP {end.cep}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            {end.principal && (
+                                                <span className="checkout-address-tag-principal">Principal</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                className="btn-contorno btn-pequeno"
+                                                onClick={() => handleEditarEndereco(end)}
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-contorno btn-pequeno"
+                                                style={{ borderColor: "var(--erro)", color: "var(--erro)" }}
+                                                onClick={() => handleExcluirEndereco(end.id)}
+                                            >
+                                                Excluir
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </main>
             </div>
         </div>

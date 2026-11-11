@@ -1,738 +1,346 @@
-import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { GoogleLogin } from "@react-oauth/google";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
-import PhoneInput from "../components/PhoneInput";
-import { countries } from "../utils/countries";
-
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "")}/auth`;
 
 function Login({ audiencia = "PERSONAL" }) {
-    const { entrar, autenticado, dadosAutenticacao: sessaoAutenticacao } = useAuth();
-    const [tipo, setTipo] = useState("email");
-    const [valor, setValor] = useState("");
+    const isBusiness = audiencia === "BUSINESS";
+    
+    // Estados do fluxo 2FA: "EMAIL" | "CODIGO_EMAIL" | "CELULAR" | "CODIGO_CELULAR"
+    const [etapa, setEtapa] = useState("EMAIL");
+    const [email, setEmail] = useState("");
+    const [celular, setCelular] = useState("");
     const [codigo, setCodigo] = useState("");
-    const [etapa, setEtapa] = useState("login");
-    const [canalAtual, setCanalAtual] = useState("");
-    const [tentativaId, setTentativaId] = useState("");
-    const [dadosAutenticacao, setDadosAutenticacao] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [tentativaId, setTentativaId] = useState(null);
     const [erro, setErro] = useState("");
-    const [mensagem, setMensagem] = useState("");
-    const [pais, setPais] = useState("BR");
-    const [socialProvider, setSocialProvider] = useState("");
-    const [socialCredential, setSocialCredential] = useState("");
-    const [socialTicket, setSocialTicket] = useState("");
+    const [carregando, setCarregando] = useState(false);
+
     const navigate = useNavigate();
+    const { iniciarLogin } = useAuth();
+    const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
-    useEffect(() => {
-        if (autenticado) {
-            const destino = sessaoAutenticacao?.tipo_conta === "BUSINESS" ? "/business" : "/home";
-            navigate(destino, { replace: true });
-            return;
-        }
-
-        const parametros = new URLSearchParams(window.location.search);
-
-        const facebookTicket = parametros.get("facebook_ticket");
-        const facebookError = parametros.get("facebook_error");
-
-        if (facebookError) {
-            setErro(facebookError);
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return;
-        }
-
-        if (facebookTicket) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            handleFacebookLogin(facebookTicket);
-        }
-    }, [autenticado, sessaoAutenticacao?.tipo_conta, navigate]);
-
-    async function handleSubmit(event) {
-        event.preventDefault();
+    // 1. Enviar e-mail para receber o 1º código
+    async function handleEnviarEmail(e) {
+        e.preventDefault();
         setErro("");
-        setMensagem("");
 
-        if (!valor.trim()) {
-            setErro(tipo === "email" ? "Informe seu e-mail." : "Informe seu celular.");
+        if (!email.trim() || !email.includes("@")) {
+            setErro("Informe um e-mail válido.");
             return;
         }
 
-        setLoading(true);
-
+        setCarregando(true);
         try {
-            const canal = tipo === "email" ? "EMAIL" : "WHATSAPP";
-            let valorFormatado = valor.trim().toLowerCase();
-
-            if (tipo === "phone") {
-                const country = countries.find((item) => item.code === pais);
-
-                if (!country) {
-                    setErro("Selecione um país.");
-                    return;
-                }
-
-                const phone = parsePhoneNumberFromString(valor, country.code);
-
-                if (!phone || !phone.isValid()) {
-                    setErro("Informe um celular válido.");
-                    return;
-                }
-
-                valorFormatado = phone.number;
-            }
-
-            const response = await fetch(`${API_URL}/login`, {
+            const resposta = await fetch(`${apiBase}/auth/login`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    canal,
-                    valor: valorFormatado
+                    canal: "EMAIL",
+                    valor: email.trim(),
+                    audiencia: audiencia
                 })
             });
 
-            const resultado = await response.json();
+            const dados = await resposta.json();
+            if (!resposta.ok) throw new Error(dados.erro || "Erro ao solicitar código.");
 
-            if (!response.ok) {
-                throw new Error(resultado.erro || "Não foi possível enviar o código.");
-            }
-
-            setTentativaId(resultado.tentativa_id);
-            setCanalAtual(canal);
-            setDadosAutenticacao({
-                [canal === "EMAIL" ? "email" : "telefone"]: valorFormatado
-            });
-            setCodigo("");
-            setMensagem(resultado.mensagem);
-            setEtapa("codigo");
-        } catch (error) {
-            setErro(error.message);
+            setTentativaId(dados.tentativa_id);
+            setEtapa("CODIGO_EMAIL");
+        } catch (err) {
+            setErro(err.message || "Falha ao conectar com o servidor.");
         } finally {
-            setLoading(false);
+            setCarregando(false);
         }
     }
 
-    async function handleVerify(event) {
-        event.preventDefault();
+    // 2. Validar código recebido no E-mail
+    async function handleVerificarCodigoEmail(e) {
+        e.preventDefault();
         setErro("");
-        setMensagem("");
 
         if (!codigo.trim()) {
-            setErro("Informe o código recebido.");
+            setErro("Digite o código recebido no e-mail.");
             return;
         }
 
-        setLoading(true);
-
+        setCarregando(true);
         try {
-            const response = await fetch(`${API_URL}/verify`, {
+            const resposta = await fetch(`${apiBase}/auth/verify`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tentativa_id: tentativaId,
-                    codigo: codigo.trim()
+                    codigo: codigo.trim(),
+                    tipo_conta: audiencia
                 })
             });
 
-            const resultado = await response.json();
+            const dados = await resposta.json();
+            if (!resposta.ok) throw new Error(dados.erro || "Código inválido ou expirado.");
 
-            if (!response.ok) {
-                throw new Error(resultado.erro || "Código inválido.");
-            }
+            setCodigo(""); // Limpa o input para o próximo código
 
-            if (resultado.dados) {
-                setDadosAutenticacao(resultado.dados);
-            }
-
-            if (resultado.proximo_canal) {
-                setCanalAtual(resultado.proximo_canal);
-                setValor("");
-                setCodigo("");
-                setMensagem(resultado.mensagem);
-                setEtapa("segundo-dado");
+            // Caso o backend já retorne autenticado (ex: usuário em ambiente dev)
+            if (dados.dados) {
+                concluirSessao(dados.dados);
                 return;
             }
 
-            if (resultado.dados?.novo_cadastro) {
-                const destino = audiencia === "BUSINESS" ? "/register/business" : "/register/personal";
-                navigate(destino, {
-                    state: {
-                        tentativaId: resultado.dados.tentativa_id || tentativaId,
-                        email: resultado.dados.email,
-                        telefone: resultado.dados.telefone
-                    }
-                });
-                return;
+            // Se o próximo canal for WHATSAPP, avança para pedir o celular
+            if (dados.proximo_canal === "WHATSAPP") {
+                setEtapa("CELULAR");
             }
-
-            if (resultado.dados?.token) {
-                entrar(resultado.dados);
-            }
-
-            if (resultado.dados?.tipo_conta === "PERSONAL") {
-                navigate("/home");
-                return;
-            }
-
-            if (resultado.dados?.tipo_conta === "BUSINESS") {
-                navigate("/business");
-                return;
-            }
-        } catch (error) {
-            setErro(error.message);
+        } catch (err) {
+            setErro(err.message || "Falha ao validar código do e-mail.");
         } finally {
-            setLoading(false);
+            setCarregando(false);
         }
     }
 
-    async function handleGoogleLogin(credential, telefone = null) {
+    // 3. Enviar celular/WhatsApp para receber o 2º código
+    async function handleEnviarCelular(e) {
+        e.preventDefault();
         setErro("");
-        setMensagem("");
-        setLoading(true);
 
+        if (!celular.trim()) {
+            setErro("Informe o número de celular/WhatsApp.");
+            return;
+        }
+
+        setCarregando(true);
         try {
-            const response = await fetch(`${API_URL}/google`, {
+            const resposta = await fetch(`${apiBase}/auth/second-code`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    credential,
-                    ...(telefone ? { telefone } : {})
-                })
-            });
-
-            const resultado = await response.json();
-
-            if (resultado.precisa_telefone) {
-                setSocialProvider("GOOGLE");
-                setSocialCredential(credential);
-
-                setDadosAutenticacao(resultado);
-                setEtapa("segundo-dado");
-                setCanalAtual("WHATSAPP");
-                setTentativaId(resultado.tentativa_id || "");
-                setValor("");
-                setMensagem("Informe seu celular para continuar.");
-
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(
-                    resultado.erro ||
-                    "Não foi possível entrar com o Google."
-                );
-            }
-
-            setSocialProvider("GOOGLE");
-            setSocialCredential(credential);
-
-            setDadosAutenticacao(resultado);
-            setTentativaId(resultado.tentativa_id || "");
-
-            if (resultado.mensagem) {
-                setMensagem(resultado.mensagem);
-            }
-
-            if (resultado.dados?.token) {
-                entrar(resultado.dados);
-            }
-
-            if (resultado.proximo_canal === "WHATSAPP") {
-                setCanalAtual("WHATSAPP");
-                setValor(resultado.telefone || telefone || "");
-                setEtapa("codigo");
-                return;
-            }
-
-            if (resultado.dados?.novo_cadastro) {
-                navigate(audiencia === "BUSINESS" ? "/register/business" : "/register/personal", {
-                    state: {
-                        tentativaId:
-                            resultado.dados.tentativa_id ||
-                            resultado.tentativa_id,
-                        email: resultado.dados.email,
-                        telefone: resultado.dados.telefone
-                    }
-                });
-                return;
-            }
-
-            if (resultado.dados?.tipo_conta === "PERSONAL") {
-                navigate("/home");
-                return;
-            }
-
-            if (resultado.dados?.tipo_conta === "BUSINESS") {
-                navigate("/business");
-            }
-
-        } catch (error) {
-            setErro(error.message);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function handleFacebookLogin(ticket, telefone = null) {
-        setErro("");
-        setMensagem("");
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${API_URL}/facebook/complete`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    ticket,
-                    ...(telefone ? { telefone } : {})
-                })
-            });
-
-            const resultado = await response.json();
-
-            if (resultado.precisa_telefone) {
-                setSocialProvider("FACEBOOK");
-                setSocialTicket(ticket);
-                setDadosAutenticacao(resultado);
-                setEtapa("segundo-dado");
-                setCanalAtual("WHATSAPP");
-                setTentativaId("");
-                setValor("");
-                setMensagem(
-                    "Informe seu celular para continuar."
-                );
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(
-                    resultado.erro ||
-                    "Não foi possível entrar com o Facebook."
-                );
-            }
-
-            setDadosAutenticacao(resultado);
-            setTentativaId(resultado.tentativa_id || "");
-
-            if (resultado.mensagem) {
-                setMensagem(resultado.mensagem);
-            }
-
-            if (resultado.proximo_canal === "WHATSAPP") {
-                setCanalAtual("WHATSAPP");
-                setValor(resultado.telefone || "");
-                setEtapa("codigo");
-                return;
-            }
-
-            if (resultado.dados?.token) {
-                entrar(resultado.dados);
-            }
-
-            if (resultado.dados?.novo_cadastro) {
-                navigate(audiencia === "BUSINESS" ? "/register/business" : "/register/personal", {
-                    state: {
-                        tentativaId:
-                            resultado.dados.tentativa_id ||
-                            resultado.tentativa_id,
-                        email: resultado.dados.email,
-                        telefone: resultado.dados.telefone
-                    }
-                });
-                return;
-            }
-
-            if (resultado.dados?.tipo_conta === "PERSONAL") {
-                navigate("/home");
-                return;
-            }
-
-            if (resultado.dados?.tipo_conta === "BUSINESS") {
-                navigate("/business");
-            }
-
-        } catch (error) {
-            setErro(error.message);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function handleSegundoDado(event) {
-        event.preventDefault();
-
-        setErro("");
-        setMensagem("");
-
-        if (!valor.trim()) {
-            setErro(
-                canalAtual === "EMAIL"
-                    ? "Informe seu e-mail."
-                    : "Informe seu celular."
-            );
-            return;
-        }
-
-        let valorFormatado = valor.trim().toLowerCase();
-
-        if (canalAtual === "WHATSAPP") {
-            const country = countries.find(
-                (item) => item.code === pais
-            );
-
-            if (!country) {
-                setErro("Selecione um país.");
-                return;
-            }
-
-            const phone = parsePhoneNumberFromString(
-                valor,
-                country.code
-            );
-
-            if (!phone || !phone.isValid()) {
-                setErro("Informe um celular válido.");
-                return;
-            }
-
-            valorFormatado = phone.number;
-        }
-
-        if (socialProvider === "GOOGLE") {
-            await handleGoogleLogin(
-                socialCredential,
-                valorFormatado
-            );
-            return;
-        }
-
-        if (socialProvider === "FACEBOOK") {
-            await handleFacebookLogin(
-                socialTicket,
-                valorFormatado
-            );
-            return;
-        }
-
-        if (!tentativaId) {
-            setErro("Não foi possível continuar a autenticação.");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${API_URL}/second-code`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tentativa_id: tentativaId,
-                    valor: valorFormatado
+                    valor: celular.trim()
                 })
             });
 
-            const resultado = await response.json();
+            const dados = await resposta.json();
+            if (!resposta.ok) throw new Error(dados.erro || "Erro ao enviar código para o WhatsApp.");
 
-            if (!response.ok) {
-                throw new Error(
-                    resultado.erro ||
-                    "Não foi possível enviar o código."
-                );
-            }
-
-            setTentativaId(resultado.tentativa_id || tentativaId);
-            setDadosAutenticacao(resultado);
-            setCanalAtual(resultado.proximo_canal || canalAtual);
-            setValor(
-                resultado.telefone ||
-                resultado.email ||
-                valorFormatado
-            );
-            setCodigo("");
-            setMensagem(resultado.mensagem);
-            setEtapa("codigo");
-
-        } catch (error) {
-            setErro(error.message);
+            setEtapa("CODIGO_CELULAR");
+        } catch (err) {
+            setErro(err.message || "Falha ao enviar código para o WhatsApp.");
         } finally {
-            setLoading(false);
+            setCarregando(false);
         }
     }
 
-    function voltarParaLogin() {
-        setEtapa("login");
-        setCodigo("");
-        setValor("");
-        setTentativaId("");
-        setCanalAtual("");
-        setDadosAutenticacao({});
-        setSocialProvider("");
-        setSocialCredential("");
-        setSocialTicket("");
+    // 4. Validar 2º código recebido no WhatsApp e finalizar login
+    async function handleVerificarCodigoCelular(e) {
+        e.preventDefault();
         setErro("");
-        setMensagem("");
+
+        if (!codigo.trim()) {
+            setErro("Digite o código recebido no WhatsApp.");
+            return;
+        }
+
+        setCarregando(true);
+        try {
+            const resposta = await fetch(`${apiBase}/auth/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    tentativa_id: tentativaId,
+                    codigo: codigo.trim(),
+                    tipo_conta: audiencia
+                })
+            });
+
+            const dados = await resposta.json();
+            if (!resposta.ok) throw new Error(dados.erro || "Código do WhatsApp inválido.");
+
+            if (dados.dados) {
+                concluirSessao(dados.dados);
+            } else {
+                throw new Error("Não foi possível obter os dados de autenticação.");
+            }
+        } catch (err) {
+            setErro(err.message || "Falha ao validar código do WhatsApp.");
+        } finally {
+            setCarregando(false);
+        }
     }
 
-    const nomeCanal = canalAtual === "EMAIL" ? "e-mail" : "WhatsApp";
-    const segundoDado = canalAtual === "EMAIL" ? "seu e-mail" : "seu celular";
+    // Gravação da sessão e redirecionamento final
+    function concluirSessao(dadosConta) {
+        if (dadosConta.novo_cadastro) {
+            const destino = isBusiness ? "/register/business" : "/register/personal";
+            navigate(destino, { state: { email: email.trim(), tentativa_id: tentativaId } });
+            return;
+        }
 
-    if (autenticado) {
-        return <Navigate to={sessaoAutenticacao?.tipo_conta === "BUSINESS" ? "/business" : "/home"} replace />;
+        if (iniciarLogin) {
+            iniciarLogin(dadosConta);
+        }
+
+        navigate(isBusiness ? "/business" : "/home");
+    }
+
+    if (isBusiness) {
+        return (
+            <div className="partner-login-page">
+                <div className="partner-login-container">
+                    
+                    <div className="partner-login-header">
+                        <span className="site-logo-icone">🍭</span>
+                        <h1 className="partner-login-brand">Candyland</h1>
+                        <span className="partner-login-subbrand">PORTAL DE PARCEIROS</span>
+                    </div>
+
+                    <div className="partner-login-card">
+                        <h2 className="partner-login-title">
+                            {etapa === "EMAIL" && "Entrar no Portal 🏪"}
+                            {etapa === "CODIGO_EMAIL" && "Código do E-mail ✉️"}
+                            {etapa === "CELULAR" && "WhatsApp / Celular 📱"}
+                            {etapa === "CODIGO_CELULAR" && "Código do WhatsApp 🔑"}
+                        </h2>
+                        
+                        <p className="partner-login-desc">
+                            {etapa === "EMAIL" && "Acesse seu painel de loja ou entregador"}
+                            {etapa === "CODIGO_EMAIL" && `Digite o código enviado para ${email}`}
+                            {etapa === "CELULAR" && "Informe seu WhatsApp para o 2º fator de autenticação"}
+                            {etapa === "CODIGO_CELULAR" && `Digite o código enviado para ${celular}`}
+                        </p>
+
+                        {/* Etapa 1: E-mail */}
+                        {etapa === "EMAIL" && (
+                            <form onSubmit={handleEnviarEmail}>
+                                <div className="form-field partner-field">
+                                    <label htmlFor="email">E-mail</label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        placeholder="loja@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                {erro && <p className="auth-error" role="alert">{erro}</p>}
+                                <button type="submit" className="primary-button btn-partner-submit" disabled={carregando}>
+                                    {carregando ? "Enviando..." : "Enviar código →"}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Etapa 2: Código E-mail */}
+                        {etapa === "CODIGO_EMAIL" && (
+                            <form onSubmit={handleVerificarCodigoEmail}>
+                                <div className="form-field partner-field">
+                                    <label htmlFor="codigo-email">Código do E-mail</label>
+                                    <input
+                                        id="codigo-email"
+                                        type="text"
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        value={codigo}
+                                        onChange={(e) => setCodigo(e.target.value)}
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                {erro && <p className="auth-error" role="alert">{erro}</p>}
+                                <button type="submit" className="primary-button btn-partner-submit" disabled={carregando}>
+                                    {carregando ? "Verificando..." : "Validar E-mail →"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="auth-back"
+                                    style={{ marginTop: "12px" }}
+                                    onClick={() => { setEtapa("EMAIL"); setErro(""); }}
+                                >
+                                    ← Voltar
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Etapa 3: Celular/WhatsApp */}
+                        {etapa === "CELULAR" && (
+                            <form onSubmit={handleEnviarCelular}>
+                                <div className="form-field partner-field">
+                                    <label htmlFor="celular">Celular com DDD</label>
+                                    <input
+                                        id="celular"
+                                        type="tel"
+                                        placeholder="(11) 99999-9999"
+                                        value={celular}
+                                        onChange={(e) => setCelular(e.target.value)}
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                {erro && <p className="auth-error" role="alert">{erro}</p>}
+                                <button type="submit" className="primary-button btn-partner-submit" disabled={carregando}>
+                                    {carregando ? "Enviando..." : "Enviar código via WhatsApp →"}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Etapa 4: Código WhatsApp */}
+                        {etapa === "CODIGO_CELULAR" && (
+                            <form onSubmit={handleVerificarCodigoCelular}>
+                                <div className="form-field partner-field">
+                                    <label htmlFor="codigo-celular">Código do WhatsApp</label>
+                                    <input
+                                        id="codigo-celular"
+                                        type="text"
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        value={codigo}
+                                        onChange={(e) => setCodigo(e.target.value)}
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                {erro && <p className="auth-error" role="alert">{erro}</p>}
+                                <button type="submit" className="primary-button btn-partner-submit" disabled={carregando}>
+                                    {carregando ? "Verificando..." : "Entrar no Painel →"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="auth-back"
+                                    style={{ marginTop: "12px" }}
+                                    onClick={() => { setEtapa("CELULAR"); setErro(""); setCodigo(""); }}
+                                >
+                                    ← Voltar
+                                </button>
+                            </form>
+                        )}
+
+                        <div className="partner-login-footer">
+                            <span>Não tem conta parceira? </span>
+                            <Link to="/register/business" className="partner-register-link">
+                                Cadastrar agora
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="partner-login-bottom-links">
+                        <Link to="/login" className="partner-bottom-link">
+                            Sou cliente → Entrar como cliente
+                        </Link>
+                        <a href="#admin" className="partner-admin-link">
+                            Área administrativa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <main className="auth-page">
-            <section className="auth-card">
-                <header className="auth-header">
-                    <h1>
-                        <Link to="/" className="auth-brand-link">
-                            CandyLand
-                        </Link>
-                    </h1>
-                    <p>Seu pedido, do seu jeito.</p>
-                </header>
-
-                <div className="auth-content">
-                    {etapa === "login" && (
-                        <>
-                            <h2>{audiencia === "BUSINESS" ? "Entrar como parceiro" : "Entrar"}</h2>
-
-                            <p className="auth-description">
-                                {audiencia === "BUSINESS"
-                                    ? "Acesse sua doceria ou comece um cadastro de parceiro com e-mail, celular, Google ou Facebook."
-                                    : "Entre usando seu e-mail ou celular."}
-                            </p>
-
-                            <div className="login-type">
-                                <button
-                                    type="button"
-                                    className={tipo === "email" ? "active" : ""}
-                                    onClick={() => {
-                                        setTipo("email");
-                                        setValor("");
-                                        setErro("");
-                                        setMensagem("");
-                                    }}
-                                >
-                                    E-mail
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={tipo === "phone" ? "active" : ""}
-                                    onClick={() => {
-                                        setTipo("phone");
-                                        setValor("");
-                                        setErro("");
-                                        setMensagem("");
-                                    }}
-                                >
-                                    Celular
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleSubmit}>
-                                <label htmlFor="login-value">
-                                    {tipo === "email" ? "E-mail" : "Celular"}
-                                </label>
-
-                                {tipo === "email" ? (
-                                    <input
-                                        id="login-value"
-                                        type="email"
-                                        placeholder="seu@email.com"
-                                        value={valor}
-                                        onChange={(event) => setValor(event.target.value)}
-                                    />
-                                ) : (
-                                    <PhoneInput
-                                        value={valor}
-                                        countryCode={pais}
-                                        onChange={setValor}
-                                        onCountryChange={setPais}
-                                    />
-                                )}
-
-                                {erro && (
-                                    <p className="auth-error">{erro}</p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="primary-button"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Enviando..." : "Continuar"}
-                                </button>
-                            </form>
-
-                            <div className="divider">
-                                <span>ou continue com uma conta social</span>
-                            </div>
-
-                            <div className="social-login">
-                                <div className="social-button google-button">
-                                    <div className="google-login">
-                                        <GoogleLogin
-                                            onSuccess={(credentialResponse) =>
-                                                handleGoogleLogin(credentialResponse.credential)
-                                            }
-                                            onError={() => setErro("Não foi possível entrar com o Google.")}
-                                            size="large"
-                                            shape="pill"
-                                            width="358"
-                                        />
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="facebook-button"
-                                    onClick={() => window.location.assign(`${API_URL}/facebook?audiencia=${encodeURIComponent(audiencia)}`)}
-                                    disabled={loading}
-                                >
-                                    <svg
-                                        className="facebook-icon"
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.2V10H7.5v3h2.6v8h3.4z"
-                                            fill="currentColor"
-                                        />
-                                    </svg>
-
-                                    <span>Continuar com Facebook</span>
-                                </button>
-                            </div>
-                        </>
-                    )}
-
-                    {etapa === "segundo-dado" && (
-                        <>
-                            <h2>Agora vamos validar {segundoDado}</h2>
-
-                            <p className="auth-description">
-                                {mensagem}
-                            </p>
-
-                            <form onSubmit={handleSegundoDado}>
-                                <label htmlFor="second-value">
-                                    {canalAtual === "EMAIL" ? "E-mail" : "Celular"}
-                                </label>
-
-                                {canalAtual === "EMAIL" ? (
-                                    <input
-                                        id="second-value"
-                                        type="email"
-                                        placeholder="seu@email.com"
-                                        value={valor}
-                                        onChange={(event) => setValor(event.target.value)}
-                                    />
-                                ) : (
-                                    <PhoneInput
-                                        value={valor}
-                                        countryCode={pais}
-                                        onChange={setValor}
-                                        onCountryChange={setPais}
-                                    />
-                                )}
-
-                                {erro && (
-                                    <p className="auth-error">{erro}</p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="primary-button"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Enviando..." : "Enviar código"}
-                                </button>
-                            </form>
-
-                            <button
-                                type="button"
-                                className="auth-back"
-                                onClick={voltarParaLogin}
-                            >
-                                Voltar
-                            </button>
-                        </>
-                    )}
-
-                    {etapa === "codigo" && (
-                        <>
-                            <h2>Verifique seu {nomeCanal}</h2>
-
-                            <p className="auth-description">
-                                Digite o código que enviamos para:
-                                <br />
-                                <strong>
-                                    {canalAtual === "EMAIL"
-                                        ? dadosAutenticacao.email
-                                        : dadosAutenticacao.telefone}
-                                </strong>
-                            </p>
-
-                            {mensagem && (
-                                <p className="auth-success">{mensagem}</p>
-                            )}
-
-                            <form onSubmit={handleVerify}>
-                                <label htmlFor="auth-code">Código</label>
-
-                                <input
-                                    id="auth-code"
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength="6"
-                                    placeholder="000000"
-                                    value={codigo}
-                                    onChange={(event) =>
-                                        setCodigo(
-                                            event.target.value.replace(/\D/g, "")
-                                        )
-                                    }
-                                />
-
-                                {erro && (
-                                    <p className="auth-error">{erro}</p>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="primary-button"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Validando..." : "Validar código"}
-                                </button>
-                            </form>
-
-                            <button
-                                type="button"
-                                className="auth-back"
-                                onClick={voltarParaLogin}
-                            >
-                                Voltar
-                            </button>
-                        </>
-                    )}
+        <div className="auth-page">
+            <div className="auth-card">
+                <div className="auth-header">
+                    <h1>Candyland</h1>
+                    <p>Doces de todos os mundos</p>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
     );
 }
 

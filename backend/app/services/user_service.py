@@ -10,6 +10,7 @@ from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
+from app.models.push_subscription import PushSubscription
 from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,
@@ -455,5 +456,153 @@ class UserService:
             return {
                 "success": False,
                 "erro": "Falha ao remover usuário.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def listar_enderecos_usuario(user_id):
+        try:
+            enderecos = Endereco.query.filter_by(id_usuario=user_id, ativo=True).all()
+            return {
+                "success": True,
+                "mensagem": "Endereços consultados com sucesso.",
+                "dados": [e.to_dict() for e in enderecos],
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao consultar endereços do usuário.",
+                "status_code": 500,
+            }
+
+
+    @staticmethod
+    def cadastrar_endereco_usuario(user_id, dados_endereco):
+        try:
+            usuario = db.session.get(Usuario, user_id)
+            if not usuario:
+                return {"success": False, "erro": "Usuário não encontrado.", "status_code": 404}
+
+            address_id = dados_endereco.get("id")
+            endereco_existente = None
+            if address_id:
+                endereco_existente = Endereco.query.filter_by(
+                    id=address_id, id_usuario=user_id, ativo=True
+                ).first()
+
+            if dados_endereco.get("principal"):
+                Endereco.query.filter_by(id_usuario=user_id).update({"principal": False})
+
+            if endereco_existente:
+                endereco_existente.cep = dados_endereco.get("cep")
+                endereco_existente.rua = dados_endereco.get("rua")
+                endereco_existente.numero = dados_endereco.get("numero")
+                endereco_existente.complemento = dados_endereco.get("complemento")
+                endereco_existente.bairro = dados_endereco.get("bairro")
+                endereco_existente.cidade = dados_endereco.get("cidade")
+                endereco_existente.estado = dados_endereco.get("estado")
+                endereco_existente.referencia = dados_endereco.get("referencia")
+                if dados_endereco.get("latitude") is not None:
+                    endereco_existente.latitude = dados_endereco.get("latitude")
+                if dados_endereco.get("longitude") is not None:
+                    endereco_existente.longitude = dados_endereco.get("longitude")
+                if "principal" in dados_endereco:
+                    endereco_existente.principal = dados_endereco.get("principal")
+                target_endereco = endereco_existente
+            else:
+                novo_endereco = Endereco(
+                    id_usuario=user_id,
+                    cep=dados_endereco.get("cep"),
+                    rua=dados_endereco.get("rua"),
+                    numero=dados_endereco.get("numero"),
+                    complemento=dados_endereco.get("complemento"),
+                    bairro=dados_endereco.get("bairro"),
+                    cidade=dados_endereco.get("cidade"),
+                    estado=dados_endereco.get("estado"),
+                    referencia=dados_endereco.get("referencia"),
+                    latitude=dados_endereco.get("latitude"),
+                    longitude=dados_endereco.get("longitude"),
+                    tipo_endereco="RESIDENCIAL",
+                    principal=dados_endereco.get("principal", False),
+                    ativo=True
+                )
+                db.session.add(novo_endereco)
+                target_endereco = novo_endereco
+
+            db.session.commit()
+
+            return {
+                "success": True,
+                "mensagem": "Endereço salvo com sucesso!",
+                "dados": target_endereco.to_dict()
+            }
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "erro": "Falha ao salvar endereço.", "status_code": 500}
+
+    @staticmethod
+    def deletar_endereco_usuario(user_id, address_id):
+        try:
+            endereco = Endereco.query.filter_by(
+                id=address_id, id_usuario=user_id, ativo=True
+            ).first()
+            if not endereco:
+                return {
+                    "success": False,
+                    "erro": "Endereço não encontrado ou já removido.",
+                    "status_code": 404,
+                }
+
+            endereco.ativo = False
+            db.session.commit()
+            return {
+                "success": True,
+                "mensagem": "Endereço removido com sucesso!",
+            }
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao remover o endereço.",
+                "status_code": 500,
+            }
+
+
+    @staticmethod
+    def salvar_push_subscription(user_id, dados):
+        try:
+            endpoint = dados.get("endpoint")
+            keys = dados.get("keys", {})
+            p256dh = keys.get("p256dh")
+            auth = keys.get("auth")
+
+            if not endpoint or not p256dh or not auth:
+                return {
+                    "success": False,
+                    "erro": "Dados de inscrição Web Push incompletos.",
+                    "status_code": 400,
+                }
+
+            # Verifica se essa inscrição de navegador já foi registrada para o usuário
+            sub_existente = PushSubscription.query.filter_by(endpoint=endpoint).first()
+            if not sub_existente:
+                nova_sub = PushSubscription(
+                    user_id=user_id,
+                    endpoint=endpoint,
+                    p256dh=p256dh,
+                    auth=auth,
+                )
+                db.session.add(nova_sub)
+                db.session.commit()
+
+            return {
+                "success": True,
+                "mensagem": "Inscrição de notificação salva com sucesso.",
+            }
+        except Exception:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Falha ao salvar a inscrição de notificação.",
                 "status_code": 500,
             }
