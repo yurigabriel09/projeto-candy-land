@@ -40,3 +40,12 @@ backend/uploads/
 
 # Executáveis locais de desenvolvimento
 /ngrok.exe
+backend/secrets/
+mobile/local.properties
+mobile/.gradle/
+mobile/build/
+mobile/app/build/
+mobile/app/google-services.json
+
+# Relatorios de falha da JVM
+**/hs_err_pid*.log

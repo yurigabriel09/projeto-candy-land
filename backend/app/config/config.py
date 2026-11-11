@@ -63,6 +63,9 @@ class Config:
     PAYPAL_RETURN_URL_BASE = os.getenv("PAYPAL_RETURN_URL_BASE", FRONTEND_URL).strip().rstrip("/")
     # Chave restrita à API Geocoding, mantida apenas no backend.
     GOOGLE_MAPS_GEOCODING_API_KEY = os.getenv("GOOGLE_MAPS_GEOCODING_API_KEY", "").strip()
+    # Firebase Cloud Messaging HTTP v1; a chave de serviço permanece somente no backend.
+    FCM_PROJECT_ID = os.getenv("FCM_PROJECT_ID", "").strip()
+    FCM_SERVICE_ACCOUNT_FILE = os.getenv("FCM_SERVICE_ACCOUNT_FILE", "").strip()
 
     UPLOAD_FOLDER = BASE_DIR / "uploads"
     UPLOAD_MAX_BYTES = 2 * 1024 * 1024

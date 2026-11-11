@@ -6,6 +6,7 @@ from flask import Flask
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.category import Categoria
+from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.order_receipt_code import OrderReceiptCode
@@ -91,3 +92,28 @@ def test_codigo_incorreto_tem_limite_de_tentativas_e_pode_ser_reemitido(app):
         new_code = OrderReceiptService.emitir_codigo(order_id, customer_id, "PERSONAL")["codigo"]
         assert new_code != first
         assert OrderReceiptService.confirmar_recebimento(order_id, business_id, "BUSINESS", new_code)["success"] is True
+
+
+def test_codigo_de_entrega_pode_ser_validado_quando_pedido_esta_pronto(app):
+    with app.app_context():
+        order_id = app.config["TEST_ORDER_ID"]
+        customer_id = app.config["TEST_CUSTOMER_ID"]
+        business_id = app.config["TEST_BUSINESS_ID"]
+        pedido = db.session.get(Pedido, order_id)
+        pedido.order_type = "DELIVERY"
+        db.session.commit()
+
+        issued = OrderReceiptService.emitir_codigo(order_id, customer_id, "PERSONAL")
+        assert issued["success"] is True
+
+        completed = OrderReceiptService.confirmar_recebimento(
+            order_id, business_id, "BUSINESS", issued["codigo"]
+        )
+        pedido_final = db.session.get(Pedido, order_id)
+
+        assert completed["success"] is True
+        assert pedido_final.status == "FINALIZADO"
+        assert pedido_final.delivered_at is not None
+        entrega = EntregaPedido.query.filter_by(pedido_id=order_id).one()
+        assert entrega.status == "ENTREGA_CONCLUIDA"
+        assert entrega.concluida_em is not None

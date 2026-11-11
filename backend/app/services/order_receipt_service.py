@@ -136,8 +136,14 @@ class OrderReceiptService:
             pedido.status = "FINALIZADO"
             if pedido.delivered_at is None:
                 pedido.delivered_at = utc_now_naive()
+            status_anterior = "ENTREGUE" if pedido.order_type == "DELIVERY" else "PRONTO_PARA_ENTREGA"
             registro.used_at = utc_now_naive()
             db.session.commit()
+            try:
+                from app.services.push_notification_service import PushNotificationService
+                PushNotificationService.notificar_pedido(pedido, status_anterior)
+            except Exception:
+                current_app.logger.exception("Falha ao notificar finalização do pedido %s.", pedido.id)
             return {"success": True, "mensagem": "Recebimento confirmado; pedido finalizado.", "pedido": OrderReceiptService._pedido_dict(pedido)}
         except OrderTransitionError as exc:
             db.session.rollback()

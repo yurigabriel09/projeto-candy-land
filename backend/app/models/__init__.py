@@ -5,6 +5,7 @@ from app.models.auth_code import CodigoAutenticacao
 from app.models.card import CartaoCliente
 from app.models.category import Categoria
 from app.models.delivery import EntregaPedido
+from app.models.device_token import DeviceToken
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.payment_attempt import PaymentAttempt
@@ -19,6 +20,7 @@ __all__ = [
     "CodigoAutenticacao",
     "Endereco",
     "EntregaPedido",
+    "DeviceToken",
     "ItemPedido",
     "Pedido",
     "PaymentAttempt",

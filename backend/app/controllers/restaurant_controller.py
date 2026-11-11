@@ -82,6 +82,21 @@ class RestaurantController:
         )
 
     @staticmethod
+    def geocodificar_endereco_cadastro(dados):
+        resultado = RestauranteService.geocodificar_endereco_cadastro(dados)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)
+
+    @staticmethod
+    def geocodificar_endereco_restaurante(restaurant_id, dados):
+        endereco = dados.get("endereco") if isinstance(dados, dict) else None
+        resultado = RestauranteService.geocodificar_endereco_restaurante(restaurant_id, endereco)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"mensagem": resultado["mensagem"], "dados": resultado["dados"]}), 200)
+
+    @staticmethod
     def buscar_configuracao(restaurant_id):
         resultado = RestauranteService.buscar_configuracao(restaurant_id)
         if not resultado["success"]:
