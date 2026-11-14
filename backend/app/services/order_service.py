@@ -307,7 +307,7 @@ class OrderService:
                 platform_fee=platform_fee,
                 total=total,
                 order_type=order_type,
-                status="PAGAMENTO_CONFIRMADO",
+                status="PENDENTE_PAGAMENTO",
                 payment_method=payment_method,
                 general_note=dados.get("general_note"),
             )
@@ -329,7 +329,6 @@ class OrderService:
                 )
 
             db.session.commit()
-            OrderService._notificar_status_pedido(pedido, None)
             return {
                 "success": True,
                 "mensagem": "Pedido criado com sucesso!",
@@ -533,6 +532,7 @@ class OrderService:
                     .where(
                         Produto.id == produto_id,
                         Produto.current_stock >= quantidade,
+                        Produto.is_available.is_(True),
                     )
                     .values(current_stock=Produto.current_stock - quantidade)
                     .execution_options(synchronize_session=False)

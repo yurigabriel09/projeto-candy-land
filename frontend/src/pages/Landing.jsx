@@ -143,7 +143,7 @@ function Landing() {
                 Saiba mais
               </button>
               <button
-                onClick={() => navigate("/parceiros/login")}
+                onClick={() => navigate("/parceiros")}
                 className="btn-parceiro-outline"
               >
                 Seja um parceiro você também!

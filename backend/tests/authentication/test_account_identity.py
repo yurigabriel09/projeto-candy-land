@@ -119,10 +119,10 @@ def test_login_com_celular_compartilhado_resolve_a_conta_pelo_email_verificado(a
         db.session.commit()
 
         resultado_cliente = AuthService._finalizar_autenticacao(
-            TentativaAutenticacao(email="cliente@example.com", telefone=telefone)
+            TentativaAutenticacao(email="cliente@example.com", telefone=telefone, email_validado=True, telefone_validado=True)
         )
         resultado_restaurante = AuthService._finalizar_autenticacao(
-            TentativaAutenticacao(email="doceria@example.com", telefone=telefone)
+            TentativaAutenticacao(email="doceria@example.com", telefone=telefone, email_validado=True, telefone_validado=True)
         )
 
         assert resultado_cliente["success"] is True
@@ -150,7 +150,7 @@ def test_finalizacao_rejeita_email_vinculado_a_cliente_e_restaurante(app):
         db.session.commit()
 
         resultado = AuthService._finalizar_autenticacao(
-            TentativaAutenticacao(email=email, telefone=telefone)
+            TentativaAutenticacao(email=email, telefone=telefone, email_validado=True, telefone_validado=True)
         )
 
         assert resultado["success"] is False
@@ -276,105 +276,48 @@ def test_email_existente_em_restaurante_bloqueia_novo_cadastro_pessoal(app):
         assert "e-mail já cadastrado" in resultado["erro"].lower()
 
 
-def test_oauth_google_permita_celular_existente_somente_em_testes(app, monkeypatch):
+def test_oauth_google_permite_iniciar_segundo_fator_com_celular_existente_em_testes(app, monkeypatch):
     with app.app_context():
         telefone = "+5511999990000"
-        db.session.add(
-            Usuario(
-                nome_completo="Cliente existente",
-                email="existente@example.com",
-                telefone=telefone,
-                cpf="12345678901",
-            )
-        )
+        db.session.add(Usuario(nome_completo="Cliente existente", email="existente@example.com", telefone=telefone, cpf="12345678901"))
         db.session.commit()
-
         app.config.update(APP_ENV="testing", ALLOW_DUPLICATE_PHONE=True)
-        monkeypatch.setattr(
-            GoogleAuthService,
-            "validar_credencial",
-            staticmethod(lambda credential: {"email": "novo-google@example.com"}),
-        )
-        monkeypatch.setattr(
-            AuthService,
-            "_gerar_e_enviar_codigo",
-            staticmethod(
-                lambda tentativa, canal, destino: {
-                    "success": True,
-                    "mensagem": "ok",
-                }
-            ),
-        )
-
+        monkeypatch.setattr(GoogleAuthService, "validar_credencial", staticmethod(lambda credential: {"email": "novo-google@example.com"}))
+        monkeypatch.setattr(AuthService, "_gerar_e_enviar_codigo", staticmethod(lambda tentativa, canal, destino: {"success": True, "mensagem": "ok"}))
         resultado = AuthService.autenticar_google("fake-credential", telefone)
-
         assert resultado["success"] is True, resultado
-        assert resultado["novo_cadastro"] is True
+        assert resultado.get("dados") is None
+        assert resultado["tentativa_id"]
         assert resultado["telefone"] == telefone
 
-
-def test_oauth_google_nao_contorna_regra_de_celular_em_producao(app, monkeypatch):
+def test_oauth_google_so_rejeita_celular_compartilhado_depois_do_segundo_fator_em_producao(app, monkeypatch):
     with app.app_context():
         telefone = "+5511999990000"
-        db.session.add(
-            Usuario(
-                nome_completo="Cliente existente",
-                email="existente@example.com",
-                telefone=telefone,
-                cpf="12345678901",
-            )
-        )
+        db.session.add(Usuario(nome_completo="Cliente existente", email="existente@example.com", telefone=telefone, cpf="12345678901"))
         db.session.commit()
-
         app.config.update(APP_ENV="production", ALLOW_DUPLICATE_PHONE=True)
-        monkeypatch.setattr(
-            GoogleAuthService,
-            "validar_credencial",
-            staticmethod(lambda credential: {"email": "novo-google@example.com"}),
-        )
-
-        resultado = AuthService.autenticar_google("fake-credential", telefone)
-
+        monkeypatch.setattr(GoogleAuthService, "validar_credencial", staticmethod(lambda credential: {"email": "novo-google@example.com"}))
+        monkeypatch.setattr(AuthService, "_gerar_e_enviar_codigo", staticmethod(lambda tentativa, canal, destino: {"success": True, "mensagem": "ok"}))
+        tentativa = AuthService.autenticar_google("fake-credential", telefone)
+        assert tentativa["success"] is True
+        assert tentativa.get("dados") is None
+        identidade = TentativaAutenticacao(email="novo-google@example.com", telefone=telefone, email_validado=True, telefone_validado=True)
+        resultado = AuthService._finalizar_autenticacao(identidade)
         assert resultado["success"] is False
         assert resultado["status_code"] == 409
-        assert "celular já está vinculado" in resultado["erro"].lower()
 
-def test_oauth_facebook_respeita_regra_de_celular_compartilhado(app, monkeypatch):
+def test_oauth_facebook_nao_bloqueia_celular_antes_da_validacao_do_segundo_fator(app, monkeypatch):
     with app.app_context():
         telefone = "+5511999990000"
-        db.session.add(
-            Usuario(
-                nome_completo="Cliente existente",
-                email="existente@example.com",
-                telefone=telefone,
-                cpf="12345678901",
-            )
-        )
+        db.session.add(Usuario(nome_completo="Cliente existente", email="existente@example.com", telefone=telefone, cpf="12345678901"))
         db.session.commit()
-
-        monkeypatch.setattr(
-            AuthService,
-            "_gerar_e_enviar_codigo",
-            staticmethod(
-                lambda tentativa, canal, destino: {
-                    "success": True,
-                    "mensagem": "ok",
-                }
-            ),
-        )
-
-        app.config.update(APP_ENV="testing", ALLOW_DUPLICATE_PHONE=True)
-        resultado_teste = AuthService.autenticar_facebook(
-            {"id": "facebook-user-test", "email": "novo-facebook@example.com"},
-            telefone,
-        )
-        assert resultado_teste["success"] is True, resultado_teste
-
+        monkeypatch.setattr(AuthService, "_gerar_e_enviar_codigo", staticmethod(lambda tentativa, canal, destino: {"success": True, "mensagem": "ok"}))
         app.config.update(APP_ENV="production", ALLOW_DUPLICATE_PHONE=True)
-        resultado_producao = AuthService.autenticar_facebook(
-            {"id": "facebook-user-prod", "email": "outro-facebook@example.com"},
-            telefone,
-        )
-        assert resultado_producao["success"] is False
-        assert resultado_producao["status_code"] == 409
-        assert "celular já está vinculado" in resultado_producao["erro"].lower()
+        resultado = AuthService.autenticar_facebook({"id": "facebook-user-prod", "email": "novo-facebook@example.com"}, telefone)
+        assert resultado["success"] is True, resultado
+        assert resultado.get("dados") is None
+        assert resultado["tentativa_id"]
+        identidade = TentativaAutenticacao(email="novo-facebook@example.com", telefone=telefone, email_validado=True, telefone_validado=True)
+        final = AuthService._finalizar_autenticacao(identidade)
+        assert final["success"] is False
+        assert final["status_code"] == 409
