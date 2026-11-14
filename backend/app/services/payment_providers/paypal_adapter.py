@@ -80,7 +80,7 @@ class PayPalPaymentProvider(PaymentProvider):
                 "cancel_url": cancel_url,
             },
         }
-        request_id = _idempotency_id(command.idempotency_key)
+        request_id = _idempotency_id(command.idempotency_key, "create")
         response = self._request(
             "POST", "/v2/checkout/orders", payload,
             extra_headers={"PayPal-Request-Id": request_id},
@@ -111,7 +111,7 @@ class PayPalPaymentProvider(PaymentProvider):
         try:
             response = self._request(
                 "POST", f"/v2/checkout/orders/{order_id}/capture", {},
-                extra_headers={"PayPal-Request-Id": _idempotency_id(idempotency_key)},
+                extra_headers={"PayPal-Request-Id": _idempotency_id(idempotency_key, "capture")},
             )
         except PaymentProviderError as exc:
             # A browser may retry after the capture succeeded but the response was
@@ -153,7 +153,7 @@ class PayPalPaymentProvider(PaymentProvider):
         payload = {"amount": {"currency_code": "BRL", "value": f"{Decimal(str(amount)):.2f}"}} if amount is not None else {}
         result = self._request(
             "POST", f"/v2/payments/captures/{capture['id']}/refund", payload,
-            extra_headers={"PayPal-Request-Id": _idempotency_id(idempotency_key)},
+            extra_headers={"PayPal-Request-Id": _idempotency_id(idempotency_key, "refund")},
         )
         refund_status = str(result.get("status") or "").upper()
         if refund_status not in {"COMPLETED", "PENDING"}:
@@ -201,9 +201,7 @@ class PayPalPaymentProvider(PaymentProvider):
         if not paypal_order_id:
             raise PaymentProviderError("O webhook PayPal não contém o ID externo da ordem para conciliação.")
 
-        # Capture webhook resources don't consistently include purchase-unit
-        # custom_id. After verifying the webhook, retrieve the PayPal Order and
-        # correlate its persisted CandyLand custom_id and authoritative amount.
+   
         order_data = self._request("GET", f"/v2/checkout/orders/{paypal_order_id}")
         units = order_data.get("purchase_units") or []
         unit = units[0] if units else {}
@@ -229,7 +227,7 @@ class PayPalPaymentProvider(PaymentProvider):
         currency = str(amount_info.get("currency_code") or unit.get("amount", {}).get("currency_code") or "BRL")
         return VerifiedPaymentEvent(
             provider="paypal",
-            event_id=str(body.get("id") or f"paypal:{event_type}:{resource.get('id', order_id)}"),
+            event_id=str(body.get("id") or f"paypal:{event_type}:{resource.get('id', paypal_order_id)}"),
             provider_payment_id=paypal_order_id,
             order_reference=order_reference,
             status=status,
@@ -286,8 +284,12 @@ class PayPalPaymentProvider(PaymentProvider):
     def _payment_result(data: Mapping[str, Any], expected_order_id: str) -> PaymentResult:
         units = data.get("purchase_units") or []
         unit = units[0] if units else {}
-        captures = ((unit.get("payments") or {}).get("captures") or [])
-        capture = next((item for item in captures if item.get("status") == "COMPLETED"), None)
+        captures = [
+            item for item in ((unit.get("payments") or {}).get("captures") or [])
+            if isinstance(item, dict)
+        ]
+        capture_statuses = {str(item.get("status") or "").upper() for item in captures}
+        capture = next((item for item in captures if str(item.get("status") or "").upper() == "COMPLETED"), None)
         amount_data = (capture or {}).get("amount") or unit.get("amount") or {}
         try:
             amount = Decimal(str(amount_data.get("value"))).quantize(Decimal("0.01"))
@@ -295,13 +297,20 @@ class PayPalPaymentProvider(PaymentProvider):
             raise PaymentProviderError("A resposta PayPal não contém o valor do pedido.") from exc
         currency = str(amount_data.get("currency_code") or "BRL")
         status_raw = str(data.get("status") or "").upper()
-        if status_raw == "COMPLETED" or capture:
+       
+        if "COMPLETED" in capture_statuses:
             status = PaymentStatus.APPROVED
+        elif capture_statuses & {"REFUNDED", "PARTIALLY_REFUNDED"}:
+            status = PaymentStatus.REFUNDED
+        elif capture_statuses & {"DECLINED", "FAILED"}:
+            status = PaymentStatus.REJECTED
+        elif "PENDING" in capture_statuses:
+            status = PaymentStatus.PENDING
         elif status_raw == "PAYER_ACTION_REQUIRED":
             status = PaymentStatus.ACTION_REQUIRED
+        elif status_raw == "VOIDED":
+            status = PaymentStatus.CANCELLED
         else:
-            # PayPal order APPROVED only means the buyer approved; funds must
-            # still be captured by the trusted backend endpoint.
             status = PaymentStatus.PENDING
         return PaymentResult(
             provider="paypal", provider_payment_id=expected_order_id,
@@ -322,7 +331,10 @@ def _order_amount(data: Mapping[str, Any]):
     return value, str(amount.get("currency_code") or "BRL")
 
 
-def _idempotency_id(value: str) -> str:
+def _idempotency_id(value: str, operation: str = "") -> str:
     # PayPal-Request-Id is kept stable across retries, within the provider's
     # documented length limits, without transmitting arbitrary client text.
-    return hashlib.sha256(str(value or "candyland-payment").encode("utf-8")).hexdigest()[:32]
+    # A operação entra na semente: criar, capturar e reembolsar com a mesma chave
+    # lógica não podem reutilizar o mesmo PayPal-Request-Id.
+    seed = f"{operation}:{value or 'candyland-payment'}"
+    return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:32]

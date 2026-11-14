@@ -1,4 +1,5 @@
 import math
+import threading
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from uuid import uuid4
 
@@ -33,6 +34,33 @@ class OrderService:
             try:
                 from flask import current_app
                 current_app.logger.exception("Falha inesperada ao notificar pedido.")
+            except Exception:
+                pass
+
+    @staticmethod
+    def _enviar_comprovante(pedido_id):
+        # Externo à transação e fora da requisição: gerar o PDF e falar com o
+        # Brevo pode demorar, e uma falha aqui nunca desfaz o pagamento.
+        try:
+            from flask import current_app
+            from app.services.invoice_service import InvoiceService
+
+            if not InvoiceService.email_configurado():
+                return
+            app = current_app._get_current_object()
+
+            def tarefa():
+                try:
+                    with app.app_context():
+                        InvoiceService.enviar_por_email(pedido_id)
+                except Exception:
+                    app.logger.exception("Falha ao enviar comprovante do pedido.")
+
+            threading.Thread(target=tarefa, daemon=True).start()
+        except Exception:
+            try:
+                from flask import current_app
+                current_app.logger.exception("Falha ao agendar envio do comprovante.")
             except Exception:
                 pass
 
@@ -550,6 +578,7 @@ class OrderService:
             pedido.status = "PAGAMENTO_CONFIRMADO"
             db.session.commit()
             OrderService._notificar_status_pedido(pedido, status_anterior)
+            OrderService._enviar_comprovante(pedido.id)
             return {
                 "success": True,
                 "mensagem": "Pagamento confirmado e estoque atualizado.",
