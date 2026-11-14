@@ -1,3 +1,4 @@
+from app.services.invoice_service import InvoiceService
 from app.services.order_service import OrderService
 from app.services.order_receipt_service import OrderReceiptService
 from flask import jsonify, make_response
@@ -127,4 +128,22 @@ class OrderController:
             return make_response(
                 jsonify({"erro": resultado["erro"]}), resultado["status_code"]
             )
+        return make_response(jsonify({"mensagem": resultado["mensagem"]}), 200)
+
+    @staticmethod
+    def baixar_comprovante(pedido_id, account_id, tipo_conta):
+        resultado = InvoiceService.baixar(pedido_id, account_id, tipo_conta)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        resposta = make_response(resultado["pdf"], 200)
+        resposta.headers["Content-Type"] = "application/pdf"
+        resposta.headers["Content-Disposition"] = f'attachment; filename="{resultado["nome_arquivo"]}"'
+        resposta.headers["Cache-Control"] = "no-store"
+        return resposta
+
+    @staticmethod
+    def enviar_comprovante(pedido_id, account_id, tipo_conta):
+        resultado = InvoiceService.reenviar(pedido_id, account_id, tipo_conta)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
         return make_response(jsonify({"mensagem": resultado["mensagem"]}), 200)

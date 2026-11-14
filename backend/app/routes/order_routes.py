@@ -138,6 +138,22 @@ def cancelar_pedido(pedido_id):
     )
 
 
+@pedido_bp.route("/<int:pedido_id>/comprovante", methods=["GET"])
+@token_required
+def baixar_comprovante(pedido_id):
+    return OrderController.baixar_comprovante(
+        pedido_id, int(g.current_account_id), g.current_account_type
+    )
+
+
+@pedido_bp.route("/<int:pedido_id>/comprovante/enviar", methods=["POST"])
+@token_required
+def enviar_comprovante(pedido_id):
+    return OrderController.enviar_comprovante(
+        pedido_id, int(g.current_account_id), g.current_account_type
+    )
+
+
 @pedido_bp.route("/<int:pedido_id>/pagamento", methods=["POST"])
 @token_required
 def criar_pagamento(pedido_id):

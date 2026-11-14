@@ -793,7 +793,7 @@ class AuthService:
                 "status_code": 502,
             }
 
-@staticmethod
+    @staticmethod
     def _finalizar_autenticacao(tentativa, tipo_conta=None):
         permitir_telefone_compartilhado = telefone_compartilhado_permitido(
             current_app.config

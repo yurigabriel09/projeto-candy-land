@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { getOrders, issueReceiptCode } from "../services/orderService";
+import { downloadInvoice, getOrders, issueReceiptCode, sendInvoiceByEmail } from "../services/orderService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const STATUS = {
@@ -17,6 +17,7 @@ const STATUS = {
 };
 const METODOS = { PIX: "Pix", PAYPAL: "PayPal", MERCADO_PAGO: "Mercado Pago", CARTAO: "Cartão", CARTAO_CREDITO: "Cartão de crédito" };
 const PEDIDOS_COM_PAGAMENTO = new Set(["PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU", "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE"]);
+const PEDIDOS_COM_COMPROVANTE = new Set([...PEDIDOS_COM_PAGAMENTO, "FINALIZADO"]);
 
 function PurchaseHistory() {
     const [pedidos, setPedidos] = useState([]);
@@ -26,6 +27,8 @@ function PurchaseHistory() {
     const [erro, setErro] = useState("");
     const [mensagens, setMensagens] = useState({});
     const [pedidoCodigo, setPedidoCodigo] = useState(null);
+    const [acaoNota, setAcaoNota] = useState(null);
+    const [avisosNota, setAvisosNota] = useState({});
 
     const carregar = useCallback(async (silencioso = false) => {
         if (!silencioso) setCarregando(true);
@@ -48,6 +51,24 @@ function PurchaseHistory() {
             setMensagens((atuais) => ({ ...atuais, [pedido.id]: "Mostre este código à doceria no momento da entrega/retirada. Ele não é o código do pedido." }));
         } catch (error) { setErro(error.message || "Não foi possível gerar o código de recebimento."); }
         finally { setPedidoCodigo(null); }
+    }
+
+    async function baixarNota(pedido) {
+        setAcaoNota({ id: pedido.id, tipo: "baixar" });
+        setAvisosNota((atuais) => ({ ...atuais, [pedido.id]: null }));
+        try { await downloadInvoice(pedido.id, pedido.order_code); }
+        catch (error) { setAvisosNota((atuais) => ({ ...atuais, [pedido.id]: { tipo: "erro", texto: error.message || "Não foi possível baixar o comprovante." } })); }
+        finally { setAcaoNota(null); }
+    }
+
+    async function enviarNota(pedido) {
+        setAcaoNota({ id: pedido.id, tipo: "enviar" });
+        setAvisosNota((atuais) => ({ ...atuais, [pedido.id]: null }));
+        try {
+            const resposta = await sendInvoiceByEmail(pedido.id);
+            setAvisosNota((atuais) => ({ ...atuais, [pedido.id]: { tipo: "ok", texto: resposta.mensagem || "Comprovante enviado por e-mail." } }));
+        } catch (error) { setAvisosNota((atuais) => ({ ...atuais, [pedido.id]: { tipo: "erro", texto: error.message || "Não foi possível enviar o comprovante." } })); }
+        finally { setAcaoNota(null); }
     }
 
     return (
@@ -80,8 +101,13 @@ function PurchaseHistory() {
                                     </div>}
                                     <footer className="purchase-history-actions">
                                         <Link className="btn-contorno" to={`/pedidos/${pedido.id}/acompanhar`}>Acompanhar pedido</Link>
+                                        {PEDIDOS_COM_COMPROVANTE.has(pedido.status) && <>
+                                            <button className="btn-contorno" type="button" disabled={acaoNota?.id === pedido.id} onClick={() => baixarNota(pedido)}>{acaoNota?.id === pedido.id && acaoNota.tipo === "baixar" ? "Baixando..." : "Baixar comprovante"}</button>
+                                            <button className="btn-contorno" type="button" disabled={acaoNota?.id === pedido.id} onClick={() => enviarNota(pedido)}>{acaoNota?.id === pedido.id && acaoNota.tipo === "enviar" ? "Enviando..." : "Enviar por e-mail"}</button>
+                                        </>}
                                         {pedido.status === "PENDENTE_PAGAMENTO" && <Link className="btn-principal" to="/minha-conta/pagamentos-pendentes">Continuar pagamento</Link>}
                                     </footer>
+                                    {avisosNota[pedido.id] && <p className={avisosNota[pedido.id].tipo === "ok" ? "auth-success" : "auth-error"} role={avisosNota[pedido.id].tipo === "ok" ? "status" : "alert"}>{avisosNota[pedido.id].texto}</p>}
                                 </article>
                             );
                         })}
