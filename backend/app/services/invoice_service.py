@@ -30,6 +30,17 @@ BORDA = colors.HexColor("#f2ddd2")
 # Brasil não tem horário de verão desde 2019; evita depender de tzdata no Windows.
 FUSO_BRASIL = timezone(timedelta(hours=-3))
 
+# Mesmos status que o OrderService considera "pagamento já confirmado".
+STATUS_COM_PAGAMENTO = {
+    "PAGAMENTO_CONFIRMADO",
+    "RESTAURANTE_RECEBEU",
+    "RESTAURANTE_ACEITOU",
+    "PROCESSANDO",
+    "PRONTO_PARA_ENTREGA",
+    "ENTREGUE",
+    "FINALIZADO",
+}
+
 FORMAS_PAGAMENTO = {
     "PIX": "Pix",
     "PAYPAL": "PayPal",
@@ -53,6 +64,13 @@ def _mascarar_cpf(cpf):
     if len(digitos) != 11:
         return "—"
     return f"***.{digitos[3:6]}.{digitos[6:9]}-**"
+
+
+def _mascarar_email(email):
+    usuario, _, dominio = str(email or "").partition("@")
+    if not usuario or not dominio:
+        return "seu e-mail cadastrado"
+    return f"{usuario[0]}***@{dominio}"
 
 
 def _endereco_texto(endereco):
@@ -227,6 +245,46 @@ class InvoiceService:
         return gerar_pdf(dados), dados["codigo"]
 
     @staticmethod
+    def _pedido_liberado(pedido_id, account_id, account_type):
+        """Só o cliente dono do pedido, e só depois do pagamento confirmado."""
+        if account_type != "PERSONAL":
+            return None, {"success": False, "erro": "Apenas o cliente pode acessar o comprovante.", "status_code": 403}
+        pedido = db.session.get(Pedido, pedido_id)
+        if not pedido:
+            return None, {"success": False, "erro": "Pedido não encontrado.", "status_code": 404}
+        if pedido.user_id != account_id:
+            return None, {"success": False, "erro": "Você não tem acesso a este pedido.", "status_code": 403}
+        if pedido.status not in STATUS_COM_PAGAMENTO:
+            return None, {
+                "success": False,
+                "erro": "O comprovante só fica disponível depois da confirmação do pagamento.",
+                "status_code": 409,
+            }
+        return pedido, None
+
+    @staticmethod
+    def baixar(pedido_id, account_id, account_type):
+        pedido, erro = InvoiceService._pedido_liberado(pedido_id, account_id, account_type)
+        if erro:
+            return erro
+        pdf, codigo = InvoiceService.gerar_pdf_do_pedido(pedido.id)
+        return {"success": True, "pdf": pdf, "nome_arquivo": f"comprovante-{codigo}.pdf"}
+
+    @staticmethod
+    def reenviar(pedido_id, account_id, account_type):
+        pedido, erro = InvoiceService._pedido_liberado(pedido_id, account_id, account_type)
+        if erro:
+            return erro
+        try:
+            return InvoiceService.enviar_por_email(pedido.id)
+        except ValueError:
+            return {
+                "success": False,
+                "erro": "Não foi possível enviar o e-mail agora. Tente novamente em instantes.",
+                "status_code": 502,
+            }
+
+    @staticmethod
     def email_configurado():
         return bool(os.getenv("BREVO_API_KEY") and os.getenv("BREVO_SENDER_EMAIL"))
 
@@ -247,4 +305,7 @@ class InvoiceService:
         EmailService.enviar_comprovante(
             dados["cliente_email"], dados["cliente_nome"], dados["codigo"], pdf
         )
-        return {"success": True, "mensagem": "Comprovante enviado por e-mail."}
+        return {
+            "success": True,
+            "mensagem": f"Comprovante enviado para {_mascarar_email(dados['cliente_email'])}.",
+        }
