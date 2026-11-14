@@ -1,15 +1,13 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import (
     Categoria,
     Endereco,
     ItemPedido,
-    Pedido,
     PaymentAttempt,
+    Pedido,
     Produto,
     Restaurante,
     Usuario,
@@ -18,6 +16,7 @@ from app.routes.order_routes import pedido_bp
 from app.services.payment_providers.contracts import UnsupportedPaymentProvider
 from app.services.payment_providers.factory import get_payment_provider
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture
@@ -218,7 +217,7 @@ def test_recusa_simulada_nao_confirma_pedido_nem_altera_estoque(app):
 
 def test_cliente_nao_pode_iniciar_ou_simular_pagamento_de_outro_cliente(app):
     with app.app_context():
-        customer, other_customer, order, _ = _create_order()
+        _, other_customer, order, _ = _create_order()
         client = app.test_client()
 
         create = client.post(

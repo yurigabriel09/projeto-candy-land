@@ -1,11 +1,18 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
-from app.models import Categoria, Endereco, EntregaPedido, Pedido, Produto, Restaurante, Usuario
+from app.models import (
+    Categoria,
+    Endereco,
+    EntregaPedido,
+    Pedido,
+    Produto,
+    Restaurante,
+    Usuario,
+)
 from app.services.order_service import OrderService
+from flask import Flask
 
 
 @pytest.fixture
@@ -158,8 +165,8 @@ def test_raio_precisa_estar_configurado_para_delivery(app):
 
 
 def test_migracao_de_taxa_e_idempotente_para_banco_existente(app):
-    from sqlalchemy import create_engine, text
     from app.database.migrations import migrar_taxa_entrega_por_distancia
+    from sqlalchemy import create_engine, text
 
     engine = create_engine("sqlite:///:memory:")
     with engine.begin() as connection:

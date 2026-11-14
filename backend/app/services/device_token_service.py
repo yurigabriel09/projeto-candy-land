@@ -1,7 +1,6 @@
-from sqlalchemy.exc import SQLAlchemyError
-
 from app.database.database import db
 from app.models.device_token import DeviceToken
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class DeviceTokenService:

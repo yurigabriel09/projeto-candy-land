@@ -8,8 +8,8 @@ from app.models.delivery import EntregaPedido
 from app.models.device_token import DeviceToken
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
-from app.models.payment_attempt import PaymentAttempt
 from app.models.order_receipt_code import OrderReceiptCode
+from app.models.payment_attempt import PaymentAttempt
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
@@ -18,13 +18,13 @@ __all__ = [
     "CartaoCliente",
     "Categoria",
     "CodigoAutenticacao",
+    "DeviceToken",
     "Endereco",
     "EntregaPedido",
-    "DeviceToken",
     "ItemPedido",
-    "Pedido",
-    "PaymentAttempt",
     "OrderReceiptCode",
+    "PaymentAttempt",
+    "Pedido",
     "Produto",
     "Restaurante",
     "TentativaAutenticacao",

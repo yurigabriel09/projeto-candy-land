@@ -1,8 +1,6 @@
-from flask import Blueprint, g, jsonify, make_response, request
-
 from app.services.device_token_service import DeviceTokenService
 from app.utils.auth_decorator import token_required
-
+from flask import Blueprint, g, jsonify, make_response, request
 
 device_bp = Blueprint("devices", __name__, url_prefix="/devices")
 

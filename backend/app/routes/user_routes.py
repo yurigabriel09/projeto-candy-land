@@ -1,7 +1,6 @@
-from flask import Blueprint, jsonify, make_response, request
-
 from app.controllers.user_controller import UserController
 from app.utils.auth_decorator import account_owner_required, token_required
+from flask import Blueprint, jsonify, make_response, request
 
 user_bp = Blueprint("user", __name__, url_prefix="/users")
 

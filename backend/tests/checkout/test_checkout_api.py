@@ -1,8 +1,6 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import (
     Categoria,
@@ -16,6 +14,7 @@ from app.models import (
 from app.routes.order_routes import pedido_bp
 from app.routes.user_routes import user_bp
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture

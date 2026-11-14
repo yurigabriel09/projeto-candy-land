@@ -4,10 +4,11 @@ This provider never contacts a gateway and never moves money. Its simulated
 result method is only exposed through routes that are separately restricted to
 local/development/test environments.
 """
+from collections.abc import Mapping
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
 from app.services.payment_providers.contracts import (
@@ -34,7 +35,7 @@ class MockPaymentProvider(PaymentProvider):
         return "mock"
 
     @property
-    def supported_methods(self) -> FrozenSet[PaymentMethod]:
+    def supported_methods(self) -> frozenset[PaymentMethod]:
         return frozenset({PaymentMethod.PIX, PaymentMethod.CARD, PaymentMethod.CREDIT_CARD})
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
@@ -75,7 +76,7 @@ class MockPaymentProvider(PaymentProvider):
         self,
         provider_payment_id: str,
         idempotency_key: str,
-        amount: Optional[Decimal] = None,
+        amount: Decimal | None = None,
     ) -> PaymentResult:
         result = self._get_in_memory_payment(provider_payment_id)
         refund_amount = amount if amount is not None else result.amount
@@ -89,7 +90,7 @@ class MockPaymentProvider(PaymentProvider):
         self,
         headers: Mapping[str, str],
         raw_body: bytes,
-        query_data_id: Optional[str] = None,
+        query_data_id: str | None = None,
     ) -> VerifiedPaymentEvent:
         raise PaymentProviderError(
             "O provedor mock não recebe webhooks HTTP. Use o endpoint de simulação "
@@ -127,7 +128,7 @@ class MockPaymentProvider(PaymentProvider):
             status=mapping[normalized],
             amount=amount,
             currency=currency,
-            occurred_at=datetime.now(timezone.utc),
+            occurred_at=datetime.now(UTC),
         )
 
     def _get_in_memory_payment(self, provider_payment_id: str) -> PaymentResult:

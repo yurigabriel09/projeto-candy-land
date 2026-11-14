@@ -1,6 +1,5 @@
-from flask import jsonify, make_response
-
 from app.services.payment_service import PaymentService
+from flask import jsonify, make_response
 
 
 class PaymentController:

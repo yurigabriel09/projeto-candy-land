@@ -1,11 +1,11 @@
 """PayPal Orders v2 adapter. All credentials and API calls stay on the backend."""
 import hashlib
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any
 from urllib.parse import urlencode
 
 import requests
-
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
     PaymentMethod,
@@ -51,7 +51,7 @@ class PayPalPaymentProvider(PaymentProvider):
         return "paypal"
 
     @property
-    def supported_methods(self) -> FrozenSet[PaymentMethod]:
+    def supported_methods(self) -> frozenset[PaymentMethod]:
         return frozenset({PaymentMethod.CARD})
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
@@ -113,7 +113,7 @@ class PayPalPaymentProvider(PaymentProvider):
                 "POST", f"/v2/checkout/orders/{order_id}/capture", {},
                 extra_headers={"PayPal-Request-Id": _idempotency_id(idempotency_key)},
             )
-        except PaymentProviderError as exc:
+        except PaymentProviderError:
             # A browser may retry after the capture succeeded but the response was
             # lost. Re-query the order before returning an error; never capture a
             # different order ID supplied by the client.
@@ -123,7 +123,7 @@ class PayPalPaymentProvider(PaymentProvider):
                     return current
             except PaymentProviderError:
                 pass
-            raise exc
+            raise
         return self._payment_result(response, expected_order_id=order_id)
 
     def get_payment(self, provider_payment_id: str) -> PaymentResult:
@@ -141,7 +141,7 @@ class PayPalPaymentProvider(PaymentProvider):
         raise PaymentProviderError("O PayPal não oferece cancelamento direto desta ordem; deixe a ordem expirar ou cancele no painel.")
 
     def refund_payment(
-        self, provider_payment_id: str, idempotency_key: str, amount: Optional[Decimal] = None
+        self, provider_payment_id: str, idempotency_key: str, amount: Decimal | None = None
     ) -> PaymentResult:
         order_id = str(provider_payment_id or "").strip()
         order = self._request("GET", f"/v2/checkout/orders/{order_id}")
@@ -167,7 +167,7 @@ class PayPalPaymentProvider(PaymentProvider):
         )
 
     def verify_webhook(
-        self, headers: Mapping[str, str], raw_body: bytes, query_data_id: Optional[str] = None
+        self, headers: Mapping[str, str], raw_body: bytes, query_data_id: str | None = None
     ) -> VerifiedPaymentEvent:
         if not self.webhook_id:
             raise PaymentProviderError("PAYPAL_WEBHOOK_ID não configurado; cadastre o webhook no painel PayPal.")
@@ -229,7 +229,10 @@ class PayPalPaymentProvider(PaymentProvider):
         currency = str(amount_info.get("currency_code") or unit.get("amount", {}).get("currency_code") or "BRL")
         return VerifiedPaymentEvent(
             provider="paypal",
-            event_id=str(body.get("id") or f"paypal:{event_type}:{resource.get('id', order_id)}"),
+            event_id=str(
+                body.get("id")
+                or f"paypal:{event_type}:{resource.get('id', paypal_order_id)}"
+            ),
             provider_payment_id=paypal_order_id,
             order_reference=order_reference,
             status=status,
@@ -238,8 +241,8 @@ class PayPalPaymentProvider(PaymentProvider):
         )
 
     def _request(
-        self, method: str, path: str, payload: Optional[dict[str, Any]] = None,
-        extra_headers: Optional[dict[str, str]] = None,
+        self, method: str, path: str, payload: dict[str, Any] | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         try:
             token_response = requests.post(

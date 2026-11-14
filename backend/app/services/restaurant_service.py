@@ -1,13 +1,11 @@
 from decimal import Decimal, InvalidOperation
 
 import requests
-
 from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
-from app.models.user import Usuario
 from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,

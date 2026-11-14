@@ -1,16 +1,14 @@
 import math
 from datetime import date
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 import requests
-
 from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
-from app.models.restaurant import Restaurante
-from app.models.user import Usuario
 from app.models.push_subscription import PushSubscription
+from app.models.user import Usuario
 from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,
@@ -478,6 +476,12 @@ class UserService:
 
     @staticmethod
     def cadastrar_endereco_usuario(user_id, dados_endereco):
+        if not isinstance(dados_endereco, dict):
+            return {
+                "success": False,
+                "erro": "Dados do endereço inválidos.",
+                "status_code": 400,
+            }
         try:
             usuario = db.session.get(Usuario, user_id)
             if not usuario:
@@ -536,7 +540,7 @@ class UserService:
                 "mensagem": "Endereço salvo com sucesso!",
                 "dados": target_endereco.to_dict()
             }
-        except Exception as e:
+        except SQLAlchemyError:
             db.session.rollback()
             return {"success": False, "erro": "Falha ao salvar endereço.", "status_code": 500}
 
@@ -570,9 +574,21 @@ class UserService:
 
     @staticmethod
     def salvar_push_subscription(user_id, dados):
+        if not isinstance(dados, dict):
+            return {
+                "success": False,
+                "erro": "Dados de inscrição Web Push inválidos.",
+                "status_code": 400,
+            }
         try:
             endpoint = dados.get("endpoint")
-            keys = dados.get("keys", {})
+            keys = dados.get("keys") or {}
+            if not isinstance(keys, dict):
+                return {
+                    "success": False,
+                    "erro": "Chaves da inscrição Web Push inválidas.",
+                    "status_code": 400,
+                }
             p256dh = keys.get("p256dh")
             auth = keys.get("auth")
 
@@ -599,7 +615,7 @@ class UserService:
                 "success": True,
                 "mensagem": "Inscrição de notificação salva com sucesso.",
             }
-        except Exception:
+        except SQLAlchemyError:
             db.session.rollback()
             return {
                 "success": False,

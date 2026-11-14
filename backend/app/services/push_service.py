@@ -1,8 +1,10 @@
 import json
-from flask import current_app
-from pywebpush import webpush, WebPushException
+
 from app.database.database import db
 from app.models.push_subscription import PushSubscription
+from flask import current_app
+from pywebpush import WebPushException, webpush
+
 
 def disparar_notificacao_pedido(user_id, titulo, mensagem, url="/minha-conta/historico-compras"):
     inscricoes = PushSubscription.query.filter_by(user_id=user_id).all()

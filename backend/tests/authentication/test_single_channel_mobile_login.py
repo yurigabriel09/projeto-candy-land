@@ -1,13 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from flask import Flask
-from werkzeug.security import generate_password_hash
-
 from app.database.database import db
 from app.models import CodigoAutenticacao, TentativaAutenticacao, Usuario
 from app.services.auth_service import AuthService
 from app.services.google_auth_service import GoogleAuthService
+from flask import Flask
+from werkzeug.security import generate_password_hash
 
 
 @pytest.fixture
@@ -50,7 +49,7 @@ def _mock_otp_sender(monkeypatch):
                 destino=destination,
                 codigo_hash=generate_password_hash("123456"),
                 expira_em=(
-                    datetime.now(timezone.utc).replace(tzinfo=None)
+                    datetime.now(UTC).replace(tzinfo=None)
                     + timedelta(minutes=10)
                 ),
                 usado=False,

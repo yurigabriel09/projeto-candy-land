@@ -1,16 +1,15 @@
 from datetime import datetime, timedelta
 
 import pytest
-from flask import Flask
-
 from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models import Restaurante, TentativaAutenticacao, Usuario
 from app.services.account_identity_service import email_esta_em_uso
 from app.services.auth_service import AuthService
 from app.services.google_auth_service import GoogleAuthService
-from app.services.user_service import UserService
 from app.services.restaurant_service import RestauranteService
+from app.services.user_service import UserService
+from flask import Flask
 
 
 @pytest.fixture
@@ -132,6 +131,30 @@ def test_login_com_celular_compartilhado_resolve_a_conta_pelo_email_verificado(a
         assert resultado_restaurante["success"] is True
         assert resultado_restaurante["dados"]["tipo_conta"] == "BUSINESS"
         assert resultado_restaurante["dados"]["id"] == restaurante.id
+
+
+def test_finalizacao_rejeita_email_vinculado_a_cliente_e_restaurante(app):
+    with app.app_context():
+        email = "compartilhado@example.com"
+        telefone = "+5511999990000"
+        usuario = Usuario(
+            nome_completo="Cliente de Teste",
+            email=email,
+            telefone=telefone,
+            cpf="12345678901",
+        )
+        restaurante = _criar_restaurante(
+            email, "+5511888880000", "12345678000199"
+        )
+        db.session.add_all([usuario, restaurante])
+        db.session.commit()
+
+        resultado = AuthService._finalizar_autenticacao(
+            TentativaAutenticacao(email=email, telefone=telefone)
+        )
+
+        assert resultado["success"] is False
+        assert resultado["status_code"] == 409
 
 
 @pytest.mark.parametrize(
@@ -355,4 +378,3 @@ def test_oauth_facebook_respeita_regra_de_celular_compartilhado(app, monkeypatch
         assert resultado_producao["success"] is False
         assert resultado_producao["status_code"] == 409
         assert "celular já está vinculado" in resultado_producao["erro"].lower()
-

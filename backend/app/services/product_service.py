@@ -1,8 +1,8 @@
 from app.database.database import db
 from app.models.category import Categoria
 from app.models.product import Produto
-from sqlalchemy.exc import SQLAlchemyError
 from app.utils.image_upload import remover_imagem, salvar_imagem_produto
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class ProductService:

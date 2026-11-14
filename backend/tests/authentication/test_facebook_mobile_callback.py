@@ -1,9 +1,8 @@
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from flask import Flask
-
 from app.routes.auth_routes import auth_bp
 from app.services.facebook_auth_service import FacebookAuthService
+from flask import Flask
 
 
 def _oauth_app():

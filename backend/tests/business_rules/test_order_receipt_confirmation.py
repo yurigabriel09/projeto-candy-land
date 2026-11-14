@@ -1,8 +1,6 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.category import Categoria
@@ -14,6 +12,7 @@ from app.models.product import Produto
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
 from app.services.order_receipt_service import OrderReceiptService
+from flask import Flask
 
 
 @pytest.fixture

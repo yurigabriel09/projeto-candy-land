@@ -1,13 +1,13 @@
 import re
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
+from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.auth_code import CodigoAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
-from app.config.config import telefone_compartilhado_permitido
 from app.services.account_identity_service import telefone_esta_em_uso
 from app.services.email_service import EmailService
 from app.services.google_auth_service import GoogleAuthService
@@ -146,7 +146,7 @@ class AuthService:
                         "status_code": 400,
                     }
 
-            tipo_conta, conta, conflito = AuthService._buscar_conta_por_canal(
+            _, conta, conflito = AuthService._buscar_conta_por_canal(
                 canal, valor
             )
             if conflito:
@@ -172,7 +172,7 @@ class AuthService:
                 canal_inicial=canal,
                 email=email,
                 telefone=telefone,
-                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                expira_em=datetime.now(UTC).replace(tzinfo=None)
                 + timedelta(minutes=15),
             )
 
@@ -216,7 +216,7 @@ class AuthService:
                     "status_code": 400,
                 }
 
-            agora = datetime.now(timezone.utc).replace(tzinfo=None)
+            agora = datetime.now(UTC).replace(tzinfo=None)
             if agora > tentativa.expira_em:
                 tentativa.concluida = True
                 db.session.commit()
@@ -300,7 +300,7 @@ class AuthService:
                     "status_code": 400,
                 }
 
-            agora = datetime.now(timezone.utc).replace(tzinfo=None)
+            agora = datetime.now(UTC).replace(tzinfo=None)
             if agora > tentativa.expira_em:
                 tentativa.concluida = True
                 db.session.commit()
@@ -362,7 +362,9 @@ class AuthService:
             if conta is not None:
                 tentativa.email = (conta.email or "").strip().lower()
                 tentativa.telefone = AuthService._normalizar_telefone(conta.telefone)
-                resultado = AuthService._finalizar_autenticacao(tentativa)
+                resultado = AuthService._finalizar_autenticacao(
+                    tentativa, tipo_conta=tipo_conta
+                )
                 if not resultado["success"]:
                     db.session.rollback()
                     return resultado
@@ -451,6 +453,19 @@ class AuthService:
             usuarios = {u.id: u for u in usuarios_email + usuarios_telefone}
             restaurantes = {r.id: r for r in restaurantes_email + restaurantes_telefone}
 
+        if len(usuarios) > 1 or len(restaurantes) > 1 or (usuarios and restaurantes):
+            return {
+                "success": False,
+                "erro": "Os dados informados estão vinculados a contas diferentes.",
+                "status_code": 409,
+            }
+
+        if tipo_conta is None:
+            if usuarios:
+                tipo_conta = "PERSONAL"
+            elif restaurantes:
+                tipo_conta = "BUSINESS"
+
         # 1. Se a requisição veio do portal de parceiros (BUSINESS), busca na tabela de restaurantes
         if tipo_conta == "BUSINESS" and restaurantes:
             restaurante = next(iter(restaurantes.values()))
@@ -515,14 +530,6 @@ class AuthService:
                         "PERSONAL", usuario.id, usuario.email
                     ),
                 },
-            }
-
-        # 3. Fallback para verificação padrão de conflitos se tipo_conta não for informado
-        if len(usuarios) > 1 or len(restaurantes) > 1 or (usuarios and restaurantes):
-            return {
-                "success": False,
-                "erro": "Os dados informados estão vinculados a contas diferentes.",
-                "status_code": 409,
             }
 
         return {
@@ -619,7 +626,7 @@ class AuthService:
                 telefone=telefone_normalizado,
                 email_validado=True,
                 telefone_validado=False,
-                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                expira_em=datetime.now(UTC).replace(tzinfo=None)
                 + timedelta(minutes=15),
             )
             db.session.add(tentativa)
@@ -730,7 +737,7 @@ class AuthService:
                 telefone=telefone_normalizado,
                 email_validado=True,
                 telefone_validado=False,
-                expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+                expira_em=datetime.now(UTC).replace(tzinfo=None)
                 + timedelta(minutes=15),
             )
             db.session.add(tentativa)
@@ -771,7 +778,7 @@ class AuthService:
             tipo=canal,
             destino=destino,
             codigo_hash=generate_password_hash(codigo),
-            expira_em=datetime.now(timezone.utc).replace(tzinfo=None)
+            expira_em=datetime.now(UTC).replace(tzinfo=None)
             + timedelta(minutes=10),
             usado=False,
         )
@@ -792,145 +799,6 @@ class AuthService:
                 "erro": "Não foi possível enviar o código.",
                 "status_code": 502,
             }
-
-@staticmethod
-    def _finalizar_autenticacao(tentativa, tipo_conta=None):
-        permitir_telefone_compartilhado = telefone_compartilhado_permitido(
-            current_app.config
-        )
-        email_verificado = (tentativa.email or "").strip().lower()
-
-        if permitir_telefone_compartilhado:
-            usuarios = (
-                {
-                    usuario.id: usuario
-                    for usuario in Usuario.query.filter(
-                        db.func.lower(Usuario.email) == email_verificado
-                    ).all()
-                }
-                if email_verificado
-                else {}
-            )
-            restaurantes = (
-                {
-                    restaurante.id: restaurante
-                    for restaurante in Restaurante.query.filter(
-                        db.func.lower(Restaurante.email) == email_verificado
-                    ).all()
-                }
-                if email_verificado
-                else {}
-            )
-        else:
-            usuarios_email = (
-                Usuario.query.filter(
-                    db.func.lower(Usuario.email) == email_verificado
-                ).all()
-                if email_verificado
-                else []
-            )
-            usuarios_telefone = Usuario.query.filter_by(
-                telefone=tentativa.telefone
-            ).all()
-            restaurantes_email = (
-                Restaurante.query.filter(
-                    db.func.lower(Restaurante.email) == email_verificado
-                ).all()
-                if email_verificado
-                else []
-            )
-            restaurantes_telefone = Restaurante.query.filter_by(
-                telefone=tentativa.telefone
-            ).all()
-
-            usuarios = {
-                usuario.id: usuario for usuario in usuarios_email + usuarios_telefone
-            }
-            restaurantes = {
-                restaurante.id: restaurante
-                for restaurante in restaurantes_email + restaurantes_telefone
-            }
-
-        if len(usuarios) > 1 or len(restaurantes) > 1:
-            return {
-                "success": False,
-                "erro": "Os dados informados estão vinculados a contas diferentes.",
-                "status_code": 409,
-            }
-
-        # SE VIER DO CLIENTE (PERSONAL), SELECIONA O USUÁRIO
-        if tipo_conta == "PERSONAL" and usuarios:
-            usuario = next(iter(usuarios.values()))
-            if getattr(usuario, "status", "ACTIVE") != "ACTIVE":
-                return {
-                    "success": False,
-                    "erro": "Usuário inativo.",
-                    "status_code": 403,
-                }
-            if not usuario.email:
-                usuario.email = tentativa.email
-            if not usuario.telefone:
-                usuario.telefone = tentativa.telefone
-
-            return {
-                "success": True,
-                "mensagem": "Autenticação concluída com sucesso.",
-                "dados": {
-                    "tipo_conta": "PERSONAL",
-                    "id": usuario.id,
-                    "nome_completo": usuario.nome_completo,
-                    "email": usuario.email,
-                    "telefone": usuario.telefone,
-                    "novo_cadastro": False,
-                    "token": TokenService.gerar_token("PERSONAL", usuario.id, usuario.email),
-                },
-            }
-
-        if restaurantes:
-            restaurante = next(iter(restaurantes.values()))
-            if not restaurante.ativo:
-                return {
-                    "success": False,
-                    "erro": "Restaurante inativo.",
-                    "status_code": 403,
-                }
-            if not restaurante.email:
-                restaurante.email = tentativa.email
-            if not restaurante.telefone:
-                restaurante.telefone = tentativa.telefone
-
-            return {
-                "success": True,
-                "mensagem": "Autenticação concluída com sucesso.",
-                "dados": {
-                    "tipo_conta": "BUSINESS",
-                    "id": restaurante.id,
-                    "nome": restaurante.nome,
-                    "email": restaurante.email,
-                    "telefone": restaurante.telefone,
-                    "novo_cadastro": False,
-                    "token": TokenService.gerar_token("BUSINESS", restaurante.id, restaurante.email),
-                },
-            }
-
-        if len(usuarios) > 1 or len(restaurantes) > 1 or (usuarios and restaurantes):
-            return {
-                "success": False,
-                "erro": "Os dados informados estão vinculados a contas diferentes.",
-                "status_code": 409,
-            }
-
-        return {
-            "success": True,
-            "mensagem": "Autenticação concluída. Cadastro necessário.",
-            "dados": {
-                "tipo_conta": None,
-                "id": None,
-                "email": tentativa.email,
-                "telefone": tentativa.telefone,
-                "novo_cadastro": True,
-            },
-        }
 
     @staticmethod
     def _email_valido(email):
