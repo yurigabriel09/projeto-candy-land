@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import PixPayment from "../components/PixPayment";
+import { createOrder, createPayment } from "../services/orderService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -34,6 +36,9 @@ function Checkout() {
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState(false);
     const [pedidoCriadoId, setPedidoCriadoId] = useState(null);
+
+    // Pix: dados do pagamento gerado (QR Code + Copia e Cola)
+    const [pixPagamento, setPixPagamento] = useState(null);
 
     const nomeUsuario = dadosAutenticacao?.nome_completo || "Cliente Candyland";
     const ano = new Date().getFullYear();
@@ -193,6 +198,15 @@ function Checkout() {
                 general_note: ""
             };
 
+            // Pix: cria o pedido, gera o pagamento e mostra a tela de QR Code
+            if (metodoPagamento === "PIX") {
+                const pedido = await createOrder(payload);
+                const pagamento = await createPayment(pedido.id);
+                setPedidoCriadoId(pedido.id);
+                setPixPagamento(pagamento);
+                return;
+            }
+
             const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
             const resposta = await fetch(`${apiBase}/pedidos`, {
@@ -220,6 +234,16 @@ function Checkout() {
         } finally {
             setProcessando(false);
         }
+    }
+
+    function handlePixConfirmado() {
+        limparCarrinho();
+        setSucesso(true);
+    }
+
+    function handlePixVoltar() {
+        setPixPagamento(null);
+        navigate("/cart");
     }
 
     if (sucesso) {
@@ -382,6 +406,7 @@ function Checkout() {
                             <button
                                 type="button"
                                 className={`payment-tab-btn ${metodoPagamento === "PAYPAL" ? "active" : ""}`}
+                                disabled={Boolean(pixPagamento)}
                                 onClick={() => { setMetodoPagamento("PAYPAL"); setErro(""); }}
                             >
                                 <span className="payment-tab-icon">🅿️</span>
@@ -391,6 +416,7 @@ function Checkout() {
                             <button
                                 type="button"
                                 className={`payment-tab-btn ${metodoPagamento === "CARTAO_CREDITO" ? "active" : ""}`}
+                                disabled={Boolean(pixPagamento)}
                                 onClick={() => { setMetodoPagamento("CARTAO_CREDITO"); setErro(""); }}
                             >
                                 <span className="payment-tab-icon">💳</span>
@@ -400,6 +426,7 @@ function Checkout() {
                             <button
                                 type="button"
                                 className={`payment-tab-btn ${metodoPagamento === "PIX" ? "active" : ""}`}
+                                disabled={Boolean(pixPagamento)}
                                 onClick={() => { setMetodoPagamento("PIX"); setErro(""); }}
                             >
                                 <span className="payment-tab-icon">⚡</span>
@@ -534,17 +561,28 @@ function Checkout() {
                             </div>
                         )}
 
-                        {metodoPagamento === "PIX" && (
+                        {metodoPagamento === "PIX" && pixPagamento && (
+                            <PixPayment
+                                pedidoId={pedidoCriadoId}
+                                pagamento={pixPagamento}
+                                total={total}
+                                onConfirmado={handlePixConfirmado}
+                                onVoltar={handlePixVoltar}
+                            />
+                        )}
+
+                        {metodoPagamento === "PIX" && !pixPagamento && (
                             <div className="conta-card pix-box">
                                 <span className="pix-emoji">⚡</span>
                                 <h3 className="pix-title">Pagamento Instantâneo via Pix</h3>
                                 <p className="pix-desc">
-                                    Ao clicar no botão abaixo, a transação Pix será processada e confirmada.
+                                    Ao clicar no botão abaixo, geramos um QR Code e um código Pix Copia e Cola para você pagar no app do seu banco.
                                 </p>
                                 <span className="pix-badge">Aprovação em segundos</span>
                             </div>
                         )}
 
+                        {!pixPagamento && (
                         <div className="conta-card checkout-summary-card">
                             <div className="checkout-summary-row">
                                 <div>
@@ -571,9 +609,12 @@ function Checkout() {
                                     ? "Processando..."
                                     : metodoPagamento === "PAYPAL"
                                     ? "🔒 Pagar com PayPal"
+                                    : metodoPagamento === "PIX"
+                                    ? "Gerar QR Code Pix"
                                     : "Confirmar e Pagar"}
                             </button>
                         </div>
+                        )}
                     </section>
                 </div>
             </main>
