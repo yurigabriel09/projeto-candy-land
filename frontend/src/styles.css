@@ -4790,3 +4790,23 @@ select:focus-visible {
     color: var(--rosa);
     text-decoration: underline;
 }
+/* ===== Pix: QR Code, Copia e Cola e aguardando confirmação ===== */
+.pixpay-card { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+.pixpay-header { display: flex; gap: 14px; align-items: center; text-align: left; }
+.pixpay-title { margin: 0 0 4px; }
+.pixpay-desc { margin: 0; color: #6b6b6b; }
+.pixpay-emoji { font-size: 40px; }
+.pixpay-spinner { width: 28px; height: 28px; flex: none; border: 3px solid #f3c6d6; border-top-color: #e5487f; border-radius: 50%; animation: pixpay-gira 1s linear infinite; }
+@keyframes pixpay-gira { to { transform: rotate(360deg); } }
+.pixpay-tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.pixpay-tab { border: 1px solid #e0e0e0; background: #fff; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.pixpay-tab.active { border-color: #e5487f; color: #e5487f; font-weight: 600; }
+.pixpay-qr { background: #fff; padding: 12px; border: 1px solid #eee; border-radius: 12px; line-height: 0; }
+.pixpay-qr svg, .pixpay-qr img { max-width: 100%; height: auto; }
+.pixpay-copia { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.pixpay-copia textarea { width: 100%; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none; box-sizing: border-box; }
+.pixpay-passos { text-align: left; color: #555; margin: 0; padding-left: 20px; max-width: 420px; }
+.pixpay-aviso { background: #fff7e0; border: 1px solid #f1d98a; color: #6b5200; padding: 10px 12px; border-radius: 8px; margin: 0; max-width: 420px; font-size: 14px; }
+.pixpay-acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.pixpay-ok .pixpay-title { color: #1a7f45; }
+.pixpay-erro .pixpay-title { color: #b3261e; }

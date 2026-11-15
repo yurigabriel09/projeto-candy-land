@@ -139,3 +139,32 @@ export async function updateOrderStatus(orderId, status) {
     const resultado = await lerResposta(response, "Não foi possível atualizar o status do pedido.");
     return resultado.pedido;
 }
+
+export async function downloadInvoice(orderId, orderCode) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/comprovante`, {
+        headers: authHeaders(),
+        cache: "no-store",
+    });
+    if (!response.ok) {
+        const resultado = await response.json().catch(() => ({}));
+        throw new Error(resultado.erro || "Não foi possível baixar o comprovante.");
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `comprovante-${orderCode || orderId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function sendInvoiceByEmail(orderId) {
+    const response = await fetch(`${API_BASE}/pedidos/${encodeURIComponent(orderId)}/comprovante/enviar`, {
+        method: "POST",
+        headers: authHeaders(),
+        cache: "no-store",
+    });
+    return lerResposta(response, "Não foi possível enviar o comprovante por e-mail.");
+}

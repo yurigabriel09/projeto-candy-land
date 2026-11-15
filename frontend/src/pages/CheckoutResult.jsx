@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
+import PixPayment from "../components/PixPayment";
 import { cancelPayPalPayment, capturePayPalPayment, createPayment, getOrder, getPayment } from "../services/orderService";
 
 const CHECKOUT_SESSION_KEY = "candyland_checkout_pending";
@@ -30,6 +31,7 @@ const STATUS_LABEL = {
 
 function CheckoutResult() {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const orderId = searchParams.get("order_id");
     const providerRetorno = searchParams.get("provider");
     const paypalToken = searchParams.get("token");
@@ -180,12 +182,20 @@ function CheckoutResult() {
                             ) : pagamentoPrecisaAtencao ? (
                                 <>
                                     <p className="cart-checkout-erro">O provedor informou <strong>{pagamento.status}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>
-                                    {["REJECTED", "CANCELLED"].includes(pagamento?.status) && (
+                                    {["REJECTED", "CANCELLED"].includes(pagamento?.status) && pagamento?.payment_method !== "PIX" && (
                                         <button className="btn-principal" type="button" disabled={iniciandoNovaTentativa} onClick={tentarPagarNovamente}>
                                             {iniciandoNovaTentativa ? "Reabrindo pagamento..." : "Tentar pagamento novamente"}
                                         </button>
                                     )}
                                 </>
+                            ) : pagamento?.payment_method === "PIX" && (pagamento.pix_copy_paste || pagamento.pix_qr_code_base64) ? (
+                                <PixPayment
+                                    pedidoId={pedido.id}
+                                    pagamento={pagamento}
+                                    total={pedido.total || 0}
+                                    onConfirmado={() => setAtualizacao((n) => n + 1)}
+                                    onVoltar={() => navigate("/home")}
+                                />
                             ) : (
                                 <p className="cart-aviso-checkout">Pagamento ainda não confirmado. A página consulta o estado periodicamente; não realize outro pagamento enquanto a tentativa estiver pendente.</p>
                             )}
