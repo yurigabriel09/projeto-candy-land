@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import ProductRecommendations from "../components/ProductRecommendations";
 import { getProducts } from "../services/productService";
 import { getRestaurants } from "../services/restaurantService";
 import { resolverImagemUrl } from "../utils/imageUrl";
@@ -16,7 +17,7 @@ function formatarPreco(valor) {
 function Itens() {
   const navigate = useNavigate();
   const { autenticado, dadosAutenticacao } = useAuth();
-  const { adicionarItem } = useCart();
+  const { adicionarItem, carrinho } = useCart();
   const compradorLogado = autenticado && dadosAutenticacao?.tipo_conta === "PERSONAL";
 
   const [parametros, setParametros] = useSearchParams();
@@ -214,6 +215,16 @@ function Itens() {
               </article>
             ))}
           </div>
+        )}
+
+        {/* Sugestões a partir do que já está no carrinho */}
+        {compradorLogado && (
+          <ProductRecommendations
+            produtoIds={carrinho.itens.map((i) => i.id_produto)}
+            restauranteId={carrinho.restauranteId}
+            restauranteNome={carrinho.restauranteNome}
+            titulo="Sugestões para o seu carrinho"
+          />
         )}
       </section>
     </>

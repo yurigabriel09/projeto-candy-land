@@ -4829,3 +4829,24 @@ select:focus-visible {
 .track-itens { margin: 12px 0; }
 .track-itens h2 { font-size: 16px; margin: 0 0 6px; }
 .track-itens ul { margin: 0; padding-left: 18px; }
+
+/* ===== Carrossel de produtos sugeridos ===== */
+.recs { margin: 24px 0; }
+.recs-cabecalho { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.recs-titulo { margin: 0; font-size: 18px; }
+.recs-setas { display: flex; gap: 8px; }
+.recs-setas button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #e0e0e0; background: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
+.recs-setas button:hover { border-color: #e5487f; color: #e5487f; }
+.recs-trilho { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; scrollbar-width: thin; }
+.recs-card { flex: 0 0 180px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 10px; }
+.recs-imagem { position: relative; height: 110px; border-radius: 10px; background: #fff1f6; overflow: hidden; display: grid; place-items: center; }
+.recs-imagem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.recs-emoji { font-size: 36px; }
+.recs-motivo { font-size: 11px; color: #e5487f; font-weight: 600; }
+.recs-nome { margin: 0; font-size: 14px; line-height: 1.25; min-height: 35px; }
+.recs-rodape { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+.recs-preco { font-size: 14px; }
+.recs-add { border: 1px solid #e5487f; background: #fff; color: #e5487f; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.recs-add:hover { background: #e5487f; color: #fff; }
+.recs-esqueleto { min-height: 210px; background: linear-gradient(90deg, #f3f3f3, #fafafa, #f3f3f3); background-size: 200% 100%; animation: recs-brilho 1.4s linear infinite; border-color: #f0f0f0; }
+@keyframes recs-brilho { to { background-position: -200% 0; } }

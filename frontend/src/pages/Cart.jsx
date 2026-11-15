@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
+import ProductRecommendations from "../components/ProductRecommendations";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getPayment, getOrder } from "../services/orderService";
@@ -237,6 +238,13 @@ function Cart() {
                                     );
                                 })}
                             </div>
+
+                            <ProductRecommendations
+                                produtoIds={carrinho.itens.map((i) => i.id_produto)}
+                                restauranteId={carrinho.restauranteId}
+                                restauranteNome={carrinho.restauranteNome}
+                                titulo="Que tal levar mais um docinho?"
+                            />
 
                             <div className="cart-entrega-secao">
                                 <h3>Como você quer receber?</h3>
