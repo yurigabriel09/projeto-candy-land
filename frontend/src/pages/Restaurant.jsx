@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
 import { useCart } from "../context/CartContext";
+import ProductRecommendations from "../components/ProductRecommendations";
 import { resolverImagemUrl } from "../utils/imageUrl";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -14,7 +15,7 @@ function Restaurant() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [tentativa, setTentativa] = useState(0);
-    const { adicionarItem } = useCart();
+    const { adicionarItem, carrinho } = useCart();
 
     useEffect(() => {
         let ativo = true;
@@ -95,6 +96,14 @@ function Restaurant() {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Sugestões a partir do que já está no carrinho deste restaurante */}
+                            <ProductRecommendations
+                                produtoIds={carrinho.restauranteId === restaurante.id ? carrinho.itens.map((i) => i.id_produto) : []}
+                                restauranteId={restaurante.id}
+                                restauranteNome={restaurante.nome}
+                                titulo="Sugestões para o seu pedido"
+                            />
                         </section>
                     </>
                 )}
