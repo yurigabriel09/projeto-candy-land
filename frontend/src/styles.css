@@ -4934,3 +4934,71 @@ select:focus-visible {
 
 .lg-cadastro button { background: none; border: 0; padding: 0; font: inherit; color: #f43f6e; font-weight: 800; cursor: pointer; }
 .lg-dica { margin: -12px 0 22px; text-align: center; font-size: 14px; color: #a58f85; }
+
+/* ===== Cabeçalho no estilo do protótipo ===== */
+.site-header .site-header-inner {
+  height: 84px;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: center;
+}
+
+.site-header .site-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+}
+
+.site-header .site-logo-icone {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff3d71, #ff7a4d);
+  box-shadow: 0 6px 14px rgba(255, 61, 113, 0.3);
+}
+
+.site-header .site-logo-texto {
+  font-family: "Pacifico", cursive;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #ff3d71, #ff7a4d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.site-header .site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.site-header .site-nav > a:not(.btn-contorno):not(.btn-principal) {
+  color: #3b1a1a;
+  font-weight: 500;
+  text-decoration: none;
+  margin-right: 1.8rem;
+}
+
+.site-header .site-nav a.btn-contorno {
+  color: #ff3d71;
+  border: 2px solid #ff3d71;
+  border-radius: 14px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 500;
+  background: #fff;
+}
+
+.site-header .site-nav a.btn-principal {
+  color: #fff;
+  border-radius: 14px;
+  padding: 0.65rem 1.5rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #ff3d71, #ff7a4d);
+  box-shadow: 0 4px 12px rgba(255, 61, 113, 0.25);
+}
