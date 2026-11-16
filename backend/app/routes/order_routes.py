@@ -75,6 +75,14 @@ def criar_pedido():
     )
 
 
+@pedido_bp.route("/taxa-entrega", methods=["GET"])
+@token_required
+def cotar_taxa_entrega():
+    return OrderController.cotar_entrega(
+        request.args, int(g.current_account_id), g.current_account_type
+    )
+
+
 @pedido_bp.route("", methods=["GET"])
 @token_required
 def listar_pedidos():
