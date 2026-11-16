@@ -34,7 +34,7 @@ function obterUrlImagem(url) {
 }
 
 function Cart() {
-    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal } = useCart();
+    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal, quantidadeMaxima } = useCart();
     const navigate = useNavigate();
     const [cupom, setCupom] = useState("");
     const [cupomAplicado, setCupomAplicado] = useState(false);
@@ -221,10 +221,10 @@ function Cart() {
                                                         type="button"
                                                         onClick={() => atualizarQuantidade(item.id_produto, item.quantidade + 1)}
                                                         aria-label="Aumentar quantidade"
+                                                        disabled={item.quantidade >= quantidadeMaxima}
                                                     >
                                                         +
-                                                    </button>
-                                                </div>
+                                                    </button>                                             </div>
                                                 <button
                                                     type="button"
                                                     className="cart-item-remover"

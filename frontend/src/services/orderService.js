@@ -168,3 +168,17 @@ export async function sendInvoiceByEmail(orderId) {
     });
     return lerResposta(response, "Não foi possível enviar o comprovante por e-mail.");
 }
+
+export async function getDeliveryQuote({ restaurantId, orderType, addressId }) {
+    const params = new URLSearchParams({
+        restaurant_id: String(restaurantId),
+        order_type: orderType || "DELIVERY",
+    });
+    if (addressId) params.set("delivery_address_id", String(addressId));
+    const response = await fetch(`${API_BASE}/pedidos/taxa-entrega?${params.toString()}`, {
+        headers: authHeaders(),
+        cache: "no-store",
+    });
+    const resultado = await lerResposta(response, "Não foi possível calcular a taxa de entrega.");
+    return resultado.cotacao;
+}

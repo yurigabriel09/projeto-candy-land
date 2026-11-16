@@ -36,7 +36,7 @@ function Header() {
                 </Link>
 
                 <nav className="site-nav">
-                    <Link to="/itens">Doces</Link>
+                    {!logado && <Link to="/parceiros">Seja Parceiro</Link>}
 
                     {logado && (
                         <Link to="/cart" className="cart-link">
