@@ -24,6 +24,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -61,10 +64,21 @@ import com.candyland.mobile.data.ApiProvider
 import com.candyland.mobile.data.SessionManager
 import com.candyland.mobile.model.*
 import com.candyland.mobile.push.PushTokenManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.util.UUID
 import java.text.NumberFormat
 import java.util.Locale
+
+private inline fun <T> runCancellableCatching(block: () -> T): Result<T> {
+    return try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
+}
 
 private data class RegistrationInfo(val attemptId: String, val email: String, val phone: String)
 private data class CartEntry(val product: ProductDto, val quantity: Int)
@@ -131,7 +145,7 @@ private fun WelcomeScreen(onLogin: () -> Unit) {
 
     LaunchedEffect(Unit) {
         runCatching { ApiProvider.unwrap(ApiProvider.api.restaurants()) }
-            .onSuccess { response -> restaurants = response.dados.filter { it.ativo && it.status == "ABERTO" } }
+            .onSuccess { response -> restaurants = response.dados.filter { it.ativo && it.status in listOf("ABERTO", "FECHADO") } }
             .onFailure { loadError = it.message ?: "Não foi possível carregar as docerias agora." }
         loading = false
     }
@@ -172,7 +186,7 @@ private fun WelcomeScreen(onLogin: () -> Unit) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(restaurant.nome, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         restaurant.descricao?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Loja parceira CandyLand · Aberta", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(if (restaurant.status == "ABERTO") "Loja parceira CandyLand · Aberta" else "Loja parceira CandyLand · Fechada", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -283,7 +297,7 @@ private fun AuthenticationScreen(
                 socialProvider = "FACEBOOK"
                 socialTicket = ticket
                 busy = true
-                runCatching {
+                runCancellableCatching {
                     ApiProvider.unwrap(ApiProvider.api.completeFacebook(FacebookCompleteRequest(ticket)))
                 }.onSuccess { continueSocialAuthentication(it) }
                     .onFailure { error = it.message ?: "Não foi possível concluir o login com Facebook." }
@@ -304,7 +318,7 @@ private fun AuthenticationScreen(
             error = null
             info = null
 
-            runCatching {
+            runCancellableCatching {
                 // Fluxo próprio do botão "Continuar com Google".
                 val googleOption = GetSignInWithGoogleOption.Builder(
                     BuildConfig.GOOGLE_WEB_CLIENT_ID
@@ -350,7 +364,7 @@ private fun AuthenticationScreen(
 
 
     fun startFacebookLogin() {
-        runCatching {
+        runCancellableCatching {
             val authUri = Uri.parse(BuildConfig.API_BASE_URL).buildUpon()
                 .appendPath("auth")
                 .appendPath("facebook")
@@ -403,7 +417,7 @@ private fun AuthenticationScreen(
                             busy = true; error = null; info = null
                             firstIdentifier = identifier.trim()
                             if (firstChannel == "EMAIL") email = firstIdentifier else phone = firstIdentifier
-                            runCatching {
+                            runCancellableCatching {
                                 ApiProvider.unwrap(ApiProvider.api.startAuthentication(AuthStartRequest(firstChannel, firstIdentifier)))
                             }.onSuccess { response ->
                                 attemptId = response.tentativa_id.orEmpty()
@@ -447,7 +461,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null; info = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
                                 .onSuccess { response ->
                                     if (response.dados != null) acceptAuth(response.dados)
                                     else {
@@ -479,7 +493,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.requestSecondCode(AuthSecondCodeRequest(attemptId, secondValue.trim()))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.requestSecondCode(AuthSecondCodeRequest(attemptId, secondValue.trim()))) }
                                 .onSuccess { response ->
                                     if (secondChannel == "EMAIL") email = secondValue.trim() else phone = secondValue.trim()
                                     code = ""
@@ -501,7 +515,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
                                 .onSuccess { response ->
                                     if (response.dados != null) acceptAuth(response.dados)
                                     else error = response.mensagem ?: "A autenticação ainda não foi concluída."
@@ -527,7 +541,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching {
+                            runCancellableCatching {
                                 when (socialProvider) {
                                     "GOOGLE" -> ApiProvider.unwrap(ApiProvider.api.authenticateGoogle(GoogleAuthRequest(socialCredential, phone.trim())))
                                     "FACEBOOK" -> ApiProvider.unwrap(ApiProvider.api.completeFacebook(FacebookCompleteRequest(socialTicket, phone.trim())))
@@ -548,7 +562,7 @@ private fun AuthenticationScreen(
                     onSubmit = { request ->
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.registerUser(request)) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.registerUser(request)) }
                                 .onSuccess { result ->
                                     val user = result.dados?.usuario
                                     val token = result.dados?.token
@@ -564,7 +578,7 @@ private fun AuthenticationScreen(
                                         )
                                         onAuthenticated(created)
                                         result.dados.endereco?.id?.let { addressId ->
-                                            runCatching { ApiProvider.unwrap(ApiProvider.api.geocodeAddress(user.id, addressId)) }
+                                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.geocodeAddress(user.id, addressId)) }
                                         }
                                     }
                                 }.onFailure { error = it.message ?: "Não foi possível concluir o cadastro." }
@@ -669,11 +683,14 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
     var createdOrder by remember { mutableStateOf<OrderDto?>(null) }
     var paymentIdempotencyKey by remember { mutableStateOf<String?>(null) }
     var actionBusy by remember { mutableStateOf(false) }
+    var settingsExpanded by remember { mutableStateOf(false) }
+    var profileDialog by remember { mutableStateOf(false) }
+    var showPendingOnly by remember { mutableStateOf(false) }
 
     suspend fun loadRestaurants() {
         restaurantLoading = true; restaurantError = null
         runCatching { ApiProvider.unwrap(ApiProvider.api.restaurants()) }
-            .onSuccess { restaurants = it.dados.filter { r -> r.ativo && r.status == "ABERTO" } }
+            .onSuccess { restaurants = it.dados.filter { r -> r.ativo && r.status in listOf("ABERTO", "FECHADO") } }
             .onFailure { restaurantError = it.message ?: "Não foi possível consultar as docerias." }
         restaurantLoading = false
     }
@@ -711,6 +728,19 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
         runCatching { PushTokenManager.registerCurrentDevice(context) }
     }
 
+    if (profileDialog) {
+        AlertDialog(
+            onDismissRequest = { profileDialog = false },
+            title = { Text("Dados pessoais") },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(session.name, fontWeight = FontWeight.SemiBold)
+                Text(session.email)
+                Text("Conta pessoal CandyLand")
+            } },
+            confirmButton = { TextButton(onClick = { profileDialog = false }) { Text("Fechar") } },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -720,14 +750,23 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                         Text("Olá, ${session.name}", style = MaterialTheme.typography.labelSmall)
                     }
                 },
-                actions = { TextButton(onClick = onLogout) { Text("Sair") } }
+                actions = {
+                    TextButton(onClick = { settingsExpanded = true }) { Text("⚙") }
+                    DropdownMenu(expanded = settingsExpanded, onDismissRequest = { settingsExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Dados pessoais") }, onClick = { settingsExpanded = false; profileDialog = true })
+                        DropdownMenuItem(text = { Text("Histórico de pedidos") }, onClick = { settingsExpanded = false; showPendingOnly = false; tab = 2; scope.launch { loadOrders() } })
+                        DropdownMenuItem(text = { Text("Pagamentos pendentes") }, onClick = { settingsExpanded = false; showPendingOnly = true; tab = 2; scope.launch { loadOrders() } })
+                        Divider()
+                        DropdownMenuItem(text = { Text("Sair") }, onClick = { settingsExpanded = false; onLogout() })
+                    }
+                }
             )
         },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Text("🍬") }, label = { Text("Docerias") })
                 NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Text("🛒") }, label = { Text("Carrinho (${cart.sumOf { it.quantity }})") })
-                NavigationBarItem(selected = tab == 2, onClick = { tab = 2; scope.launch { loadOrders() } }, icon = { Text("📦") }, label = { Text("Pedidos") })
+                NavigationBarItem(selected = tab == 2, onClick = { showPendingOnly = false; tab = 2; scope.launch { loadOrders() } }, icon = { Text("📦") }, label = { Text("Pedidos") })
             }
         }
     ) { innerPadding ->
@@ -754,6 +793,7 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                 } else {
                     ProductListScreen(
                         restaurant = selectedRestaurant!!,
+                        restaurantCanReceiveOrders = selectedRestaurant?.status == "ABERTO",
                         products = products,
                         loading = productLoading,
                         error = productsError,
@@ -826,7 +866,7 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                 modifier = Modifier.padding(innerPadding)
             )
             else -> OrderHistoryScreen(
-                orders = orders,
+                orders = if (showPendingOnly) orders.filter { it.status == "PENDENTE_PAGAMENTO" } else orders,
                 loading = orderLoading,
                 error = orderError,
                 onRefresh = { scope.launch { loadOrders() } },
@@ -874,6 +914,7 @@ private fun RestaurantListScreen(
 @Composable
 private fun ProductListScreen(
     restaurant: RestaurantDto,
+    restaurantCanReceiveOrders: Boolean,
     products: List<ProductDto>,
     loading: Boolean,
     error: String?,
@@ -897,7 +938,7 @@ private fun ProductListScreen(
                         product.description?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text(money(product.price), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
-                    Button(onClick = { onAdd(product) }, enabled = product.available) { Text(if (product.available) "Adicionar" else "Indisponível") }
+                    Button(onClick = { onAdd(product) }, enabled = product.available && restaurantCanReceiveOrders) { Text(if (!restaurantCanReceiveOrders) "Loja fechada" else if (product.available) "Adicionar" else "Indisponível") }
                 }
             }
         }

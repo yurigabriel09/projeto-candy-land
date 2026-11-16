@@ -1,11 +1,10 @@
 from urllib.parse import parse_qs, urlencode, urlparse
 
 import pytest
-from flask import Flask
-
 from app.routes.auth_routes import auth_bp
 from app.services.facebook_auth_service import FacebookAuthService
 from app.services.google_auth_service import GoogleAuthService
+from flask import Flask
 
 
 def test_google_valida_token_e_normaliza_email(monkeypatch):

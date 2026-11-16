@@ -1,12 +1,11 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.user import Usuario
 from app.services.user_service import UserService
+from flask import Flask
 
 
 @pytest.fixture

@@ -1,7 +1,8 @@
 """Select a payment-provider adapter without coupling order logic to a gateway."""
 import importlib
 import os
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 from app.services.payment_providers.contracts import (
     PaymentProvider,
@@ -9,7 +10,6 @@ from app.services.payment_providers.contracts import (
     PaymentProviderNotSelected,
     UnsupportedPaymentProvider,
 )
-
 
 PAYMENT_PROVIDER_ADAPTERS = {
     "mock": (
@@ -29,9 +29,9 @@ NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
 
 
 def get_payment_provider(
-    provider_name: Optional[str] = None,
+    provider_name: str | None = None,
     *,
-    config: Optional[Mapping[str, Any]] = None,
+    config: Mapping[str, Any] | None = None,
 ) -> PaymentProvider:
     """Return the configured adapter, failing closed when unavailable.
 

@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.auth_attempt import TentativaAutenticacao
 from app.services.restaurant_service import RestauranteService
+from flask import Flask
 
 
 @pytest.fixture
@@ -28,7 +27,8 @@ def app():
             email_validado=True,
             telefone_validado=True,
             concluida=True,
-            expira_em=datetime.utcnow() + timedelta(minutes=10),
+            expira_em=datetime.now(UTC).replace(tzinfo=None)
+            + timedelta(minutes=10),
         )
         db.session.add(tentativa)
         db.session.commit()

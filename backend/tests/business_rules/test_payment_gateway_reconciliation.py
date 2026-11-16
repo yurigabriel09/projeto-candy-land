@@ -1,12 +1,20 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
-from app.models import Categoria, Endereco, ItemPedido, Pedido, PaymentAttempt, Produto, Restaurante, Usuario
+from app.models import (
+    Categoria,
+    Endereco,
+    ItemPedido,
+    PaymentAttempt,
+    Pedido,
+    Produto,
+    Restaurante,
+    Usuario,
+)
 from app.services.payment_providers.contracts import PaymentResult, PaymentStatus
 from app.services.payment_service import PaymentService
+from flask import Flask
 
 
 @pytest.fixture

@@ -7,12 +7,12 @@ ou por webhook assinado; nunca confiamos apenas na URL de retorno do navegador.
 import hashlib
 import hmac
 import json
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, FrozenSet, Mapping, Optional
-
-import requests
+from typing import Any
 from urllib.parse import urlparse
 
+import requests
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
     PaymentMethod,
@@ -51,7 +51,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         return "mercadopago"
 
     @property
-    def supported_methods(self) -> FrozenSet[PaymentMethod]:
+    def supported_methods(self) -> frozenset[PaymentMethod]:
         return frozenset({PaymentMethod.PIX, PaymentMethod.CARD, PaymentMethod.CREDIT_CARD})
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
@@ -210,7 +210,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         provider_payment_id: str,
         idempotency_key: str,
-        amount: Optional[Decimal] = None,
+        amount: Decimal | None = None,
     ) -> PaymentResult:
         if str(provider_payment_id).startswith("pref:"):
             raise PaymentProviderError(
@@ -229,7 +229,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         headers: Mapping[str, str],
         raw_body: bytes,
-        query_data_id: Optional[str] = None,
+        query_data_id: str | None = None,
     ) -> VerifiedPaymentEvent:
         if not self.webhook_secret:
             raise PaymentProviderError(
@@ -322,9 +322,9 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         method: str,
         path: str,
-        payload: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
-        extra_headers: Optional[dict[str, str]] = None,
+        payload: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
         headers.update(extra_headers or {})

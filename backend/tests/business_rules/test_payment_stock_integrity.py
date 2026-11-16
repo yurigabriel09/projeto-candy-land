@@ -1,6 +1,4 @@
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import (
     Categoria,
@@ -13,6 +11,7 @@ from app.models import (
     Usuario,
 )
 from app.services.order_service import OrderService
+from flask import Flask
 
 
 @pytest.fixture

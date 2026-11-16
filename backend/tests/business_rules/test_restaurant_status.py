@@ -1,10 +1,9 @@
-from flask import Flask
 import pytest
-
 from app.database.database import db
 from app.models.restaurant import Restaurante
 from app.routes.restaurant_routes import restaurante_bp
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture

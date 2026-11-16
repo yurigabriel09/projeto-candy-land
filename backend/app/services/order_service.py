@@ -1,3 +1,4 @@
+import logging
 import math
 import threading
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -7,7 +8,6 @@ from app.database.database import db
 from app.models.address import Endereco
 from app.models.delivery import EntregaPedido
 from app.models.item_order import ItemPedido
-from app.services.push_service import disparar_notificacao_pedido
 from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
@@ -21,6 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 PAYMENT_METHODS = {"PIX", "PAYPAL", "MERCADO_PAGO", "CARTAO", "CARTAO_CREDITO"}
 ORDER_TYPES = {"DELIVERY", "PICKUP"}
+logger = logging.getLogger(__name__)
 
 
 class OrderService:
@@ -31,11 +32,7 @@ class OrderService:
             from app.services.push_notification_service import PushNotificationService
             PushNotificationService.notificar_pedido(pedido, status_anterior)
         except Exception:
-            try:
-                from flask import current_app
-                current_app.logger.exception("Falha inesperada ao notificar pedido.")
-            except Exception:
-                pass
+            logger.exception("Falha inesperada ao notificar pedido.")
 
     @staticmethod
     def _enviar_comprovante(pedido_id):
@@ -301,9 +298,11 @@ class OrderService:
             else:
                 # A coluna legado delivery_address_id é obrigatória no banco. Para
                 # retirada, ela referencia o endereço ativo do próprio restaurante.
-                if pickup_address_id not in (None, ""):
-                    if isinstance(pickup_address_id, bool) or not isinstance(pickup_address_id, int):
-                        raise TypeError("pickup_address_id deve ser um inteiro válido.")
+                if pickup_address_id not in (None, "") and (
+                    isinstance(pickup_address_id, bool)
+                    or not isinstance(pickup_address_id, int)
+                ):
+                    raise TypeError("pickup_address_id deve ser um inteiro válido.")
                 address_id = OrderService._resolve_pickup_address(
                     restaurant_id, pickup_address_id
                 ).id
@@ -358,7 +357,6 @@ class OrderService:
                 )
 
             db.session.commit()
-            OrderService._notificar_status_pedido(pedido, None)
             return {
                 "success": True,
                 "mensagem": "Pedido criado com sucesso!",
@@ -562,6 +560,7 @@ class OrderService:
                     .where(
                         Produto.id == produto_id,
                         Produto.current_stock >= quantidade,
+                        Produto.is_available.is_(True),
                     )
                     .values(current_stock=Produto.current_stock - quantidade)
                     .execution_options(synchronize_session=False)
@@ -830,7 +829,9 @@ class OrderService:
 
             db.session.commit()
             try:
-                from app.services.push_notification_service import PushNotificationService
+                from app.services.push_notification_service import (
+                    PushNotificationService,
+                )
                 PushNotificationService.notificar_pedido(
                     pedido,
                     status_entrega_anterior,
@@ -838,11 +839,7 @@ class OrderService:
                     tipo_evento="ENTREGA",
                 )
             except Exception:
-                try:
-                    from flask import current_app
-                    current_app.logger.exception("Falha ao notificar mudança da entrega.")
-                except Exception:
-                    pass
+                logger.exception("Falha ao notificar mudança da entrega.")
             return {
                 "success": True,
                 "mensagem": "Status da entrega atualizado com sucesso.",

@@ -4,15 +4,14 @@ from app.database.migrations import migrar_taxa_entrega_por_distancia
 from app.models.delivery import EntregaPedido
 from app.models.order import Pedido
 from app.routes.auth_routes import auth_bp
-from app.routes.device_routes import device_bp
 from app.routes.category_routes import categoria_bp
+from app.routes.device_routes import device_bp
 from app.routes.order_routes import pedido_bp
 from app.routes.product_routes import produto_bp
 from app.routes.restaurant_routes import restaurante_bp
 from app.routes.user_routes import user_bp
 from flask import Flask, jsonify
 from flask_cors import CORS
-
 
 NON_PRODUCTION_ENVS = {"development", "dev", "local", "test", "testing"}
 

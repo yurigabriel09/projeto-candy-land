@@ -59,8 +59,9 @@ O app Android nativo não está sujeito à política CORS do navegador. Ainda as
 ### Facebook
 
 1. Configure `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` e `FACEBOOK_REDIRECT_URI` no `backend/.env`. O redirect URI do backend precisa estar cadastrado exatamente no painel Meta/Facebook Login.
-2. Configure `FACEBOOK_MOBILE_REDIRECT_URI=com.candyland.mobile://oauth/facebook`. O backend valida o `state`, emite um ticket temporário assinado e só então redireciona de volta ao aplicativo.
-3. Para desenvolvimento local com Facebook, use uma URL HTTPS pública (por exemplo, um túnel ngrok) como `CANDYLAND_API_BASE_URL` no `mobile/local.properties` **e** como host de `FACEBOOK_REDIRECT_URI`. Isso garante que o navegador e o callback usem o mesmo host e os cookies de `state` sejam preservados. Não use `localhost` como callback dentro do navegador do emulador.
+2. No Meta Developers, habilite Facebook Login com as permissões `email` e `public_profile`; o backend solicita essas permissões. Configure `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` e `FACEBOOK_REDIRECT_URI` no `backend/.env`. Cadastre exatamente o `FACEBOOK_REDIRECT_URI` em Facebook Login > Configurações > URIs de redirecionamento OAuth válidos. Para ngrok, use `https://SEU_HOST_NGROK/auth/facebook/callback`.
+3. Configure `FACEBOOK_MOBILE_REDIRECT_URI=com.candyland.mobile://oauth/facebook`. Esse é o deep link declarado no `AndroidManifest.xml` (scheme `com.candyland.mobile`, host `oauth`, path `/facebook`). O callback HTTPS termina no backend; o backend valida o state e retorna ao app com `?ticket=...` ou `?error=...`. Se surgir “Não foi possível obter o token do Facebook”, confira se o `FACEBOOK_CLIENT_SECRET` corresponde ao Client ID e se o redirect URI é idêntico no painel Meta e no backend.
+4. Em `mobile/local.properties`, configure `CANDYLAND_API_BASE_URL=https://SEU_HOST_NGROK/`. Esse hostname é a base de API do app, não o deep link de retorno. Reinicie o backend e reconstrua o app depois de alterar as configurações.
 
 Os botões ficam visíveis mesmo antes de configurar as credenciais; o login só será concluído quando os respectivos Client IDs e segredos estiverem configurados no ambiente. Não coloque segredos no app Android nem no Git.
 

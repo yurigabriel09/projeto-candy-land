@@ -1,7 +1,13 @@
 from decimal import Decimal
 
-from app.services.payment_providers.contracts import CreatePaymentCommand, PaymentMethod, PaymentStatus
-from app.services.payment_providers.mercado_pago_adapter import MercadoPagoPaymentProvider
+from app.services.payment_providers.contracts import (
+    CreatePaymentCommand,
+    PaymentMethod,
+    PaymentStatus,
+)
+from app.services.payment_providers.mercado_pago_adapter import (
+    MercadoPagoPaymentProvider,
+)
 
 
 def test_mercadopago_pix_retorna_qr_code_e_copia_e_cola_sem_redirect():

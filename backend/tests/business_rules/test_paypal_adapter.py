@@ -3,7 +3,6 @@ from types import SimpleNamespace
 
 import pytest
 import requests
-
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
     PaymentMethod,

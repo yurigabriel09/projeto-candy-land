@@ -1,10 +1,8 @@
 """Payment orchestration shared by the mock now and real adapters later."""
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, Dict, Mapping, Optional
+from typing import Any
 from urllib.parse import parse_qs, urlparse
-
-from flask import current_app, has_app_context
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.database.database import db
 from app.models.order import Pedido
@@ -21,6 +19,8 @@ from app.services.payment_providers.factory import (
     NON_PRODUCTION_ENVS,
     get_payment_provider,
 )
+from flask import current_app, has_app_context
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
 class PaymentService:
@@ -31,7 +31,7 @@ class PaymentService:
         return default
 
     @staticmethod
-    def _mock_mode_error() -> Optional[Dict[str, Any]]:
+    def _mock_mode_error() -> dict[str, Any] | None:
         environment = str(PaymentService._config_value("APP_ENV", "production")).lower()
         provider = str(PaymentService._config_value("PAYMENT_PROVIDER", "none")).lower()
         if environment not in NON_PRODUCTION_ENVS:
@@ -72,7 +72,7 @@ class PaymentService:
         return pedido, None
 
     @staticmethod
-    def _referencia_preferencia_da_url(pedido_id: int, approval_url: Optional[str]) -> Optional[str]:
+    def _referencia_preferencia_da_url(pedido_id: int, approval_url: str | None) -> str | None:
         """Recover the Checkout Pro preference ID from its saved redirect URL."""
         if not approval_url:
             return None
@@ -98,8 +98,8 @@ class PaymentService:
         pedido_id: int,
         account_id: int,
         account_type: str,
-        idempotency_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         # The create/query contract is provider-neutral. Apply the special
         # environment gate only when someone explicitly selects the mock; real
         # adapters can use this same endpoint once implemented and configured.
@@ -264,7 +264,7 @@ class PaymentService:
     @staticmethod
     def consultar_pagamento(
         pedido_id: int, account_id: int, account_type: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         pedido, error = PaymentService._pedido_do_cliente(
             pedido_id, account_id, account_type
         )
@@ -332,8 +332,8 @@ class PaymentService:
 
     @staticmethod
     def processar_webhook_mercado_pago(
-        headers: Mapping[str, str], raw_body: bytes, query_data_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        headers: Mapping[str, str], raw_body: bytes, query_data_id: str | None = None
+    ) -> dict[str, Any]:
         """Valida assinatura, consulta pagamento na API e reconcilia o pedido."""
         try:
             provider = get_payment_provider("mercadopago")
@@ -588,7 +588,7 @@ class PaymentService:
         }
 
     @staticmethod
-    def cancelar_tentativa_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> Dict[str, Any]:
+    def cancelar_tentativa_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> dict[str, Any]:
         pedido, error = PaymentService._pedido_do_cliente(pedido_id, account_id, account_type)
         if error:
             return error
@@ -617,7 +617,7 @@ class PaymentService:
             return {"success": False, "erro": "Falha ao registrar cancelamento da tentativa PayPal.", "status_code": 500}
 
     @staticmethod
-    def capturar_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> Dict[str, Any]:
+    def capturar_paypal(pedido_id: int, account_id: int, account_type: str, paypal_order_id: str) -> dict[str, Any]:
         pedido, error = PaymentService._pedido_do_cliente(pedido_id, account_id, account_type)
         if error:
             return error
@@ -642,7 +642,7 @@ class PaymentService:
             return {"success": False, "erro": "Falha ao registrar a captura PayPal.", "status_code": 500}
 
     @staticmethod
-    def processar_webhook_paypal(headers: Mapping[str, str], raw_body: bytes) -> Dict[str, Any]:
+    def processar_webhook_paypal(headers: Mapping[str, str], raw_body: bytes) -> dict[str, Any]:
         try:
             provider = get_payment_provider("paypal")
             event = provider.verify_webhook(headers, raw_body)
@@ -672,7 +672,7 @@ class PaymentService:
         account_id: int,
         account_type: str,
         outcome: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         mode_error = PaymentService._mock_mode_error()
         if mode_error:
             return mode_error
@@ -838,7 +838,7 @@ class PaymentService:
         }
 
     @staticmethod
-    def _to_dict(attempt: PaymentAttempt) -> Dict[str, Any]:
+    def _to_dict(attempt: PaymentAttempt) -> dict[str, Any]:
         return {
             "id": attempt.id,
             "order_id": attempt.order_id,

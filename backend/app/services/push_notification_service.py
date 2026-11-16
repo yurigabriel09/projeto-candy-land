@@ -3,13 +3,12 @@ import json
 from pathlib import Path
 
 import requests
+from app.database.database import db
+from app.models.device_token import DeviceToken
 from flask import current_app, has_app_context
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from sqlalchemy.exc import SQLAlchemyError
-
-from app.database.database import db
-from app.models.device_token import DeviceToken
 
 _FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 

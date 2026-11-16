@@ -3,8 +3,15 @@ import hmac
 import json
 from decimal import Decimal
 
-from app.services.payment_providers.contracts import CreatePaymentCommand, PaymentMethod, PaymentStatus
-from app.services.payment_providers.mercado_pago_adapter import MercadoPagoPaymentProvider
+from app.services.payment_providers.contracts import (
+    CreatePaymentCommand,
+    PaymentMethod,
+    PaymentProviderError,
+    PaymentStatus,
+)
+from app.services.payment_providers.mercado_pago_adapter import (
+    MercadoPagoPaymentProvider,
+)
 
 
 class FakeResponse:
@@ -125,7 +132,7 @@ def test_webhook_recusa_assinatura_invalida(monkeypatch):
             {"x-signature": "ts=1700000000000,v1=assinatura-incorreta", "x-request-id": "req"},
             body,
         )
-    except Exception as exc:
+    except PaymentProviderError as exc:
         assert "inválida" in str(exc).lower()
     else:
         raise AssertionError("O webhook com assinatura inválida deveria ser recusado.")
@@ -246,7 +253,7 @@ def test_checkout_pro_rejeita_retorno_local_antes_de_criar_preferencia(monkeypat
 
     try:
         provider.create_payment(command)
-    except Exception as exc:
+    except PaymentProviderError as exc:
         assert "MERCADO_PAGO_RETURN_URL_BASE" in str(exc)
         assert "HTTPS pública do frontend" in str(exc)
     else:
