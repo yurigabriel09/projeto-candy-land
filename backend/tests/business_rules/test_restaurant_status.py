@@ -111,3 +111,14 @@ def test_alteracao_de_status_exige_token(app):
             f"/restaurantes/{restaurante.id}/status", json={"status": "ABERTO"}
         )
         assert response.status_code == 401
+
+
+def test_catalogo_publico_inclui_doceria_ativa_em_analise(app):
+    with app.app_context():
+        restaurante = _criar_restaurante("EM_ANALISE", "9")
+        response = app.test_client().get("/restaurantes")
+        assert response.status_code == 200
+        lojas = response.get_json()["dados"]
+        loja = next(item for item in lojas if item["id"] == restaurante.id)
+        assert loja["ativo"] is True
+        assert loja["status"] == "EM_ANALISE"

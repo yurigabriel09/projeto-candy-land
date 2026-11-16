@@ -56,6 +56,7 @@ def test_pedido_para_retirada_usa_endereco_do_restaurante_e_nao_cria_entrega(app
             cpf_responsavel="12345678901",
             email="doceria-teste@example.com",
             telefone="1133334444",
+            status="ABERTO",
         )
         db.session.add_all([cliente, restaurante])
         db.session.flush()
@@ -111,6 +112,43 @@ def test_pedido_para_retirada_usa_endereco_do_restaurante_e_nao_cria_entrega(app
         assert EntregaPedido.query.filter_by(pedido_id=pedido.id).first() is None
 
 
+def test_retirada_nao_depende_da_chave_de_geocoding(app):
+    with app.app_context():
+        restaurante = Restaurante(
+            cnpj="98765432000198",
+            razao_social="Retirada sem mapa LTDA",
+            nome="Retirada sem mapa",
+            cpf_responsavel="10987654321",
+            email="retirada-sem-mapa@example.com",
+            telefone="1132221112",
+            status="ABERTO",
+        )
+        db.session.add(restaurante)
+        db.session.flush()
+        endereco = Endereco(
+            id_restaurante=restaurante.id,
+            cep="01001000",
+            rua="Praça da Sé",
+            numero="100",
+            bairro="Sé",
+            cidade="São Paulo",
+            estado="SP",
+            tipo_endereco="COMERCIAL",
+            principal=True,
+            ativo=True,
+        )
+        db.session.add(endereco)
+        db.session.flush()
+        restaurante.address_id = endereco.id
+        db.session.commit()
+
+        # Retirada só precisa saber onde retirar; não exige coordenadas nem Google API.
+        resolvido = OrderService._resolve_pickup_address(restaurante.id)
+        assert resolvido.id == endereco.id
+        assert resolvido.latitude is None
+        assert resolvido.longitude is None
+
+
 def test_retirada_e_rejeitada_se_restaurante_nao_tem_endereco_ativo(app):
     with app.app_context():
         restaurante = Restaurante(
@@ -126,3 +164,39 @@ def test_retirada_e_rejeitada_se_restaurante_nao_tem_endereco_ativo(app):
 
         with pytest.raises(ValueError, match="endereço ativo cadastrado"):
             OrderService._resolve_pickup_address(restaurante.id)
+
+
+def test_pedido_nao_pode_ser_criado_enquanto_doceria_aguarda_aprovacao(app):
+    with app.app_context():
+        cliente = Usuario(
+            nome_completo="Cliente em teste",
+            email="cliente-analise@example.com",
+            telefone="11999990001",
+            cpf="12345678902",
+        )
+        restaurante = Restaurante(
+            cnpj="11223344000199",
+            razao_social="Doceria em análise LTDA",
+            nome="Doceria em análise",
+            cpf_responsavel="12345678901",
+            email="doceria-analise@example.com",
+            telefone="1133334445",
+            status="EM_ANALISE",
+            ativo=True,
+        )
+        db.session.add_all([cliente, restaurante])
+        db.session.commit()
+
+        resultado = OrderService.criar_pedido(
+            cliente.id,
+            {
+                "restaurant_id": restaurante.id,
+                "order_type": "PICKUP",
+                "payment_method": "PIX",
+                "items": [],
+            },
+        )
+
+        assert resultado["success"] is False
+        assert resultado["status_code"] == 400
+        assert "não está aberta" in resultado["erro"]

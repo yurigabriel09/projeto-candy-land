@@ -1,8 +1,6 @@
-import math
 from datetime import date
 from decimal import Decimal
 
-import requests
 from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
@@ -14,6 +12,7 @@ from app.services.account_identity_service import (
     telefone_esta_em_uso,
 )
 from app.services.token_service import TokenService
+from app.services.geocoding_service import GeocodingService
 from app.utils.formatter import normalizar_telefone
 from flask import current_app
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -154,6 +153,17 @@ class UserService:
                     "status_code": 409,
                 }
 
+            if not isinstance(endereco, dict):
+                return {"success": False, "erro": "Informe um endereço residencial completo.", "status_code": 400}
+            geocodificacao = GeocodingService.geocodificar(endereco)
+            if geocodificacao["success"]:
+                coordenadas = geocodificacao["dados"]
+            elif geocodificacao.get("status_code") in (502, 503):
+                # Não bloqueia a criação da conta; o checkout repetirá a geocodificação.
+                coordenadas = {"latitude": None, "longitude": None}
+            else:
+                return geocodificacao
+
             if data_nascimento:
                 data_nascimento = date.fromisoformat(data_nascimento)
 
@@ -178,8 +188,8 @@ class UserService:
                 cidade=endereco.get("cidade"),
                 estado=endereco.get("estado"),
                 referencia=endereco.get("referencia"),
-                latitude=endereco.get("latitude"),
-                longitude=endereco.get("longitude"),
+                latitude=coordenadas["latitude"],
+                longitude=coordenadas["longitude"],
                 tipo_endereco="RESIDENCIAL",
                 principal=True,
                 ativo=True,
@@ -226,12 +236,7 @@ class UserService:
 
     @staticmethod
     def geocodificar_endereco(user_id, address_id):
-        """Resolve the selected customer's saved address and persists its coordinates.
-
-        The request is made only when the user selects an address without coordinates.
-        It uses the server-side Google Geocoding API key; no address or key is exposed
-        to the React client.
-        """
+        """Resolve e persiste a localização do endereço do próprio cliente."""
         endereco = Endereco.query.filter_by(
             id=address_id, id_usuario=user_id, ativo=True
         ).first()
@@ -241,7 +246,6 @@ class UserService:
                 "erro": "Endereço ativo não encontrado para este cliente.",
                 "status_code": 404,
             }
-
         if endereco.latitude is not None and endereco.longitude is not None:
             return {
                 "success": True,
@@ -249,134 +253,27 @@ class UserService:
                 "dados": endereco.to_dict(),
             }
 
-        api_key = str(current_app.config.get("GOOGLE_MAPS_GEOCODING_API_KEY", "") or "").strip()
-        if not api_key:
-            return {
-                "success": False,
-                "erro": (
-                    "A localização automática ainda não está configurada. Configure "
-                    "GOOGLE_MAPS_GEOCODING_API_KEY no backend/.env e habilite a API "
-                    "Geocoding no Google Cloud, ou informe a localização manualmente."
-                ),
-                "status_code": 503,
-            }
-
-        linhas = [endereco.rua, endereco.numero, endereco.bairro, endereco.cidade, endereco.estado, endereco.cep, "Brasil"]
-        consulta = ", ".join(str(item).strip() for item in linhas if item and str(item).strip())
+        resultado = GeocodingService.geocodificar({
+            "cep": endereco.cep, "rua": endereco.rua, "numero": endereco.numero,
+            "bairro": endereco.bairro, "cidade": endereco.cidade, "estado": endereco.estado,
+        })
+        if not resultado["success"]:
+            return resultado
         try:
-            resposta = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json",
-                params={"address": consulta, "key": api_key, "region": "br", "components": "country:BR"},
-                timeout=8,
-            )
-            resposta.raise_for_status()
-            payload = resposta.json()
-        except (requests.RequestException, ValueError):
-            return {
-                "success": False,
-                "erro": "Não foi possível consultar a localização agora. Tente novamente ou informe as coordenadas manualmente.",
-                "status_code": 502,
-            }
-
-        if not isinstance(payload, dict):
-            return {
-                "success": False,
-                "erro": "O serviço de localização retornou uma resposta inválida.",
-                "status_code": 502,
-            }
-        status = str(payload.get("status", ""))
-        resultados = payload.get("results") or []
-        if status != "OK" or not resultados:
-            mensagem = {
-                "ZERO_RESULTS": "Não encontramos esse endereço no mapa. Confira rua, número, bairro, cidade e CEP.",
-                "REQUEST_DENIED": "O Google recusou a geocodificação. Confira a chave e se a API Geocoding está habilitada no Google Cloud.",
-                "OVER_QUERY_LIMIT": "O limite de consultas de localização foi atingido. Tente novamente mais tarde.",
-            }.get(status, "Não foi possível localizar esse endereço automaticamente. Confira os dados ou informe as coordenadas manualmente.")
-            return {"success": False, "erro": mensagem, "status_code": 422}
-
-        try:
-            local = resultados[0]["geometry"]["location"]
-            latitude = float(local["lat"])
-            longitude = float(local["lng"])
-        except (KeyError, TypeError, ValueError):
-            return {
-                "success": False,
-                "erro": "O serviço de localização retornou coordenadas inválidas.",
-                "status_code": 502,
-            }
-
-        if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-            return {
-                "success": False,
-                "erro": "O serviço retornou uma localização fora dos limites válidos.",
-                "status_code": 502,
-            }
-
-        try:
-            endereco.latitude = Decimal(str(latitude)).quantize(Decimal("0.000001"))
-            endereco.longitude = Decimal(str(longitude)).quantize(Decimal("0.000001"))
+            endereco.latitude = Decimal(str(resultado["dados"]["latitude"])).quantize(Decimal("0.000001"))
+            endereco.longitude = Decimal(str(resultado["dados"]["longitude"])).quantize(Decimal("0.000001"))
             db.session.commit()
             return {
                 "success": True,
                 "mensagem": "Endereço localizado e coordenadas salvas.",
                 "dados": endereco.to_dict(),
-                "endereco_localizado": payload["results"][0].get("formatted_address"),
+                "endereco_localizado": resultado["dados"].get("endereco_localizado"),
             }
         except SQLAlchemyError:
             db.session.rollback()
             return {
                 "success": False,
-                "erro": "Não foi possível salvar as coordenadas do endereço.",
-                "status_code": 500,
-            }
-
-    @staticmethod
-    def atualizar_coordenadas_endereco(user_id, address_id, latitude, longitude):
-        """Salva coordenadas somente em endereço ativo do cliente autenticado."""
-        try:
-            try:
-                lat = float(latitude)
-                lon = float(longitude)
-            except (TypeError, ValueError):
-                return {
-                    "success": False,
-                    "erro": "Informe latitude e longitude numéricas.",
-                    "status_code": 400,
-                }
-            if (
-                not math.isfinite(lat)
-                or not math.isfinite(lon)
-                or not -90 <= lat <= 90
-                or not -180 <= lon <= 180
-            ):
-                return {
-                    "success": False,
-                    "erro": "Latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
-                    "status_code": 400,
-                }
-
-            endereco = Endereco.query.filter_by(
-                id=address_id, id_usuario=user_id, ativo=True
-            ).first()
-            if not endereco:
-                return {
-                    "success": False,
-                    "erro": "Endereço ativo não encontrado para este cliente.",
-                    "status_code": 404,
-                }
-            endereco.latitude = Decimal(str(lat)).quantize(Decimal("0.000001"))
-            endereco.longitude = Decimal(str(lon)).quantize(Decimal("0.000001"))
-            db.session.commit()
-            return {
-                "success": True,
-                "mensagem": "Coordenadas do endereço salvas.",
-                "dados": endereco.to_dict(),
-            }
-        except SQLAlchemyError:
-            db.session.rollback()
-            return {
-                "success": False,
-                "erro": "Falha ao salvar as coordenadas do endereço.",
+                "erro": "Não foi possível salvar a localização do endereço.",
                 "status_code": 500,
             }
 
@@ -427,6 +324,13 @@ class UserService:
                 "success": True,
                 "mensagem": "Usuário atualizado com sucesso!",
                 "dados": usuario.to_dict(),
+            }
+        except ValueError:
+            db.session.rollback()
+            return {
+                "success": False,
+                "erro": "Data de nascimento inválida. Use o formato AAAA-MM-DD.",
+                "status_code": 400,
             }
         except SQLAlchemyError:
             db.session.rollback()
@@ -493,6 +397,39 @@ class UserService:
                 endereco_existente = Endereco.query.filter_by(
                     id=address_id, id_usuario=user_id, ativo=True
                 ).first()
+                if endereco_existente is None:
+                    return {
+                        "success": False,
+                        "erro": "Endereço não encontrado para este cliente.",
+                        "status_code": 404,
+                    }
+
+            campos_localizacao = ("cep", "rua", "numero", "bairro", "cidade", "estado")
+            endereco_alterado = endereco_existente is None or any(
+                campo in dados_endereco
+                and str(getattr(endereco_existente, campo, "") or "").strip()
+                != str(dados_endereco.get(campo) or "").strip()
+                for campo in campos_localizacao
+            )
+            if endereco_alterado or endereco_existente.latitude is None or endereco_existente.longitude is None:
+                dados_geo = {
+                    campo: dados_endereco.get(
+                        campo,
+                        getattr(endereco_existente, campo, None) if endereco_existente else None
+                    )
+                    for campo in campos_localizacao
+                }
+                geocodificacao = GeocodingService.geocodificar(dados_geo)
+                if geocodificacao["success"]:
+                    latitude = geocodificacao["dados"]["latitude"]
+                    longitude = geocodificacao["dados"]["longitude"]
+                elif geocodificacao.get("status_code") in (502, 503):
+                    latitude = longitude = None
+                else:
+                    return geocodificacao
+            else:
+                latitude = float(endereco_existente.latitude)
+                longitude = float(endereco_existente.longitude)
 
             if dados_endereco.get("principal"):
                 Endereco.query.filter_by(id_usuario=user_id).update({"principal": False})
@@ -506,10 +443,8 @@ class UserService:
                 endereco_existente.cidade = dados_endereco.get("cidade")
                 endereco_existente.estado = dados_endereco.get("estado")
                 endereco_existente.referencia = dados_endereco.get("referencia")
-                if dados_endereco.get("latitude") is not None:
-                    endereco_existente.latitude = dados_endereco.get("latitude")
-                if dados_endereco.get("longitude") is not None:
-                    endereco_existente.longitude = dados_endereco.get("longitude")
+                endereco_existente.latitude = latitude
+                endereco_existente.longitude = longitude
                 if "principal" in dados_endereco:
                     endereco_existente.principal = dados_endereco.get("principal")
                 target_endereco = endereco_existente
@@ -524,8 +459,8 @@ class UserService:
                     cidade=dados_endereco.get("cidade"),
                     estado=dados_endereco.get("estado"),
                     referencia=dados_endereco.get("referencia"),
-                    latitude=dados_endereco.get("latitude"),
-                    longitude=dados_endereco.get("longitude"),
+                    latitude=latitude,
+                    longitude=longitude,
                     tipo_endereco="RESIDENCIAL",
                     principal=dados_endereco.get("principal", False),
                     ativo=True

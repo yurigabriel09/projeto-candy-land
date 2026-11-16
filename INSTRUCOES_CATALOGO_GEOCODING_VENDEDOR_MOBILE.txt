@@ -1,0 +1,75 @@
+# CandyLand — catálogo, geocoding e mobile vendedor
+
+## Causa de as docerias não aparecerem
+
+O endpoint público `GET /restaurantes` já retornava os registros. O modelo `Restaurante` inicia uma conta nova com `status = EM_ANALISE` e `ativo = true`, mas os filtros nas Homes web e Android descartavam `EM_ANALISE` junto com `SUSPENSO`. Assim, docerias cadastradas e ainda aguardando aprovação desapareciam da vitrine.
+
+A correção mantém as docerias ativas visíveis, exceto as suspensas, e exibe o estado `Em análise` ou `Fechada`. Isso não libera compras: a UI web/Android desabilita o carrinho e o backend rejeita qualquer pedido até que a loja esteja `ABERTO`. A aprovação administrativa continua separada do controle operacional do vendedor.
+
+## Geocoding automático
+
+O cliente e o vendedor informam o endereço textual: CEP, rua, número, bairro, cidade e UF. O backend centraliza a consulta no serviço `GeocodingService` e chama o Google Geocoding API; a chave nunca é enviada ao frontend ou ao app. O fluxo é acionado no cadastro de cliente, cadastro de doceria, edição de endereço do cliente, configuração da doceria e, como último recurso, no checkout quando um endereço legado ainda não possui coordenadas. O endereço da Home também é resolvido por `POST /restaurantes/geocodificar-endereco/publico`.
+
+Configure no arquivo local `backend/.env` (não commitar):
+
+```env
+GOOGLE_MAPS_GEOCODING_API_KEY=SUA_CHAVE_RESTRITA
+```
+
+No Google Cloud, habilite **Geocoding API**, associe faturamento conforme as regras do Google Maps Platform e restrinja a chave ao uso de Geocoding pelo backend. Não coloque essa chave em `frontend/.env`, `mobile/local.properties`, código React ou Kotlin.
+
+Quando o Google retorna `ZERO_RESULTS`, o endereço precisa ser corrigido e a API devolve erro de validação. Em indisponibilidade temporária, ausência de chave ou limite/problema do provedor, o cadastro pode ser salvo sem coordenadas e o checkout tenta novamente; uma entrega só pode ser calculada quando a consulta conseguir localizar ambos os endereços. Retirada não depende de coordenadas.
+
+A distância exibida na vitrine e usada para a taxa atual é Haversine em linha reta, não o trajeto rodoviário. Para distância de rota/tempo real é necessária uma integração distinta com Routes API/Distance Matrix.
+
+### Preencher coordenadas de endereços antigos (opcional)
+
+O catálogo continua mostrando lojas mesmo que um endereço antigo ainda não tenha coordenadas. Para preencher em lote os registros existentes e habilitar distância na Home antes do primeiro checkout, use primeiro a simulação: 
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\python.exe scripts\geocodificar_enderecos_legados.py
+```
+
+Depois de conferir a quantidade, execute explicitamente: 
+
+```powershell
+..\.venv\Scripts\python.exe scripts\geocodificar_enderecos_legados.py --execute
+```
+
+O script só chama o Google quando recebe `--execute`. Cada endereço pode gerar uma consulta faturável. Para processar por lotes, use `--limit 50`; para ajustar a pausa, `--delay 0.3`.
+
+## Ajustes direcionados no frontend atual
+
+O código mais recente da branch já tinha o formulário de busca por endereço e a API `geocodePublicAddress`; por isso não substituímos `Landing.jsx` ou `Landing.css` por cópias antigas. Após extrair o pacote na raiz do repositório, execute os três patches direcionados: 
+
+```powershell
+.\scripts\corrigir_home_restaurantes.cmd
+.\scripts\corrigir_enderecos_sem_coordenadas.cmd
+.\scripts\corrigir_compra_lojas_pendentes.cmd
+```
+
+Eles ajustam a vitrine, retiram os campos/validações de coordenadas do cadastro/configuração web e impedem adicionar ao carrinho produtos de lojas que ainda não estejam `ABERTO`. Os scripts falham se não reconhecerem o bloco esperado; nesse caso, não force substituição manual por coordenadas.
+
+## Android
+
+- Conta `PERSONAL` abre a experiência de cliente. A engrenagem abre dados pessoais/endereço e leva ao histórico, onde o cliente pode gerar o código de recebimento após pagamento confirmado.
+- Conta `BUSINESS` abre o Portal do Vendedor, com painel, cardápio (criar/editar produtos e criar categorias), pedidos, etapas de entrega, validação de código e configuração sincronizada ao backend. O envio de imagens de produtos continua no portal web.
+- O cadastro/edição do endereço no app envia somente os campos de endereço. A geocodificação é responsabilidade do backend.
+- Lojas `EM_ANALISE` aparecem no catálogo e mostram o status; não podem vender até serem liberadas e abertas.
+- A seção de cartões informa que o recurso ainda não está disponível. O modelo atual prevê armazenar somente token do gateway/últimos quatro dígitos, mas não existe endpoint ou SDK de tokenização implementado. Não cadastrar PAN ou CVV manualmente.
+
+Valide o backend/frontend na raiz do projeto:
+
+```powershell
+.\scripts\validar_projeto.cmd
+```
+
+Valide o Android no Android Studio ou pelo wrapper:
+
+```powershell
+Set-Location mobile
+.\gradlew.bat :app:assembleDebug
+```
+
+A compilação Android deve ser confirmada no ambiente com Android SDK e JDK compatíveis com o wrapper configurado no projeto.

@@ -218,10 +218,14 @@ function Itens() {
                     <strong>{formatarPreco(produto.preco_produto)}</strong>
                     <button
                       className="btn-principal btn-pequeno"
-                      disabled={!produto.produto_disponivel}
+                      disabled={!produto.produto_disponivel || String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() !== "ABERTO"}
                       onClick={() => handleAdicionar(produto)}
                     >
-                      Adicionar
+                      {String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() === "EM_ANALISE"
+                        ? "Aguardando aprovaÃ§Ã£o"
+                        : String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() === "ABERTO"
+                          ? "Adicionar"
+                          : "Loja fechada"}
                     </button>
                   </div>
                 </div>

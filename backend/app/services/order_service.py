@@ -11,6 +11,7 @@ from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
+from app.services.geocoding_service import GeocodingService
 from app.services.order_workflow_service import (
     OrderTransitionError,
     validar_transicao_entrega,
@@ -131,6 +132,20 @@ class OrderService:
         return address
 
     @staticmethod
+    def _garantir_coordenadas_endereco(endereco, descricao):
+        if endereco.latitude is not None and endereco.longitude is not None:
+            return endereco
+        geocodificacao = GeocodingService.geocodificar({
+            "cep": endereco.cep, "rua": endereco.rua, "numero": endereco.numero,
+            "bairro": endereco.bairro, "cidade": endereco.cidade, "estado": endereco.estado,
+        })
+        if not geocodificacao["success"]:
+            raise ValueError(f"Não foi possível localizar {descricao}: {geocodificacao['erro']}")
+        endereco.latitude = geocodificacao["dados"]["latitude"]
+        endereco.longitude = geocodificacao["dados"]["longitude"]
+        return endereco
+
+    @staticmethod
     def _validar_coordenada(valor, campo, minimo, maximo):
         try:
             coordenada = float(valor)
@@ -162,6 +177,7 @@ class OrderService:
             raise ValueError(
                 "Cadastre um endereço comercial ativo no restaurante para calcular a entrega."
             )
+        address = OrderService._garantir_coordenadas_endereco(address, "o endereço comercial da doceria")
         return restaurant, address
 
     @staticmethod
@@ -181,17 +197,21 @@ class OrderService:
         if not math.isfinite(radius_km) or radius_km <= 0:
             raise ValueError("O raio de entrega deve ser maior que zero.")
 
+        customer_address = OrderService._garantir_coordenadas_endereco(
+            customer_address, "o endereço de entrega do cliente"
+        )
+
         restaurant_lat = OrderService._validar_coordenada(
-            restaurant_address.latitude, "latitude do restaurante", -90, 90
+            restaurant_address.latitude, "localização da doceria", -90, 90
         )
         restaurant_lon = OrderService._validar_coordenada(
-            restaurant_address.longitude, "longitude do restaurante", -180, 180
+            restaurant_address.longitude, "localização da doceria", -180, 180
         )
         customer_lat = OrderService._validar_coordenada(
-            customer_address.latitude, "latitude do endereço de entrega", -90, 90
+            customer_address.latitude, "localização do endereço de entrega", -90, 90
         )
         customer_lon = OrderService._validar_coordenada(
-            customer_address.longitude, "longitude do endereço de entrega", -180, 180
+            customer_address.longitude, "localização do endereço de entrega", -180, 180
         )
 
         # Haversine: distância em linha reta sobre uma Terra aproximada como esfera.
@@ -285,6 +305,12 @@ class OrderService:
 
             OrderService._validate_order_type(order_type)
             OrderService._validate_payment_method(payment_method)
+
+            restaurante = db.session.get(Restaurante, restaurant_id)
+            if not restaurante or not restaurante.ativo:
+                raise ValueError("Esta doceria não está disponível no catálogo.")
+            if restaurante.status != "ABERTO":
+                raise ValueError("Esta doceria ainda não está aberta para receber pedidos.")
 
             if order_type == "DELIVERY":
                 if isinstance(address_id, bool) or not isinstance(address_id, int):

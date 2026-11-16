@@ -1,11 +1,11 @@
 from decimal import Decimal, InvalidOperation
 
-import requests
 from app.config.config import telefone_compartilhado_permitido
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
+from app.services.geocoding_service import GeocodingService
 from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,
@@ -19,165 +19,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 class RestauranteService:
     @staticmethod
     def _geocodificar_dados_endereco(endereco_dados):
-        """Resolve um endereço comercial sem expor a chave do provedor ao frontend."""
-        if not isinstance(endereco_dados, dict):
-            return {"success": False, "erro": "Informe os dados do endereço.", "status_code": 400}
-
-        campos = {
-            "rua": str(endereco_dados.get("rua") or "").strip(),
-            "numero": str(endereco_dados.get("numero") or "").strip(),
-            "bairro": str(endereco_dados.get("bairro") or "").strip(),
-            "cidade": str(endereco_dados.get("cidade") or "").strip(),
-            "estado": str(endereco_dados.get("estado") or "").strip(),
-            "cep": str(endereco_dados.get("cep") or "").strip(),
-        }
-        obrigatorios = ("rua", "numero", "cidade", "estado")
-        ausentes = [campo for campo in obrigatorios if not campos[campo]]
-        if ausentes:
-            return {
-                "success": False,
-                "erro": "Preencha rua, número, cidade e estado para localizar o endereço.",
-                "status_code": 400,
-            }
-
-        api_key = str(current_app.config.get("GOOGLE_MAPS_GEOCODING_API_KEY", "") or "").strip()
-        if not api_key:
-            return {
-                "success": False,
-                "erro": (
-                    "A geolocalização automática não está configurada. Configure "
-                    "GOOGLE_MAPS_GEOCODING_API_KEY no backend/.env. Os campos de "
-                    "coordenadas manuais foram liberados como alternativa."
-                ),
-                "status_code": 503,
-            }
-
-        consulta = ", ".join(
-            parte for parte in (
-                campos["rua"], campos["numero"], campos["bairro"],
-                campos["cidade"], campos["estado"], campos["cep"], "Brasil",
-            ) if parte
-        )
-        try:
-            resposta = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json",
-                params={
-                    "address": consulta,
-                    "key": api_key,
-                    "region": "br",
-                    "components": "country:BR",
-                },
-                timeout=8,
-            )
-            resposta.raise_for_status()
-            payload = resposta.json()
-        except (requests.RequestException, ValueError):
-            return {
-                "success": False,
-                "erro": "Não foi possível consultar o mapa agora. Tente novamente ou informe as coordenadas manualmente.",
-                "status_code": 502,
-            }
-
-        status = str(payload.get("status", "")) if isinstance(payload, dict) else ""
-        resultados = payload.get("results") or [] if isinstance(payload, dict) else []
-        if status != "OK" or not resultados:
-            mensagem = {
-                "ZERO_RESULTS": "Não encontramos esse endereço no mapa. Confira os dados ou informe as coordenadas manualmente.",
-                "REQUEST_DENIED": "O Google recusou a geolocalização. Confira a chave e se a API Geocoding está habilitada.",
-                "OVER_QUERY_LIMIT": "O limite de consultas do mapa foi atingido. Tente novamente mais tarde ou informe as coordenadas manualmente.",
-            }.get(status, "Não foi possível localizar esse endereço. Confira os dados ou informe as coordenadas manualmente.")
-            return {"success": False, "erro": mensagem, "status_code": 422}
-
-        try:
-            local = resultados[0]["geometry"]["location"]
-            latitude = float(local["lat"])
-            longitude = float(local["lng"])
-        except (KeyError, TypeError, ValueError):
-            return {"success": False, "erro": "O mapa retornou coordenadas inválidas. Informe-as manualmente.", "status_code": 502}
-
-        if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-            return {"success": False, "erro": "O mapa retornou uma localização inválida. Informe as coordenadas manualmente.", "status_code": 502}
-
-        return {
-            "success": True,
-            "mensagem": "Endereço localizado no mapa.",
-            "dados": {
-                "latitude": round(latitude, 6),
-                "longitude": round(longitude, 6),
-                "endereco_localizado": resultados[0].get("formatted_address"),
-            },
-        }
-
-    @staticmethod
-    def geocodificar_endereco_publico(dados):
-        """Geocodifica um endereço digitado na busca pública, sem persistir dados."""
-        if not isinstance(dados, dict):
-            return {"success": False, "erro": "Informe o endereço de entrega.", "status_code": 400}
-
-        consulta = str(dados.get("endereco") or "").strip()
-        if len(consulta) < 8:
-            return {"success": False, "erro": "Informe um endereço mais completo para localizar no mapa.", "status_code": 400}
-        if len(consulta) > 250:
-            return {"success": False, "erro": "O endereço deve ter no máximo 250 caracteres.", "status_code": 400}
-
-        api_key = str(current_app.config.get("GOOGLE_MAPS_GEOCODING_API_KEY", "") or "").strip()
-        if not api_key:
-            return {
-                "success": False,
-                "erro": "A busca por endereço está temporariamente indisponível. A geolocalização precisa ser configurada no servidor.",
-                "status_code": 503,
-            }
-
-        consulta_google = consulta if "brasil" in consulta.lower() or "brazil" in consulta.lower() else f"{consulta}, Brasil"
-        try:
-            resposta = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json",
-                params={
-                    "address": consulta_google,
-                    "key": api_key,
-                    "region": "br",
-                    "components": "country:BR",
-                },
-                timeout=8,
-            )
-            resposta.raise_for_status()
-            payload = resposta.json()
-        except (requests.RequestException, ValueError):
-            return {
-                "success": False,
-                "erro": "Não foi possível consultar o mapa agora. Tente novamente em instantes.",
-                "status_code": 502,
-            }
-
-        status = str(payload.get("status", "")) if isinstance(payload, dict) else ""
-        resultados = payload.get("results") or [] if isinstance(payload, dict) else []
-        if status != "OK" or not resultados:
-            mensagem = {
-                "ZERO_RESULTS": "Não encontramos esse endereço. Confira o número, bairro e cidade.",
-                "REQUEST_DENIED": "O serviço de mapas recusou a consulta. Avise o suporte para verificar a configuração.",
-                "OVER_QUERY_LIMIT": "A busca por endereço atingiu o limite temporário. Tente novamente mais tarde.",
-            }.get(status, "Não foi possível localizar esse endereço. Confira os dados e tente novamente.")
-            return {"success": False, "erro": mensagem, "status_code": 422}
-
-        try:
-            local = resultados[0]["geometry"]["location"]
-            latitude = float(local["lat"])
-            longitude = float(local["lng"])
-        except (KeyError, TypeError, ValueError):
-            return {"success": False, "erro": "O mapa retornou uma localização inválida.", "status_code": 502}
-
-        if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
-            return {"success": False, "erro": "O mapa retornou uma localização inválida.", "status_code": 502}
-
-        return {
-            "success": True,
-            "mensagem": "Endereço localizado no mapa.",
-            "dados": {
-                "latitude": round(latitude, 6),
-                "longitude": round(longitude, 6),
-                "endereco_localizado": resultados[0].get("formatted_address") or consulta,
-            },
-        }
+        """Mantém o contrato do controller e delega ao geocodificador compartilhado."""
+        return GeocodingService.geocodificar(endereco_dados)
 
     @staticmethod
     def geocodificar_endereco_cadastro(dados):
@@ -189,6 +32,12 @@ class RestauranteService:
         if not tentativa.concluida or not tentativa.email_validado or not tentativa.telefone_validado:
             return {"success": False, "erro": "Conclua a validação de e-mail e telefone antes de localizar o endereço.", "status_code": 401}
         return RestauranteService._geocodificar_dados_endereco(dados.get("endereco"))
+
+    @staticmethod
+    def geocodificar_endereco_publico(dados):
+        """Localiza o endereço informado na busca da Home sem persistir dados pessoais."""
+        endereco = dados.get("endereco") if isinstance(dados, dict) else None
+        return GeocodingService.geocodificar(endereco)
 
     @staticmethod
     def geocodificar_endereco_restaurante(restaurante_id, endereco_dados):
@@ -220,24 +69,34 @@ class RestauranteService:
         return raio.quantize(Decimal("0.01"))
 
     @staticmethod
+    def _catalogo_publico_com_coordenadas(restaurante):
+        dados = restaurante.to_catalog_dict()
+        endereco = db.session.get(Endereco, restaurante.address_id) if restaurante.address_id else None
+        # A referência address_id é a fonte preferida, mas precisa apontar para
+        # um endereço ativo pertencente à própria doceria (ou legado sem vínculo).
+        if endereco and (
+            not endereco.ativo
+            or endereco.id_restaurante not in (None, restaurante.id)
+        ):
+            endereco = None
+        if endereco is None:
+            endereco = Endereco.query.filter_by(id_restaurante=restaurante.id, ativo=True).order_by(
+                Endereco.principal.desc(), Endereco.id.asc()
+            ).first()
+        dados["latitude"] = float(endereco.latitude) if endereco and endereco.latitude is not None else None
+        dados["longitude"] = float(endereco.longitude) if endereco and endereco.longitude is not None else None
+        return dados
+
+    @staticmethod
     def listar_restaurantes():
         try:
             restaurantes = Restaurante.query.all()
             if not restaurantes:
                 return {"success": True, "mensagem": "Nenhum restaurante cadastrado!", "dados": []}
-            catalogo = []
-            for restaurante in restaurantes:
-                dados_publicos = restaurante.to_catalog_dict()
-                endereco = Endereco.query.filter_by(
-                    id_restaurante=restaurante.id, ativo=True
-                ).order_by(Endereco.principal.desc(), Endereco.id.asc()).first()
-                dados_publicos["latitude"] = float(endereco.latitude) if endereco and endereco.latitude is not None else None
-                dados_publicos["longitude"] = float(endereco.longitude) if endereco and endereco.longitude is not None else None
-                catalogo.append(dados_publicos)
             return {
                 "success": True,
                 "mensagem": "Lista de restaurantes cadastrados:",
-                "dados": catalogo,
+                "dados": [RestauranteService._catalogo_publico_com_coordenadas(restaurante) for restaurante in restaurantes],
             }
         except SQLAlchemyError:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
@@ -248,7 +107,7 @@ class RestauranteService:
             restaurante = Restaurante.query.get(restaurante_id)
             if not restaurante:
                 return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
-            return {"success": True, "mensagem": "Restaurante encontrado:", "dados": restaurante.to_catalog_dict()}
+            return {"success": True, "mensagem": "Restaurante encontrado:", "dados": RestauranteService._catalogo_publico_com_coordenadas(restaurante)}
         except SQLAlchemyError:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
 
@@ -320,6 +179,16 @@ class RestauranteService:
             if not telefone_compartilhado_permitido(current_app.config) and telefone_esta_em_uso(telefone_normalizado):
                 return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
 
+            geocodificacao = GeocodingService.geocodificar(endereco)
+            if geocodificacao["success"]:
+                coordenadas = geocodificacao["dados"]
+            elif geocodificacao.get("status_code") in (502, 503):
+                # O cadastro permanece possível durante indisponibilidade temporária.
+                # O checkout tentará localizar o endereço antes de calcular a entrega.
+                coordenadas = {"latitude": None, "longitude": None}
+            else:
+                return geocodificacao
+
             novo_restaurante = Restaurante(
                 cnpj=cnpj, razao_social=razao_social, nome=nome,
                 nome_responsavel=nome_responsavel, email=email,
@@ -341,8 +210,8 @@ class RestauranteService:
                 cep=endereco.get("cep"), rua=endereco.get("rua"), numero=endereco.get("numero"),
                 complemento=endereco.get("complemento"), bairro=endereco.get("bairro"),
                 cidade=endereco.get("cidade"), estado=endereco.get("estado"),
-                referencia=endereco.get("referencia"), latitude=endereco.get("latitude"),
-                longitude=endereco.get("longitude"), tipo_endereco="COMERCIAL", principal=True, ativo=True,
+                referencia=endereco.get("referencia"), latitude=coordenadas["latitude"],
+                longitude=coordenadas["longitude"], tipo_endereco="COMERCIAL", principal=True, ativo=True,
             )
             db.session.add(novo_endereco)
             db.session.flush()
@@ -446,7 +315,13 @@ class RestauranteService:
 
                 campos_endereco = (
                     "cep", "rua", "numero", "complemento", "bairro", "cidade",
-                    "estado", "referencia", "latitude", "longitude",
+                    "estado", "referencia",
+                )
+                endereco_alterado = endereco_novo or any(
+                    campo in endereco_dados
+                    and str(getattr(endereco, campo, "") or "").strip()
+                    != str(endereco_dados.get(campo) or "").strip()
+                    for campo in campos_endereco
                 )
                 for campo in campos_endereco:
                     if campo in endereco_dados:
@@ -464,6 +339,21 @@ class RestauranteService:
                     restaurante.address_id = endereco.id
                 elif endereco is not None and not restaurante.address_id:
                     restaurante.address_id = endereco.id
+
+                if endereco_alterado or endereco.latitude is None or endereco.longitude is None:
+                    geocodificacao = GeocodingService.geocodificar({
+                        "cep": endereco.cep, "rua": endereco.rua, "numero": endereco.numero,
+                        "bairro": endereco.bairro, "cidade": endereco.cidade, "estado": endereco.estado,
+                    })
+                    if geocodificacao["success"]:
+                        endereco.latitude = geocodificacao["dados"]["latitude"]
+                        endereco.longitude = geocodificacao["dados"]["longitude"]
+                    elif geocodificacao.get("status_code") in (502, 503):
+                        endereco.latitude = None
+                        endereco.longitude = None
+                    else:
+                        db.session.rollback()
+                        return geocodificacao
 
             db.session.commit()
             return {

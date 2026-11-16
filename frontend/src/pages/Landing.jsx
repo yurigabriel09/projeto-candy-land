@@ -122,10 +122,7 @@ function Landing() {
           setLojas(
             dados.filter(
               (loja) =>
-                loja.ativo &&
-                !["EM_ANALISE", "SUSPENSO"].includes(
-                  String(loja.status || "").toUpperCase()
-                )
+                loja.ativo && String(loja.status || "").toUpperCase() !== "SUSPENSO"
             )
           );
         }
@@ -450,9 +447,7 @@ function Landing() {
                           <span className="lp-card-distancia">📍 {formatarDistancia(loja.distancia_km)}</span>
                         )}
                       </span>
-                      {String(loja.status || "").toUpperCase() === "FECHADO" && (
-                        <strong className="lp-status-fechado">Fechada</strong>
-                      )}
+                      {["FECHADO", "EM_ANALISE"].includes(String(loja.status || "").toUpperCase()) && ( <strong className="lp-status-fechado">{String(loja.status).toUpperCase() === "EM_ANALISE" ? "Em anÃ¡lise" : "Fechada"}</strong> )}
                     </div>
                   </div>
                 </article>
