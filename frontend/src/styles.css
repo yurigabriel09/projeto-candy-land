@@ -5002,3 +5002,52 @@ select:focus-visible {
   background: linear-gradient(135deg, #ff3d71, #ff7a4d);
   box-shadow: 0 4px 12px rgba(255, 61, 113, 0.25);
 }
+
+/* ===== Resumo do pagamento (taxa e tempo de entrega) ===== */
+.checkout-breakdown {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 280px;
+}
+
+.checkout-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  font-size: 0.95rem;
+  color: #6b4d49;
+}
+
+.checkout-breakdown-row span:last-child {
+  font-weight: 600;
+  color: #3b1a1a;
+}
+
+.checkout-breakdown-row .checkout-breakdown-gratis {
+  color: #12a150;
+}
+
+.checkout-breakdown-row .checkout-breakdown-muted {
+  color: #a58a86;
+  font-weight: 400;
+}
+
+.checkout-breakdown-tempo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: #fff1e6;
+  border: 1px solid #ffd9b8;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: #6b4d49;
+}
+
+.checkout-breakdown-tempo strong {
+  color: #ff3d71;
+}

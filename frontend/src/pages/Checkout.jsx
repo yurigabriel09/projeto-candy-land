@@ -539,15 +539,33 @@ function Checkout() {
                                         Valor Total ({quantidadeTotal} {quantidadeTotal === 1 ? "item" : "itens"})
                                     </span>
                                     <strong className="checkout-summary-total">{moeda.format(totalComTaxa)}</strong>
-                                    <small className="checkout-summary-taxa">
-                                        {calculandoTaxa
-                                            ? "Calculando a taxa de entrega..."
-                                            : !isDelivery
-                                            ? "Retirada na loja: sem taxa de entrega"
-                                            : cotacao
-                                            ? `Subtotal ${moeda.format(total)} + entrega ${moeda.format(taxaEntrega)}`
-                                            : "A taxa de entrega aparece ao escolher o endereço"}
-                                    </small>
+                                    <div className="checkout-breakdown">
+                                        <div className="checkout-breakdown-row">
+                                            <span>Subtotal</span>
+                                            <span>{moeda.format(total)}</span>
+                                        </div>
+                                        <div className="checkout-breakdown-row">
+                                            <span>{isDelivery ? "Taxa de entrega" : "Retirada na loja"}</span>
+                                            {calculandoTaxa ? (
+                                                <span className="checkout-breakdown-muted">Calculando...</span>
+                                            ) : !isDelivery || (cotacao && taxaEntrega === 0) ? (
+                                                <span className="checkout-breakdown-gratis">Grátis</span>
+                                            ) : cotacao ? (
+                                                <span>{moeda.format(taxaEntrega)}</span>
+                                            ) : (
+                                                <span className="checkout-breakdown-muted">Escolha o endereço</span>
+                                            )}
+                                        </div>
+                                        {cotacao?.tempo_estimado && !calculandoTaxa && (
+                                            <div className="checkout-breakdown-tempo">
+                                                <span aria-hidden="true">{isDelivery ? "🛵" : "🛍️"}</span>
+                                                <span>
+                                                    {isDelivery ? "Entrega estimada em " : "Pronto para retirada em "}
+                                                    <strong>{cotacao.tempo_estimado.minimo}{"–"}{cotacao.tempo_estimado.maximo} min</strong>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="checkout-summary-delivery">
                                     <span className="checkout-summary-delivery-label">Entrega:</span>
