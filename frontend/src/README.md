@@ -1,11 +1,11 @@
-# `frontend/src/`
+# `frontend/src/services/` — clientes de API
 
-- `App.jsx`: define as rotas, layouts e gates de acesso da aplicação.
-- `main.jsx`: importa estilos e monta a árvore React no elemento raiz do HTML.
-- `styles.css`: tokens/estilos globais e regras visuais compartilhadas.
-- `components/`: peças reutilizáveis de UI, geolocalização, cabeçalho e proteção de rota.
-- `context/`: estado global de sessão e carrinho.
-- `hooks/`: lógica reutilizável para contagens e geocoding.
-- `pages/`: telas do cliente e do painel do restaurante.
-- `services/`: camada de integração com API Flask.
-- `utils/`: normalização, máscaras, validadores, imagens e notificações.
+- `addressService.js`: operações de endereço/geocoding.
+- `categoryService.js`: chamadas de categorias.
+- `orderService.js`: criação, consulta, status e operações de pedidos/pagamento conforme contrato da API.
+- `productService.js`: catálogo e produtos.
+- `recommendationService.js`: consulta à API de recomendação.
+- `restaurantService.js`: cadastro, configuração, catálogo e operações de restaurante.
+- `userService.js`: perfil e dados do usuário.
+
+A autenticação é centralizada em `AuthContext.jsx` e nas rotas/handlers da tela `Login.jsx`; o antigo `authService.js` não tinha importadores e foi removido.

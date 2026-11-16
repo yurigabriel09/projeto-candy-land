@@ -2,9 +2,12 @@
 
 - `AddressCoordinates.jsx`: formulário/visualização de endereço e coordenadas.
 - `DashboardSidebar.jsx`: navegação lateral do painel do restaurante.
-- `Header.jsx`: cabeçalho e navegação global; contém o link “Doces” apontando para `/itens`, item identificado na auditoria para revisão de rótulo/visibilidade.
+- `Header.jsx`: cabeçalho e navegação global.
 - `LocationMap.jsx`: exibição de mapa/localização.
-- `PhoneInput.jsx`: campo de telefone com máscara/entrada adequada.
+- `PixPayment.jsx`: QR Code e dados de pagamento Pix.
+- `ProductRecommendations.jsx`: recomendações de produtos.
 - `ProtectedRoute.jsx`: protege rotas que exigem autenticação/perfil.
 - `RegistrationGuard.jsx`: protege e organiza etapas de cadastro.
-- `VerifiedPhoneInput.jsx`: entrada de telefone associada a verificação.
+- `VerifiedPhoneInput.jsx`: exibe o telefone confirmado durante o cadastro.
+
+O componente antigo `PhoneInput.jsx` foi removido porque não tinha importadores; os formulários atuais usam `VerifiedPhoneInput.jsx`.
