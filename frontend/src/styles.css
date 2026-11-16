@@ -4810,3 +4810,43 @@ select:focus-visible {
 .pixpay-acoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .pixpay-ok .pixpay-title { color: #1a7f45; }
 .pixpay-erro .pixpay-title { color: #b3261e; }
+
+/* ===== Acompanhamento do pedido: linha do tempo ===== */
+.track-timeline { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; }
+.track-etapa { position: relative; display: flex; gap: 14px; align-items: flex-start; padding-bottom: 18px; }
+.track-etapa:last-child { padding-bottom: 0; }
+.track-etapa:not(:last-child)::before { content: ""; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: #e3e3e3; }
+.track-etapa.track-feito:not(:last-child)::before { background: #1a7f45; }
+.track-bolinha { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #f1f1f1; color: #999; font-size: 16px; }
+.track-feito .track-bolinha { background: #1a7f45; color: #fff; font-weight: 700; }
+.track-atual .track-bolinha { background: #fff; border: 2px solid #e5487f; box-shadow: 0 0 0 4px rgba(229, 72, 127, 0.15); animation: track-pulsa 1.8s ease-in-out infinite; }
+.track-texto { display: flex; flex-direction: column; padding-top: 6px; }
+.track-pendente .track-texto strong { color: #9a9a9a; font-weight: 500; }
+.track-atual .track-texto strong { color: #e5487f; }
+.track-texto small { color: #6b6b6b; }
+@keyframes track-pulsa { 50% { box-shadow: 0 0 0 8px rgba(229, 72, 127, 0); } }
+.track-status-cancelado { background: #fdecea; color: #b3261e; }
+.track-itens { margin: 12px 0; }
+.track-itens h2 { font-size: 16px; margin: 0 0 6px; }
+.track-itens ul { margin: 0; padding-left: 18px; }
+
+/* ===== Carrossel de produtos sugeridos ===== */
+.recs { margin: 24px 0; }
+.recs-cabecalho { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.recs-titulo { margin: 0; font-size: 18px; }
+.recs-setas { display: flex; gap: 8px; }
+.recs-setas button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #e0e0e0; background: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
+.recs-setas button:hover { border-color: #e5487f; color: #e5487f; }
+.recs-trilho { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; scrollbar-width: thin; }
+.recs-card { flex: 0 0 180px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 10px; }
+.recs-imagem { position: relative; height: 110px; border-radius: 10px; background: #fff1f6; overflow: hidden; display: grid; place-items: center; }
+.recs-imagem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.recs-emoji { font-size: 36px; }
+.recs-motivo { font-size: 11px; color: #e5487f; font-weight: 600; }
+.recs-nome { margin: 0; font-size: 14px; line-height: 1.25; min-height: 35px; }
+.recs-rodape { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+.recs-preco { font-size: 14px; }
+.recs-add { border: 1px solid #e5487f; background: #fff; color: #e5487f; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.recs-add:hover { background: #e5487f; color: #fff; }
+.recs-esqueleto { min-height: 210px; background: linear-gradient(90deg, #f3f3f3, #fafafa, #f3f3f3); background-size: 200% 100%; animation: recs-brilho 1.4s linear infinite; border-color: #f0f0f0; }
+@keyframes recs-brilho { to { background-position: -200% 0; } }
