@@ -26,6 +26,28 @@ class OrderController:
         )
 
     @staticmethod
+    def cotar_entrega(args, user_id, tipo_conta):
+        if tipo_conta != "PERSONAL":
+            return make_response(
+                jsonify({"erro": "Apenas clientes podem consultar a taxa de entrega."}), 403
+            )
+
+        resultado = OrderService.cotar_entrega(
+            user_id,
+            args.get("restaurant_id"),
+            args.get("order_type"),
+            args.get("delivery_address_id"),
+        )
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "cotacao": resultado["dados"]}),
+            200,
+        )
+
+    @staticmethod
     def listar_pedidos(account_id, tipo_conta):
         resultado = OrderService.listar_pedidos(account_id, tipo_conta)
         if not resultado["success"]:
