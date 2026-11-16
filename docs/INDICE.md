@@ -9,6 +9,10 @@
 - [Documentação já existente no projeto](README.md)
 - [Scripts de desenvolvimento](../scripts/README.md)
 
+## Interface pública e localização
+
+- [Home pública, pesquisa de endereço e geocoding](home-busca-endereco-geocoding.md)
+
 ## Auditoria e trabalho planejado
 
 - [Auditoria técnica e plano de integração](auditoria-projeto-e-plano-integracao-2026-11-14.md)

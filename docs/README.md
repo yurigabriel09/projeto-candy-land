@@ -14,6 +14,7 @@ Esta pasta armazena requisitos, decisões de arquitetura, relatórios de valida�
 - `configurar-ngrok-um-endpoint.md`: configuração do túnel de desenvolvimento.
 - `correcao-fluxo-checkout-historico-geocoding.md`: registro do fluxo checkout/histórico/geocoding.
 - `integridade-pagamento-estoque.md`: regras e riscos de integridade pagamento/estoque.
+- `home-busca-endereco-geocoding.md`: busca pública de endereço, contrato de geocoding e cálculo de distância das lojas.
 - `limpeza-projeto-2026-10-28.md`: limpeza técnica anterior.
 - `mercado-pago-checkout-pro.md`: documentação do checkout Mercado Pago.
 - `modelo-dados.dot`, `modelo-dados.md`, `modelo-dados.png`: fontes e renderização do diagrama de dados.

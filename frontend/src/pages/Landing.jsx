@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import "./Landing.css";
-import { getRestaurants } from "../services/restaurantService";
+import { geocodePublicAddress, getRestaurants } from "../services/restaurantService";
 
 const ATALHOS = [
   { emoji: "🍰", nome: "Bolos", busca: "bolo" },
@@ -56,6 +56,46 @@ function dataCadastro(loja) {
   return Number.isFinite(data) ? data : 0;
 }
 
+function lerLocalizacaoSalva() {
+  try {
+    const salva = sessionStorage.getItem("candyland_delivery_location");
+    if (!salva) return null;
+    const localizacao = JSON.parse(salva);
+    if (
+      typeof localizacao?.latitude !== "number" ||
+      typeof localizacao?.longitude !== "number" ||
+      !localizacao.endereco
+    ) return null;
+    return localizacao;
+  } catch {
+    return null;
+  }
+}
+
+function calcularDistanciaKm(origem, destino) {
+  const latitude = Number(destino?.latitude);
+  const longitude = Number(destino?.longitude);
+  if (
+    !origem || !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+    destino.latitude == null || destino.longitude == null
+  ) return null;
+
+  const radianos = (graus) => (graus * Math.PI) / 180;
+  const dLat = radianos(latitude - origem.latitude);
+  const dLng = radianos(longitude - origem.longitude);
+  const lat1 = radianos(origem.latitude);
+  const lat2 = radianos(latitude);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371.0088 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatarDistancia(distancia) {
+  return distancia.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }) + " km";
+}
+
 function Landing() {
   const [lojas, setLojas] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -64,6 +104,10 @@ function Landing() {
   const [soGratis, setSoGratis] = useState(false);
   const [somenteAbertas, setSomenteAbertas] = useState(false);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [enderecoBusca, setEnderecoBusca] = useState(() => lerLocalizacaoSalva()?.endereco || "");
+  const [localizacaoCliente, setLocalizacaoCliente] = useState(() => lerLocalizacaoSalva());
+  const [geocodificando, setGeocodificando] = useState(false);
+  const [erroEndereco, setErroEndereco] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,6 +147,7 @@ function Landing() {
       ...loja,
       emoji: EMOJIS_LOJA[indice % EMOJIS_LOJA.length],
       entrega: obterResumoEntrega(loja),
+      distancia_km: calcularDistanciaKm(localizacaoCliente, loja),
     }));
 
     if (soGratis) {
@@ -127,22 +172,67 @@ function Landing() {
       );
     } else if (ordem === "novidades") {
       lista = [...lista].sort((a, b) => dataCadastro(b) - dataCadastro(a));
+    } else if (ordem === "distancia") {
+      lista = [...lista].sort((a, b) =>
+        (a.distancia_km ?? Number.MAX_SAFE_INTEGER) -
+        (b.distancia_km ?? Number.MAX_SAFE_INTEGER)
+      );
     }
 
     return lista;
-  }, [lojas, soGratis, somenteAbertas, ordem]);
+  }, [lojas, soGratis, somenteAbertas, ordem, localizacaoCliente]);
 
-  function buscarDocerias() {
-    navigate("/itens");
+  const possuiDistancias = Boolean(
+    localizacaoCliente && lojas.some((loja) => calcularDistanciaKm(localizacaoCliente, loja) !== null)
+  );
+
+  useEffect(() => {
+    if (localizacaoCliente && !carregando && possuiDistancias) {
+      setOrdem("distancia");
+    }
+  }, [localizacaoCliente, carregando, possuiDistancias]);
+
+  async function buscarDocerias(evento) {
+    evento.preventDefault();
+    const endereco = enderecoBusca.trim();
+    if (endereco.length < 8) {
+      setErroEndereco("Digite um endereço completo, incluindo número e cidade.");
+      return;
+    }
+
+    setGeocodificando(true);
+    setErroEndereco("");
+    try {
+      const resultado = await geocodePublicAddress(endereco);
+      const localizacao = {
+        endereco: resultado.endereco_localizado || endereco,
+        latitude: Number(resultado.latitude),
+        longitude: Number(resultado.longitude),
+      };
+      if (!Number.isFinite(localizacao.latitude) || !Number.isFinite(localizacao.longitude)) {
+        throw new Error("O serviço de mapas não retornou coordenadas válidas.");
+      }
+      try {
+        sessionStorage.setItem("candyland_delivery_location", JSON.stringify(localizacao));
+      } catch {
+        // O endereço continua funcionando durante esta visita mesmo sem storage.
+      }
+      setLocalizacaoCliente(localizacao);
+    } catch (erro) {
+      setErroEndereco(erro.message || "Não foi possível localizar esse endereço.");
+    } finally {
+      setGeocodificando(false);
+    }
   }
 
   function abrirLoja(lojaId) {
-    navigate(`/itens?loja=${encodeURIComponent(lojaId)}`);
+    const parametros = new URLSearchParams({ loja: String(lojaId) });
+    navigate(`/itens?${parametros.toString()}`);
   }
 
   return (
     <div className="pagina-inicial">
-      <Header />
+      <Header variant="landing" />
 
       <section className="hero">
         <span className="lp-decoracao lp-decoracao-1" aria-hidden="true">🍭</span>
@@ -167,14 +257,41 @@ function Landing() {
             Peça e receba onde estiver.
           </p>
 
-          <button
-            type="button"
-            className="lp-busca-cta"
-            onClick={buscarDocerias}
-          >
-            <span aria-hidden="true">📍</span>
-            <strong>Buscar 🍭</strong>
-          </button>
+          <form className="lp-busca-endereco" onSubmit={buscarDocerias}>
+            <label className="lp-busca-icone" htmlFor="lp-endereco-entrega" aria-hidden="true">📍</label>
+            <input
+              id="lp-endereco-entrega"
+              type="text"
+              value={enderecoBusca}
+              onChange={(evento) => {
+                setEnderecoBusca(evento.target.value);
+                setErroEndereco("");
+                if (localizacaoCliente) {
+                  setLocalizacaoCliente(null);
+                  try {
+                    sessionStorage.removeItem("candyland_delivery_location");
+                  } catch {
+                    // A busca atual não depende do armazenamento do navegador.
+                  }
+                  setOrdem("relevancia");
+                }
+              }}
+              placeholder="Seu endereço de entrega e número"
+              aria-label="Endereço de entrega e número"
+              autoComplete="street-address"
+              maxLength={250}
+              required
+            />
+            <button type="submit" disabled={geocodificando}>
+              {geocodificando ? "Localizando..." : "Buscar 🍭"}
+            </button>
+          </form>
+          {erroEndereco && <p className="lp-busca-erro" role="alert">{erroEndereco}</p>}
+          {localizacaoCliente && !erroEndereco && (
+            <p className="lp-busca-sucesso" role="status">
+              <span aria-hidden="true">✓</span> Endereço localizado: {localizacaoCliente.endereco}
+            </p>
+          )}
 
           <p className="lp-confianca">
             <span>🚀 Entrega rápida</span>
@@ -210,6 +327,7 @@ function Landing() {
                 <option value="relevancia">Ordenar</option>
                 <option value="menor-taxa">Menor taxa base</option>
                 <option value="nome">Nome A–Z</option>
+                <option value="distancia" disabled={!possuiDistancias}>Distância</option>
               </select>
             </label>
 
@@ -233,9 +351,15 @@ function Landing() {
 
             <button
               type="button"
-              className="lp-chip lp-chip-indisponivel"
-              disabled
-              title="A distância depende da localização do cliente e das lojas, ainda não disponível no catálogo."
+              className={`lp-chip ${ordem === "distancia" ? "lp-chip-ativo" : ""} ${!possuiDistancias ? "lp-chip-indisponivel" : ""}`}
+              disabled={!possuiDistancias}
+              aria-pressed={ordem === "distancia"}
+              title={!localizacaoCliente
+                ? "Informe seu endereço para ordenar as lojas por distância."
+                : !possuiDistancias
+                  ? "As lojas cadastradas ainda não possuem coordenadas para calcular a distância."
+                  : "Ordenar lojas pela distância do endereço informado."}
+              onClick={() => setOrdem((atual) => atual === "distancia" ? "relevancia" : "distancia")}
             >
               Distância
             </button>
@@ -318,8 +442,13 @@ function Landing() {
                       {loja.descricao || "Doceria parceira Candyland"}
                     </p>
                     <div className="lp-card-rodape">
-                      <span className={loja.entrega.gratis ? "lp-gratis" : "lp-taxa"}>
-                        {loja.entrega.texto}
+                      <span className="lp-card-meta">
+                        <span className={loja.entrega.gratis ? "lp-gratis" : "lp-taxa"}>
+                          {loja.entrega.texto}
+                        </span>
+                        {loja.distancia_km !== null && localizacaoCliente && (
+                          <span className="lp-card-distancia">📍 {formatarDistancia(loja.distancia_km)}</span>
+                        )}
                       </span>
                       {String(loja.status || "").toUpperCase() === "FECHADO" && (
                         <strong className="lp-status-fechado">Fechada</strong>
@@ -358,10 +487,9 @@ function Landing() {
               <button
                 type="button"
                 className="lp-btn-rosa"
-                disabled
-                title="O cadastro de entregadores ainda não está disponível no sistema."
+                onClick={() => navigate("/parceiros")}
               >
-                Cadastre-se →
+                Seja Parceiro →
               </button>
             </article>
           </div>

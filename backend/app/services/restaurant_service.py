@@ -109,6 +109,77 @@ class RestauranteService:
         }
 
     @staticmethod
+    def geocodificar_endereco_publico(dados):
+        """Geocodifica um endereço digitado na busca pública, sem persistir dados."""
+        if not isinstance(dados, dict):
+            return {"success": False, "erro": "Informe o endereço de entrega.", "status_code": 400}
+
+        consulta = str(dados.get("endereco") or "").strip()
+        if len(consulta) < 8:
+            return {"success": False, "erro": "Informe um endereço mais completo para localizar no mapa.", "status_code": 400}
+        if len(consulta) > 250:
+            return {"success": False, "erro": "O endereço deve ter no máximo 250 caracteres.", "status_code": 400}
+
+        api_key = str(current_app.config.get("GOOGLE_MAPS_GEOCODING_API_KEY", "") or "").strip()
+        if not api_key:
+            return {
+                "success": False,
+                "erro": "A busca por endereço está temporariamente indisponível. A geolocalização precisa ser configurada no servidor.",
+                "status_code": 503,
+            }
+
+        consulta_google = consulta if "brasil" in consulta.lower() or "brazil" in consulta.lower() else f"{consulta}, Brasil"
+        try:
+            resposta = requests.get(
+                "https://maps.googleapis.com/maps/api/geocode/json",
+                params={
+                    "address": consulta_google,
+                    "key": api_key,
+                    "region": "br",
+                    "components": "country:BR",
+                },
+                timeout=8,
+            )
+            resposta.raise_for_status()
+            payload = resposta.json()
+        except (requests.RequestException, ValueError):
+            return {
+                "success": False,
+                "erro": "Não foi possível consultar o mapa agora. Tente novamente em instantes.",
+                "status_code": 502,
+            }
+
+        status = str(payload.get("status", "")) if isinstance(payload, dict) else ""
+        resultados = payload.get("results") or [] if isinstance(payload, dict) else []
+        if status != "OK" or not resultados:
+            mensagem = {
+                "ZERO_RESULTS": "Não encontramos esse endereço. Confira o número, bairro e cidade.",
+                "REQUEST_DENIED": "O serviço de mapas recusou a consulta. Avise o suporte para verificar a configuração.",
+                "OVER_QUERY_LIMIT": "A busca por endereço atingiu o limite temporário. Tente novamente mais tarde.",
+            }.get(status, "Não foi possível localizar esse endereço. Confira os dados e tente novamente.")
+            return {"success": False, "erro": mensagem, "status_code": 422}
+
+        try:
+            local = resultados[0]["geometry"]["location"]
+            latitude = float(local["lat"])
+            longitude = float(local["lng"])
+        except (KeyError, TypeError, ValueError):
+            return {"success": False, "erro": "O mapa retornou uma localização inválida.", "status_code": 502}
+
+        if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+            return {"success": False, "erro": "O mapa retornou uma localização inválida.", "status_code": 502}
+
+        return {
+            "success": True,
+            "mensagem": "Endereço localizado no mapa.",
+            "dados": {
+                "latitude": round(latitude, 6),
+                "longitude": round(longitude, 6),
+                "endereco_localizado": resultados[0].get("formatted_address") or consulta,
+            },
+        }
+
+    @staticmethod
     def geocodificar_endereco_cadastro(dados):
         """Geocodificação pré-cadastro limitada a uma tentativa já verificada."""
         tentativa_id = dados.get("tentativa_id") if isinstance(dados, dict) else None
@@ -154,10 +225,19 @@ class RestauranteService:
             restaurantes = Restaurante.query.all()
             if not restaurantes:
                 return {"success": True, "mensagem": "Nenhum restaurante cadastrado!", "dados": []}
+            catalogo = []
+            for restaurante in restaurantes:
+                dados_publicos = restaurante.to_catalog_dict()
+                endereco = Endereco.query.filter_by(
+                    id_restaurante=restaurante.id, ativo=True
+                ).order_by(Endereco.principal.desc(), Endereco.id.asc()).first()
+                dados_publicos["latitude"] = float(endereco.latitude) if endereco and endereco.latitude is not None else None
+                dados_publicos["longitude"] = float(endereco.longitude) if endereco and endereco.longitude is not None else None
+                catalogo.append(dados_publicos)
             return {
                 "success": True,
                 "mensagem": "Lista de restaurantes cadastrados:",
-                "dados": [restaurante.to_catalog_dict() for restaurante in restaurantes],
+                "dados": catalogo,
             }
         except SQLAlchemyError:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}

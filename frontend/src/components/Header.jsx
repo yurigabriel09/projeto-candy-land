@@ -9,7 +9,7 @@ import usePendingOrdersCount from "../hooks/usePendingOrdersCount";
  * de itens. As telas de login/cadastro continuam com o card centralizado
  * sem cabeçalho, como já estava.
  */
-function Header() {
+function Header({ variant = "default" }) {
     const { dadosAutenticacao, autenticado, sair } = useAuth();
     const { quantidadeTotal } = useCart();
     const [contaAberta, setContaAberta] = useState(false);
@@ -36,7 +36,11 @@ function Header() {
                 </Link>
 
                 <nav className="site-nav">
-                    {!logado && <Link to="/parceiros">Seja Parceiro</Link>}
+                    {!logado && (
+                        <Link to={variant === "landing" ? "/itens" : "/parceiros"}>
+                            {variant === "landing" ? "Seja Cliente" : "Seja Parceiro"}
+                        </Link>
+                    )}
 
                     {logado && (
                         <Link to="/cart" className="cart-link">

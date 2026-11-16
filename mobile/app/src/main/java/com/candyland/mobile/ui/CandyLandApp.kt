@@ -287,23 +287,49 @@ private fun AuthenticationScreen(
     }
 
     LaunchedEffect(oauthUri) {
-        if (oauthUri != null) {
-            onOAuthUriConsumed()
-            val ticket = oauthUri.getQueryParameter("ticket")
-            val oauthError = oauthUri.getQueryParameter("error")
-            if (!oauthError.isNullOrBlank()) {
-                error = oauthError
-            } else if (!ticket.isNullOrBlank()) {
-                socialProvider = "FACEBOOK"
-                socialTicket = ticket
-                busy = true
-                runCancellableCatching {
-                    ApiProvider.unwrap(ApiProvider.api.completeFacebook(FacebookCompleteRequest(ticket)))
-                }.onSuccess { continueSocialAuthentication(it) }
-                    .onFailure { error = it.message ?: "Não foi possível concluir o login com Facebook." }
+        val callbackUri = oauthUri ?: return@LaunchedEffect
+
+        // O processamento HTTP roda no escopo da tela, não nesta LaunchedEffect.
+        // Limpar oauthUri altera a chave do efeito e o cancelaria enquanto a API
+        // ainda estivesse respondendo, deixando busy=true permanentemente.
+        scope.launch {
+            busy = true
+            error = null
+            info = null
+
+            try {
+                val ticket = callbackUri.getQueryParameter("ticket")
+                val oauthError = callbackUri.getQueryParameter("error")
+
+                when {
+                    !oauthError.isNullOrBlank() -> {
+                        error = oauthError
+                    }
+                    !ticket.isNullOrBlank() -> {
+                        socialProvider = "FACEBOOK"
+                        socialTicket = ticket
+                        runCancellableCatching {
+                            ApiProvider.unwrap(
+                                ApiProvider.api.completeFacebook(FacebookCompleteRequest(ticket))
+                            )
+                        }.onSuccess { continueSocialAuthentication(it) }
+                            .onFailure {
+                                error = it.message
+                                    ?: "Não foi possível concluir o login com Facebook."
+                            }
+                    }
+                    else -> {
+                        error = "O retorno do Facebook não contém um ticket válido. Tente entrar novamente."
+                    }
+                }
+            } finally {
                 busy = false
             }
         }
+
+        // A URI pode ser consumida assim que o trabalho independente foi iniciado.
+        // Mudanças na chave da LaunchedEffect não cancelam o job do rememberCoroutineScope.
+        onOAuthUriConsumed()
     }
 
     
