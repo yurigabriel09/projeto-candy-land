@@ -2,12 +2,26 @@ import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "candyland_cart";
+// Limite de unidades de um mesmo produto no carrinho
+const QUANTIDADE_MAXIMA = 99;
 const CARRINHO_VAZIO = {
     restauranteId: null,
     restauranteNome: null,
     itens: [],
     orderType: "DELIVERY"
 };
+
+// Garante uma quantidade inteira entre 1 e o limite
+function normalizarQuantidade(valor) {
+    const numero = Math.floor(Number(valor));
+    if (!Number.isFinite(numero)) return 1;
+    return Math.min(Math.max(numero, 1), QUANTIDADE_MAXIMA);
+}
+
+// O id pode chegar como número ou como texto, dependendo da tela
+function mesmoProduto(a, b) {
+    return String(a) === String(b);
+}
 
 function carregarCarrinhoInicial() {
     const dadosSalvos = localStorage.getItem(CART_STORAGE_KEY);
@@ -19,6 +33,11 @@ function carregarCarrinhoInicial() {
             return {
                 ...CARRINHO_VAZIO,
                 ...dados,
+                itens: dados.itens.map((i) => ({
+                    ...i,
+                    preco: Number(i.preco),
+                    quantidade: normalizarQuantidade(i.quantidade)
+                })),
                 orderType: dados.orderType || "DELIVERY"
             };
         }
@@ -32,9 +51,18 @@ function carregarCarrinhoInicial() {
 export function CartProvider({ children }) {
     const [carrinho, setCarrinho] = useState(carregarCarrinhoInicial);
 
-    function aplicar(novoCarrinho) {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(novoCarrinho));
-        setCarrinho(novoCarrinho);
+    // Recebe uma função que calcula o novo carrinho a partir do atual.
+    // Assim, cliques rápidos não perdem incrementos.
+    function atualizar(calcular) {
+        setCarrinho((atual) => {
+            const novo = calcular(atual);
+            try {
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(novo));
+            } catch {
+                // sem acesso ao armazenamento: o carrinho continua em memória
+            }
+            return novo;
+        });
     }
 
     function adicionarItem(produto, restauranteId, restauranteNome) {
@@ -49,67 +77,78 @@ export function CartProvider({ children }) {
             quantidade: 1
         };
 
-        if (carrinho.restauranteId && carrinho.restauranteId !== restauranteId) {
+        if (carrinho.restauranteId && String(carrinho.restauranteId) !== String(restauranteId)) {
             const confirmou = window.confirm(
                 "Seu carrinho tem itens de outro restaurante. Deseja esvaziar e adicionar este novo item?"
             );
             if (!confirmou) return;
 
-            aplicar({
+            atualizar(() => ({
                 ...CARRINHO_VAZIO,
                 restauranteId,
                 restauranteNome,
                 itens: [itemNovo],
-            });
-            aplicar({ ...CARRINHO_VAZIO, restauranteId, restauranteNome, itens: [itemNovo] });
+            }));
             return;
         }
 
-        const itemExistente = carrinho.itens.find((i) => i.id_produto === itemNovo.id_produto);
+        atualizar((atual) => {
+            const jaExiste = atual.itens.some((i) => mesmoProduto(i.id_produto, itemNovo.id_produto));
 
-        const novosItens = itemExistente
-            ? carrinho.itens.map((i) =>
-                i.id_produto === itemNovo.id_produto
-                    ? { ...i, quantidade: i.quantidade + 1, imagem_url: i.imagem_url || imagemUrl }
-                    : i
-            )
-            : [...carrinho.itens, itemNovo];
+            const novosItens = jaExiste
+                ? atual.itens.map((i) =>
+                    mesmoProduto(i.id_produto, itemNovo.id_produto)
+                        ? {
+                            ...i,
+                            quantidade: Math.min(i.quantidade + 1, QUANTIDADE_MAXIMA),
+                            imagem_url: i.imagem_url || imagemUrl
+                        }
+                        : i
+                )
+                : [...atual.itens, itemNovo];
 
-        aplicar({
-            ...carrinho,
-            restauranteId,
-            restauranteNome,
-            itens: novosItens,
-            orderType: carrinho.orderType || "DELIVERY",
+            return {
+                ...atual,
+                restauranteId,
+                restauranteNome,
+                itens: novosItens,
+                orderType: atual.orderType || "DELIVERY",
+            };
         });
-        aplicar({ ...carrinho, restauranteId, restauranteNome, itens: novosItens });
     }
 
     function removerItem(idProduto) {
-        const novosItens = carrinho.itens.filter((i) => i.id_produto !== idProduto);
-        aplicar(novosItens.length === 0 ? CARRINHO_VAZIO : { ...carrinho, itens: novosItens });
+        atualizar((atual) => {
+            const novosItens = atual.itens.filter((i) => !mesmoProduto(i.id_produto, idProduto));
+            return novosItens.length === 0 ? CARRINHO_VAZIO : { ...atual, itens: novosItens };
+        });
     }
 
     function atualizarQuantidade(idProduto, quantidade) {
-        if (quantidade <= 0) {
+        const numero = Number(quantidade);
+        if (!Number.isFinite(numero)) return;
+
+        if (numero <= 0) {
             removerItem(idProduto);
             return;
         }
-        aplicar({
-            ...carrinho,
-            itens: carrinho.itens.map((i) =>
-                i.id_produto === idProduto ? { ...i, quantidade } : i
+
+        const novaQuantidade = normalizarQuantidade(numero);
+        atualizar((atual) => ({
+            ...atual,
+            itens: atual.itens.map((i) =>
+                mesmoProduto(i.id_produto, idProduto) ? { ...i, quantidade: novaQuantidade } : i
             )
-        });
+        }));
     }
 
     function atualizarTipoPedido(orderType) {
         if (!["DELIVERY", "PICKUP"].includes(orderType)) return;
-        aplicar({ ...carrinho, orderType });
+        atualizar((atual) => ({ ...atual, orderType }));
     }
 
     function limparCarrinho() {
-        aplicar({ ...CARRINHO_VAZIO });
+        atualizar(() => ({ ...CARRINHO_VAZIO }));
     }
 
     const total = carrinho.itens.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
@@ -124,9 +163,9 @@ export function CartProvider({ children }) {
                 removerItem,
                 atualizarTipoPedido,
                 limparCarrinho,
-                atualizarTipoPedido,
                 total,
-                quantidadeTotal
+                quantidadeTotal,
+                quantidadeMaxima: QUANTIDADE_MAXIMA
             }}
         >
             {children}
