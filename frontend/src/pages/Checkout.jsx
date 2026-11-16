@@ -167,13 +167,6 @@ function Checkout() {
             }
         }
 
-        if (metodoPagamento === "PAYPAL") {
-            if (!emailPaypal.trim() || !emailPaypal.includes("@")) {
-                setErro("Informe um e-mail válido da sua conta PayPal.");
-                return;
-            }
-        }
-
         const token = obterToken();
         if (!token) {
             setErro("Sua sessão expirou. Faça login novamente.");
@@ -183,7 +176,7 @@ function Checkout() {
         setProcessando(true);
 
         try {
-            const backendPaymentMethod = metodoPagamento === "PAYPAL" ? "CARTAO_CREDITO" : metodoPagamento;
+            const backendPaymentMethod = metodoPagamento;
 
             const payload = {
                 restaurant_id: Number(carrinho.restauranteId) || 1,
@@ -198,36 +191,26 @@ function Checkout() {
                 general_note: ""
             };
 
-            // Pix: cria o pedido, gera o pagamento e mostra a tela de QR Code
+            // Cria o pedido e gera o pagamento no backend
+            const pedido = await createOrder(payload);
+            const pagamento = await createPayment(pedido.id);
+
+            // Pix: mostra a tela de QR Code
             if (metodoPagamento === "PIX") {
-                const pedido = await createOrder(payload);
-                const pagamento = await createPayment(pedido.id);
                 setPedidoCriadoId(pedido.id);
                 setPixPagamento(pagamento);
                 return;
             }
 
-            const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
-
-            const resposta = await fetch(`${apiBase}/pedidos`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const dados = await resposta.json();
-
-            if (!resposta.ok || !dados.success) {
-                throw new Error(dados.erro || dados.mensagem || "Erro ao gravar pedido.");
+            // PayPal e Mercado Pago: abre o checkout do provedor
+            if (!pagamento?.approval_url) {
+                throw new Error(pagamento?.message || "O provedor não retornou o link de pagamento.");
             }
-
-            const idGerado = dados?.dados?.id || null;
-            setPedidoCriadoId(idGerado);
-            setSucesso(true);
-            limparCarrinho();
+            const urlPagamento = new URL(pagamento.approval_url);
+            if (urlPagamento.protocol !== "https:") {
+                throw new Error("O link de pagamento não é HTTPS; o pagamento não foi aberto.");
+            }
+            window.location.assign(urlPagamento.href);
 
         } catch (err) {
             setErro(err.message || "Ocorreu um erro ao processar seu pedido. Tente novamente.");
@@ -415,12 +398,12 @@ function Checkout() {
 
                             <button
                                 type="button"
-                                className={`payment-tab-btn ${metodoPagamento === "CARTAO_CREDITO" ? "active" : ""}`}
+                                className={`payment-tab-btn ${metodoPagamento === "MERCADO_PAGO" ? "active" : ""}`}
                                 disabled={Boolean(pixPagamento)}
-                                onClick={() => { setMetodoPagamento("CARTAO_CREDITO"); setErro(""); }}
+                                onClick={() => { setMetodoPagamento("MERCADO_PAGO"); setErro(""); }}
                             >
                                 <span className="payment-tab-icon">💳</span>
-                                <span>Cartão de Crédito</span>
+                                <span>Mercado Pago</span>
                             </button>
 
                             <button
@@ -444,19 +427,8 @@ function Checkout() {
                                 </div>
 
                                 <p className="paypal-desc">
-                                    Conecte sua conta PayPal para pagar de forma simples e rápida.
+                                    Você será redirecionado ao PayPal para concluir o pagamento e, depois, volta ao Candyland.
                                 </p>
-
-                                <div className="form-field paypal-field">
-                                    <label htmlFor="paypal-email">E-mail cadastrado no PayPal</label>
-                                    <input
-                                        id="paypal-email"
-                                        type="email"
-                                        placeholder="seu-email@exemplo.com"
-                                        value={emailPaypal}
-                                        onChange={(e) => setEmailPaypal(e.target.value)}
-                                    />
-                                </div>
 
                                 <div className="paypal-protecao-card">
                                     <div className="paypal-protecao-header">
@@ -470,93 +442,25 @@ function Checkout() {
                             </div>
                         )}
 
-                        {metodoPagamento === "CARTAO_CREDITO" && (
-                            <div className="cartao-container-grid">
-                                <div className="conta-card cartao-form-card">
-                                    <div className="cartao-form-header">
-                                        <h3>Adicionar novo cartão</h3>
-                                        <span className="cartao-badge-seguro">Seguro</span>
-                                    </div>
-
-                                    <div className="form-field cartao-field">
-                                        <label htmlFor="card-name">Nome no cartão</label>
-                                        <input
-                                            id="card-name"
-                                            type="text"
-                                            placeholder="Como aparece no cartão"
-                                            value={nomeCartao}
-                                            onChange={(e) => setNomeCartao(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div className="form-field cartao-field">
-                                        <label htmlFor="card-number">Número do cartão</label>
-                                        <input
-                                            id="card-number"
-                                            type="text"
-                                            placeholder="0000 0000 0000 0000"
-                                            maxLength={19}
-                                            value={numeroCartao}
-                                            onChange={(e) => setNumeroCartao(e.target.value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim())}
-                                        />
-                                    </div>
-
-                                    <div className="form-row cartao-form-row">
-                                        <div className="form-field">
-                                            <label htmlFor="card-expiry">Validade</label>
-                                            <input
-                                                id="card-expiry"
-                                                type="text"
-                                                placeholder="MM/AA"
-                                                maxLength={5}
-                                                value={validadeCartao}
-                                                onChange={(e) => {
-                                                    let val = e.target.value.replace(/\D/g, "");
-                                                    if (val.length >= 3) val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
-                                                    setValidadeCartao(val);
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="form-field">
-                                            <label htmlFor="card-cvv">Código de segurança (CVV)</label>
-                                            <input
-                                                id="card-cvv"
-                                                type="text"
-                                                placeholder="000"
-                                                maxLength={3}
-                                                value={cvvCartao}
-                                                onChange={(e) => setCvvCartao(e.target.value.replace(/\D/g, ""))}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <label className="cartao-salvar-checkbox">
-                                        <input
-                                            type="checkbox"
-                                            checked={salvarCartao}
-                                            onChange={(e) => setSalvarCartao(e.target.checked)}
-                                        />
-                                        <span>Salvar para compras futuras</span>
-                                    </label>
+                        {metodoPagamento === "MERCADO_PAGO" && (
+                            <div className="conta-card paypal-box">
+                                <div className="paypal-header">
+                                    <h3 className="paypal-title">Pagar com Mercado Pago</h3>
+                                    <span className="paypal-badge">Cartão, Pix ou saldo</span>
                                 </div>
 
-                                <div className="cartao-preview-col">
-                                    <div className="cartao-preview-card">
-                                        <div className="cartao-preview-header">
-                                            <small>CARTÃO PRINCIPAL</small>
-                                            <div className="cartao-preview-chip"></div>
-                                        </div>
-                                        <div className="cartao-preview-number">
-                                            {numeroCartao ? numeroCartao.slice(-4).padStart(16, "• ") : "•••• •••• •••• 4421"}
-                                        </div>
-                                        <div className="cartao-preview-footer">
-                                            <span>{nomeCartao || "MARINA SILVA"}</span>
-                                            <span>{validadeCartao || "08/29"}</span>
-                                        </div>
+                                <p className="paypal-desc">
+                                    Você será redirecionado ao Mercado Pago para pagar com cartão, Pix ou saldo da conta e, depois, volta ao Candyland.
+                                </p>
+
+                                <div className="paypal-protecao-card">
+                                    <div className="paypal-protecao-header">
+                                        <span>🛡️</span>
+                                        <strong>Pagamento protegido pelo Mercado Pago</strong>
                                     </div>
-                                    <button type="button" className="btn-contorno cartao-btn-principal">
-                                        Definir como principal
-                                    </button>
+                                    <small className="paypal-protecao-texto">
+                                        Seus dados de pagamento ficam com o Mercado Pago, não passam pelo Candyland.
+                                    </small>
                                 </div>
                             </div>
                         )}
@@ -611,7 +515,7 @@ function Checkout() {
                                     ? "🔒 Pagar com PayPal"
                                     : metodoPagamento === "PIX"
                                     ? "Gerar QR Code Pix"
-                                    : "Confirmar e Pagar"}
+                                    : "Pagar com Mercado Pago"}
                             </button>
                         </div>
                         )}
