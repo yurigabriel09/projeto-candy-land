@@ -5,7 +5,7 @@ import LocationMap from "../components/LocationMap";
 import ProductRecommendations from "../components/ProductRecommendations";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getPayment, getOrder } from "../services/orderService";
+import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getDeliveryQuote, getPayment, getOrder } from "../services/orderService";
 import { geocodeCustomerAddress, saveAddressCoordinates } from "../services/userService";
 import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
@@ -13,7 +13,6 @@ import { getRestaurantPickupAddresses } from "../services/restaurantService";
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 // Estimativas exibidas ao cliente (ainda não vêm do backend)
-const TEMPO_ENTREGA = "25–40 min";
 const TEMPO_RETIRADA = "20–30 min";
 
 // Monta o texto de um endereço: "Rua das Flores, 123 - Apto 4 · Centro · São Paulo/SP"
@@ -45,8 +44,12 @@ function Cart() {
     const [enderecoRetirada, setEnderecoRetirada] = useState(null); // endereço do restaurante
     const [carregandoEnderecos, setCarregandoEnderecos] = useState(false);
     const [erroEnderecos, setErroEnderecos] = useState("");
+    const [tempoEntrega, setTempoEntrega] = useState(null); // faixa estimada pelo servidor
 
     const ehRetirada = carrinho.orderType === "PICKUP";
+    const textoTempoEntrega = tempoEntrega
+        ? `Entrega estimada em ${tempoEntrega.minimo}–${tempoEntrega.maximo} min`
+        : "Tempo de entrega calculado com o seu endereço";
 
     // Endereço do restaurante (retirada) — muda se o restaurante do carrinho mudar
     useEffect(() => {
@@ -88,6 +91,29 @@ function Cart() {
             cancelado = true;
         };
     }, [dadosAutenticacao]);
+
+    // Tempo de entrega estimado pelo servidor, conforme a distância até o endereço
+    useEffect(() => {
+        if (ehRetirada || !carrinho.restauranteId || !enderecoEntrega?.id) {
+            setTempoEntrega(null);
+            return undefined;
+        }
+        let cancelado = false;
+        getDeliveryQuote({
+            restaurantId: carrinho.restauranteId,
+            orderType: "DELIVERY",
+            addressId: enderecoEntrega.id,
+        })
+            .then((cotacao) => {
+                if (!cancelado) setTempoEntrega(cotacao?.tempo_estimado || null);
+            })
+            .catch(() => {
+                if (!cancelado) setTempoEntrega(null);
+            });
+        return () => {
+            cancelado = true;
+        };
+    }, [ehRetirada, carrinho.restauranteId, enderecoEntrega]);
 
     function handleAplicarCupom(e) {
         e.preventDefault();
@@ -164,7 +190,7 @@ function Cart() {
                                         <p>
                                             {ehRetirada
                                                 ? `Pronto para retirada em ${TEMPO_RETIRADA}`
-                                                : `Entrega estimada em ${TEMPO_ENTREGA}`}
+                                                : textoTempoEntrega}
                                         </p>
                                     </div>
                                 </div>
