@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import LocationMap from "../components/LocationMap";
 import PixPayment from "../components/PixPayment";
 import { cancelPayPalPayment, capturePayPalPayment, createPayment, getOrder, getPayment } from "../services/orderService";
+import { useCart } from "../context/CartContext";
 
 const CHECKOUT_SESSION_KEY = "candyland_checkout_pending";
 
@@ -32,6 +33,7 @@ const STATUS_LABEL = {
 function CheckoutResult() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { limparCarrinho } = useCart();
     const orderId = searchParams.get("order_id");
     const providerRetorno = searchParams.get("provider");
     const paypalToken = searchParams.get("token");
@@ -148,6 +150,12 @@ function CheckoutResult() {
 
     const confirmado = pedido && pedido.status !== "PENDENTE_PAGAMENTO" && pedido.status !== "CANCELADO";
     const pagamentoPrecisaAtencao = ["REJECTED", "CANCELLED", "ACTION_REQUIRED", "REFUNDED"].includes(pagamento?.status);
+        useEffect(() => {
+        // Pedido confirmado: o carrinho já virou pedido, então é esvaziado.
+        if (confirmado) {
+            limparCarrinho();
+        }
+    }, [confirmado]);
 
     return (
         <>
