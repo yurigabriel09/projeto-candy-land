@@ -336,7 +336,7 @@ class OrderService:
                 platform_fee=platform_fee,
                 total=total,
                 order_type=order_type,
-                status="PAGAMENTO_CONFIRMADO",
+                status="PENDENTE_PAGAMENTO",
                 payment_method=payment_method,
                 general_note=dados.get("general_note"),
             )

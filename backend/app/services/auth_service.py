@@ -362,7 +362,7 @@ class AuthService:
             if conta is not None:
                 tentativa.email = (conta.email or "").strip().lower()
                 tentativa.telefone = AuthService._normalizar_telefone(conta.telefone)
-                resultado = AuthService._finalizar_autenticacao(tentativa)
+                resultado = AuthService._finalizar_autenticacao(tentativa, tipo_conta=tipo_conta)
                 if not resultado["success"]:
                     db.session.rollback()
                     return resultado
