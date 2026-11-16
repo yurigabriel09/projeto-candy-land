@@ -15,6 +15,8 @@ import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PATCH
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface CandyLandApi {
@@ -36,11 +38,50 @@ interface CandyLandApi {
     @POST("users")
     suspend fun registerUser(@Body body: UserRegistrationRequest): Response<UserRegistrationResponse>
 
+    @GET("users/{userId}")
+    suspend fun userProfile(@Path("userId") userId: Int): Response<UserProfileResponse>
+
+    @PUT("users/{userId}")
+    suspend fun updateUserProfile(@Path("userId") userId: Int, @Body body: UserProfileUpdateRequest): Response<Map<String, Any?>>
+
+    @POST("users/{userId}/enderecos")
+    suspend fun addUserAddress(@Path("userId") userId: Int, @Body body: AddressUpsertRequest): Response<Map<String, Any?>>
+
+    @PUT("users/{userId}/enderecos/{addressId}")
+    suspend fun updateUserAddress(@Path("userId") userId: Int, @Path("addressId") addressId: Int, @Body body: AddressUpsertRequest): Response<Map<String, Any?>>
+
+    @DELETE("users/{userId}/enderecos/{addressId}")
+    suspend fun deleteUserAddress(@Path("userId") userId: Int, @Path("addressId") addressId: Int): Response<Map<String, Any?>>
+
     @GET("restaurantes")
     suspend fun restaurants(): Response<RestaurantListResponse>
 
     @GET("restaurantes/{restaurantId}/produtos")
     suspend fun products(@Path("restaurantId") restaurantId: Int): Response<ProductListResponse>
+
+    @GET("restaurantes/{restaurantId}/configuracao")
+    suspend fun restaurantConfiguration(@Path("restaurantId") restaurantId: Int): Response<RestaurantConfigurationResponse>
+
+    @PUT("restaurantes/{restaurantId}/configuracao")
+    suspend fun updateRestaurantConfiguration(@Path("restaurantId") restaurantId: Int, @Body body: RestaurantConfigurationUpdateRequest): Response<RestaurantConfigurationResponse>
+
+    @PATCH("restaurantes/{restaurantId}/status")
+    suspend fun updateRestaurantStatus(@Path("restaurantId") restaurantId: Int, @Body body: RestaurantStatusRequest): Response<Map<String, Any?>>
+
+    @GET("restaurantes/{restaurantId}/produtos/gerenciamento")
+    suspend fun managedProducts(@Path("restaurantId") restaurantId: Int): Response<ProductListResponse>
+
+    @GET("categorias")
+    suspend fun categories(): Response<CategoryListResponse>
+
+    @POST("categorias")
+    suspend fun createCategory(@Body body: CategoryCreateRequest): Response<CategoryMutationResponse>
+
+    @POST("produtos")
+    suspend fun createProduct(@Body body: ProductUpsertRequest): Response<ProductMutationResponse>
+
+    @PUT("produtos/{productId}")
+    suspend fun updateProduct(@Path("productId") productId: Int, @Body body: ProductUpsertRequest): Response<ProductMutationResponse>
 
     @GET("users/{userId}/enderecos")
     suspend fun addresses(@Path("userId") userId: Int): Response<AddressListResponse>
@@ -62,6 +103,18 @@ interface CandyLandApi {
 
     @GET("pedidos")
     suspend fun orders(): Response<OrderListResponse>
+
+    @PUT("pedidos/{orderId}/status")
+    suspend fun updateOrderStatus(@Path("orderId") orderId: Int, @Body body: OrderStatusRequest): Response<Map<String, Any?>>
+
+    @PUT("pedidos/{orderId}/entrega/status")
+    suspend fun updateDeliveryStatus(@Path("orderId") orderId: Int, @Body body: OrderStatusRequest): Response<Map<String, Any?>>
+
+    @POST("pedidos/{orderId}/codigo-recebimento")
+    suspend fun issueReceiptCode(@Path("orderId") orderId: Int): Response<ReceiptCodeResponse>
+
+    @POST("pedidos/{orderId}/confirmar-recebimento")
+    suspend fun confirmReceipt(@Path("orderId") orderId: Int, @Body body: ReceiptCodeRequest): Response<Map<String, Any?>>
 
     @POST("devices/fcm")
     suspend fun registerDevice(@Body body: DeviceTokenRequest): Response<Map<String, Any>>
