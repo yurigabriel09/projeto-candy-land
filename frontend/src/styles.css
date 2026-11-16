@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap");
 
 :root {
   --rosa: #f4356e;
@@ -4850,3 +4851,86 @@ select:focus-visible {
 .recs-add:hover { background: #e5487f; color: #fff; }
 .recs-esqueleto { min-height: 210px; background: linear-gradient(90deg, #f3f3f3, #fafafa, #f3f3f3); background-size: 200% 100%; animation: recs-brilho 1.4s linear infinite; border-color: #f0f0f0; }
 @keyframes recs-brilho { to { background-position: -200% 0; } }
+
+/* ===== Login do cliente (tela dividida, conforme o protótipo) ===== */
+.lg-page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; background: #ffede3; }
+
+/* Lado esquerdo: ilustração */
+.lg-lado { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center;
+    background:
+        radial-gradient(1.5px 1.5px at 12% 22%, rgba(255,255,255,.8) 50%, transparent 52%),
+        radial-gradient(1.5px 1.5px at 78% 14%, rgba(255,255,255,.7) 50%, transparent 52%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.6) 50%, transparent 52%),
+        radial-gradient(2px 2px at 85% 58%, rgba(255,255,255,.7) 50%, transparent 52%),
+        radial-gradient(1px 1px at 55% 88%, rgba(255,255,255,.6) 50%, transparent 52%),
+        radial-gradient(1px 1px at 20% 45%, rgba(255,255,255,.5) 50%, transparent 52%),
+        radial-gradient(circle at 50% 38%, #5a1f1d 0%, #2c0e0e 55%, #1b0808 100%); }
+.lg-deco { position: absolute; font-size: 34px; filter: drop-shadow(0 0 10px rgba(255,170,80,.45)); }
+.lg-deco-1 { top: 7%; left: 6%; transform: rotate(-20deg); }
+.lg-deco-2 { top: 22%; right: 8%; }
+.lg-deco-3 { bottom: 14%; left: 8%; font-size: 30px; }
+.lg-deco-4 { bottom: 10%; right: 10%; font-size: 40px; }
+
+.lg-arco { position: relative; width: 270px; height: 400px; margin-bottom: 28px; border: 11px solid transparent; border-radius: 135px 135px 14px 14px;
+    background: linear-gradient(#1a0707, #1a0707) padding-box, linear-gradient(180deg, #ff4d6d, #ff8a3d) border-box;
+    box-shadow: 0 0 60px rgba(255, 90, 70, .35); }
+.lg-lua { position: absolute; top: 34px; left: 50%; transform: translateX(-50%); font-size: 34px; }
+.lg-caminho { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(180deg, #f1c9a5, #7a4a35); clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%); }
+.lg-castelo { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%); font-size: 40px; }
+.lg-pirulito { position: absolute; bottom: 70px; font-size: 22px; }
+.lg-pirulito-e { left: 18px; }
+.lg-pirulito-d { right: 18px; }
+.lg-gota { position: absolute; bottom: -34px; width: 18px; border-radius: 0 0 10px 10px; background: #ff4d6d; }
+.lg-gota-1 { left: 10px; height: 30px; }
+.lg-gota-2 { left: 38px; height: 44px; background: #ff7a3d; }
+.lg-gota-3 { right: 52px; height: 36px; background: #ff7a3d; }
+.lg-gota-4 { right: 14px; height: 28px; }
+
+.lg-marca { margin: 0; font-family: "Pacifico", cursive; font-weight: 400; font-size: 60px; line-height: 1.1;
+    background: linear-gradient(90deg, #ff4d6d, #ff9a3d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lg-slogan { margin: 6px 0 22px; letter-spacing: .18em; font-size: 13px; font-weight: 600; color: #ecc9a0; }
+.lg-convite { margin: 0; max-width: 400px; font-size: 16px; line-height: 1.6; color: #f0d2b0; }
+
+/* Lado direito: formulário */
+.lg-form-lado { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+.lg-form-box { width: 100%; max-width: 560px; }
+.lg-titulo { margin: 0 0 8px; font-size: 38px; line-height: 1.15; color: #4a1d12; }
+.lg-desc { margin: 0 0 36px; font-size: 18px; color: #8a6a5f; }
+
+.lg-field { margin-bottom: 20px; }
+.lg-field label { display: block; margin-bottom: 8px; font-weight: 700; color: #3a1810; }
+.lg-field input { width: 100%; box-sizing: border-box; height: 68px; padding: 0 22px; font-size: 18px; border: 2px solid #fbdcb8; border-radius: 18px; background: #fff; color: #3a1810; outline: none; }
+.lg-field input:focus { border-color: #ff7a45; box-shadow: 0 0 0 4px rgba(255, 122, 69, .15); }
+.lg-field input::placeholder { color: #c9b7ae; }
+
+.lg-btn { width: 100%; height: 74px; border: 0; border-radius: 20px; font-size: 20px; font-weight: 800; color: #fff; cursor: pointer;
+    background: linear-gradient(90deg, #f7446c, #ff7a45); box-shadow: 0 10px 24px rgba(247, 68, 108, .28); }
+.lg-btn:hover:not(:disabled) { filter: brightness(1.05); }
+.lg-btn:disabled { opacity: .7; cursor: default; }
+
+.lg-ou { display: flex; align-items: center; gap: 14px; margin: 22px 0; color: #a58f85; }
+.lg-ou::before, .lg-ou::after { content: ""; flex: 1; height: 1px; background: #f1d3c3; }
+
+.lg-google { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 70px; font-size: 19px; font-weight: 600; color: #3a1810; cursor: pointer;
+    background: #fff; border: 2px solid #fbdcb8; border-radius: 18px; }
+.lg-google:hover { border-color: #ff7a45; }
+.lg-google-g { font-size: 22px; font-weight: 700; }
+
+.lg-cadastro { margin: 30px 0 22px; text-align: center; font-size: 18px; color: #8a6a5f; }
+.lg-cadastro a { color: #f43f6e; font-weight: 800; text-decoration: none; }
+.lg-parceiro { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 22px; border-top: 1px solid #f1d3c3; }
+.lg-parceiro small { color: #b59f95; font-size: 14px; }
+.lg-parceiro a { color: #ff7a2f; font-weight: 700; text-decoration: none; }
+
+@media (max-width: 860px) {
+    .lg-page { grid-template-columns: 1fr; }
+    .lg-lado { display: none; }
+    .lg-titulo { font-size: 30px; }
+    .lg-field input, .lg-btn, .lg-google { height: 60px; }
+}
+.lg-page { font-family: "Nunito", "Poppins", Arial, sans-serif; }
+.lg-page input, .lg-page button { font-family: inherit; }
+.lg-page .lg-titulo { font-weight: 900; letter-spacing: -0.01em; }
+
+.lg-cadastro button { background: none; border: 0; padding: 0; font: inherit; color: #f43f6e; font-weight: 800; cursor: pointer; }
+.lg-dica { margin: -12px 0 22px; text-align: center; font-size: 14px; color: #a58f85; }
