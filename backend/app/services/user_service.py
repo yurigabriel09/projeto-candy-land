@@ -11,8 +11,8 @@ from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,
 )
-from app.services.token_service import TokenService
 from app.services.geocoding_service import GeocodingService
+from app.services.token_service import TokenService
 from app.utils.formatter import normalizar_telefone
 from flask import current_app
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError

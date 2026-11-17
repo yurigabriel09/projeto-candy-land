@@ -1,5 +1,5 @@
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
 
 import pytest
 from app.database.database import db
@@ -102,7 +102,7 @@ def test_codigo_de_entrega_pode_ser_validado_quando_pedido_esta_pronto(app):
         pedido = db.session.get(Pedido, order_id)
         pedido.order_type = "DELIVERY"
         pedido.status = "ENTREGUE"
-        entrega = EntregaPedido(pedido_id=order_id, status="ENTREGA_CONCLUIDA", concluida_em=datetime.utcnow())
+        entrega = EntregaPedido(pedido_id=order_id, status="ENTREGA_CONCLUIDA", concluida_em=datetime.utcnow())  # noqa: DTZ003
         db.session.add(entrega)
         db.session.commit()
 

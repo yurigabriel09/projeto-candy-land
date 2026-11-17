@@ -1,7 +1,7 @@
 import logging
 import math
 import threading
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from uuid import uuid4
 
 from app.database.database import db
@@ -40,8 +40,8 @@ class OrderService:
         # Externo à transação e fora da requisição: gerar o PDF e falar com o
         # Brevo pode demorar, e uma falha aqui nunca desfaz o pagamento.
         try:
-            from flask import current_app
             from app.services.invoice_service import InvoiceService
+            from flask import current_app
 
             if not InvoiceService.email_configurado():
                 return
@@ -55,12 +55,12 @@ class OrderService:
                     app.logger.exception("Falha ao enviar comprovante do pedido.")
 
             threading.Thread(target=tarefa, daemon=True).start()
-        except Exception:
+        except Exception:  # noqa: BLE001 - agendamento do envio é best-effort
             try:
                 from flask import current_app
                 current_app.logger.exception("Falha ao agendar envio do comprovante.")
-            except Exception:
-                pass
+            except (ImportError, AttributeError):
+                logger.exception("Falha ao agendar envio do comprovante.")
 
     @staticmethod
     def _money(value, field):

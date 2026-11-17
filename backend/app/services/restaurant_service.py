@@ -8,11 +8,11 @@ from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
 from app.models.restaurant import Restaurante
-from app.services.geocoding_service import GeocodingService
 from app.services.account_identity_service import (
     email_esta_em_uso,
     telefone_esta_em_uso,
 )
+from app.services.geocoding_service import GeocodingService
 from app.services.token_service import TokenService
 from app.utils.formatter import normalizar_telefone
 from flask import current_app

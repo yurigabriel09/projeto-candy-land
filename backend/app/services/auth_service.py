@@ -8,7 +8,6 @@ from app.models.auth_attempt import TentativaAutenticacao
 from app.models.auth_code import CodigoAutenticacao
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
-from app.services.account_identity_service import telefone_esta_em_uso
 from app.services.email_service import EmailService
 from app.services.google_auth_service import GoogleAuthService
 from app.services.token_service import TokenService

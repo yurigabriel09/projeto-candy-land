@@ -4,7 +4,6 @@ from app.services.order_service import OrderService
 from flask import jsonify, make_response
 
 
-
 class OrderController:
     @staticmethod
     def criar_pedido(dados, user_id, tipo_conta):

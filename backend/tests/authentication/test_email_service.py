@@ -1,6 +1,5 @@
 import pytest
 import requests
-
 from app.services.email_service import EmailService
 
 

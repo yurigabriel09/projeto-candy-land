@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.database.database import db
 from app.models.auth_attempt import TentativaAutenticacao
-from app.services.restaurant_service import RestauranteService
 from app.routes.restaurant_routes import restaurante_bp
+from app.services.restaurant_service import RestauranteService
 from flask import Flask
 
 
