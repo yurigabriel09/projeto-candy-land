@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import DashboardSidebar from "../components/DashboardSidebar";
-import { getRestaurant, getRestaurantProductsManagement } from "../services/restaurantService";
+import { getRestaurant, getRestaurantProductsManagement, updateRestaurantStatus } from "../services/restaurantService";
 import { getCategories } from "../services/categoryService";
 import { updateProduct, deleteProduct } from "../services/productService";
 import { CATEGORY_TYPES } from "../utils/categoryTypes";
@@ -32,6 +32,9 @@ function Cardapio() {
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState("");
     const [statusVisual, setStatusVisual] = useState(null);
+    const [salvandoStatus, setSalvandoStatus] = useState(false);
+    const [erroStatus, setErroStatus] = useState("");
+    const [mensagemStatus, setMensagemStatus] = useState("");
 
     const [busca, setBusca] = useState("");
     const [categoriaAtiva, setCategoriaAtiva] = useState(null); // null = "Todos"
@@ -57,6 +60,29 @@ function Cardapio() {
             setErro(error.message || "Não foi possível carregar o cardápio.");
         } finally {
             setCarregando(false);
+        }
+    }
+
+    async function alternarStatusLoja() {
+        if (
+            !restaurante ||
+            salvandoStatus ||
+            !["EM_ANALISE", "ABERTO", "FECHADO"].includes(statusVisual)
+        ) return;
+
+        const novoStatus = statusVisual === "ABERTO" ? "FECHADO" : "ABERTO";
+        setSalvandoStatus(true);
+        setErroStatus("");
+        setMensagemStatus("");
+        try {
+            const atualizado = await updateRestaurantStatus(restaurante.id, novoStatus);
+            setStatusVisual(atualizado.status);
+            setRestaurante((atual) => ({ ...atual, status: atualizado.status }));
+            setMensagemStatus(`Status da loja salvo: ${STATUS_LABEL[atualizado.status] || atualizado.status}.`);
+        } catch (error) {
+            setErroStatus(error.message || "Não foi possível atualizar o status da loja.");
+        } finally {
+            setSalvandoStatus(false);
         }
     }
 
@@ -137,19 +163,28 @@ function Cardapio() {
 
                     <div className="dashboard-header-actions">
                         <button
+                            type="button"
                             className={`toggle-loja ${statusVisual === "ABERTO" ? "toggle-loja-aberta" : ""}`}
-                            onClick={() =>
-                                setStatusVisual((atual) => (atual === "ABERTO" ? "FECHADO" : "ABERTO"))
+                            onClick={alternarStatusLoja}
+                            disabled={salvandoStatus || !["EM_ANALISE", "ABERTO", "FECHADO"].includes(statusVisual)}
+                            title={
+                                ["ABERTO", "FECHADO"].includes(statusVisual)
+                                    ? "Alterar e salvar o status da loja"
+                                    : statusVisual === "EM_ANALISE"
+                                        ? "Abrir para testes em desenvolvimento; em produção depende de aprovação administrativa"
+                                        : "A loja está suspensa e não pode ser aberta ou fechada"
                             }
-                            title="Alteração ainda não é salva — recurso em desenvolvimento"
                         >
-                            ● {STATUS_LABEL[statusVisual] || statusVisual}
+                            ● {salvandoStatus ? "Salvando..." : (STATUS_LABEL[statusVisual] || statusVisual)}
                         </button>
                         <button className="icon-button" title="Notificações" disabled>
                             🔔
                         </button>
                     </div>
                 </header>
+
+                {erroStatus && <p className="field-error" role="alert">{erroStatus}</p>}
+                {mensagemStatus && <p className="field-message dashboard-success-message" role="status">✓ {mensagemStatus}</p>}
 
                 <div className="dashboard-body">
                     <div className="dashboard-secao-cabecalho">

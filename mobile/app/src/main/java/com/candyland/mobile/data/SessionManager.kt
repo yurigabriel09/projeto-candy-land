@@ -69,7 +69,10 @@ object SessionManager {
         val payload = prefs(context).getString(SESSION_KEY, null) ?: return null
         return runCatching { Gson().fromJson(decrypt(payload), Session::class.java) }
             .getOrNull()
-            ?.takeIf { it.id > 0 && it.token.isNotBlank() && it.accountType == "PERSONAL" }
+            ?.takeIf {
+                it.id > 0 && it.token.isNotBlank() &&
+                    it.accountType in setOf("PERSONAL", "BUSINESS")
+            }
             ?: run { clear(context); null }
     }
 

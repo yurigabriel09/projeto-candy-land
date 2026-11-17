@@ -1,5 +1,6 @@
 from app.database.database import db
 
+
 class PushSubscription(db.Model):
     __tablename__ = "push_subscriptions"
 

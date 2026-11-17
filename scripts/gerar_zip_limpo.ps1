@@ -13,12 +13,12 @@ $TempZip = "$OutputPath.tmp.zip"
 # Não apaga nem modifica o projeto. Só copia os arquivos permitidos para uma área temporária.
 $ExcludedDirectories = @(
     ".git", ".venv", "venv", "node_modules", "dist", "build",
-    "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".cache",
+    "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".cache", ".gradle",
     "coverage", "htmlcov", ".idea", "Credenciais", "credentials", "secrets",
-    "instance", "temp", "tmp"
+    "instance", "temp", "tmp", "uploads"
 )
 $ExcludedExtensions = @(".pyc", ".pyo", ".db", ".sqlite", ".sqlite3", ".pem", ".p12", ".pfx", ".log")
-$ExcludedFileNames = @("Thumbs.db", "desktop.ini", ".DS_Store")
+$ExcludedFileNames = @("Thumbs.db", "desktop.ini", ".DS_Store", "local.properties", "google-services.json")
 
 function Test-ExcludedFile {
     param([System.IO.FileInfo]$File)
@@ -93,18 +93,20 @@ try {
         if (!$hasBackend -or !$hasFrontend) { throw "ZIP não contém as estruturas esperadas de backend e frontend." }
         $unsafe = @(
             foreach ($entry in $archive.Entries) {
-                $parts = $entry.FullName -split '/'
+                $normalizedEntryPath = $entry.FullName.Replace('\', '/')
+                $parts = $normalizedEntryPath -split '/'
                 $leaf = $parts[-1]
                 $badDirectory = $false
                 foreach ($part in $parts) {
-                    if ($part -in @('.git', '.venv', 'venv', 'node_modules', 'Credenciais', 'credentials', 'secrets', '__pycache__', '.pytest_cache', '.ruff_cache', '.mypy_cache', '.cache', 'dist', 'build', 'coverage', 'htmlcov', '.idea', 'instance', 'temp', 'tmp')) {
+                    if ($part -in @('.git', '.venv', 'venv', 'node_modules', 'Credenciais', 'credentials', 'secrets', '__pycache__', '.pytest_cache', '.ruff_cache', '.mypy_cache', '.cache', '.gradle', 'dist', 'build', 'coverage', 'htmlcov', '.idea', 'instance', 'temp', 'tmp', 'uploads')) {
                         $badDirectory = $true
                         break
                     }
                 }
                 $badGeneratedFile = ($leaf -like '*.pyc') -or ($leaf -like '*.pyo') -or ($leaf -like '*.db') -or ($leaf -like '*.sqlite') -or ($leaf -like '*.sqlite3')
+                $badMachineFile = ($leaf -in @('local.properties', 'google-services.json'))
                 $badEnvironmentFile = ($leaf -eq '.env') -or ($leaf -eq '.env.local') -or (($leaf -like '.env.*') -and ($leaf -notin @('.env.example', '.env.template')))
-                if ($badDirectory -or $badEnvironmentFile -or $badGeneratedFile) { $entry }
+                if ($badDirectory -or $badMachineFile -or $badEnvironmentFile -or $badGeneratedFile) { $entry }
             }
         )
         if ($unsafe.Count -gt 0) { throw "ZIP contém caminho que deveria ser excluído: $($unsafe[0].FullName)" }
@@ -114,7 +116,7 @@ try {
     Move-Item -LiteralPath $TempZip -Destination $OutputPath -Force
     Write-Host ""
     Write-Host "ZIP criado e verificado: $OutputPath" -ForegroundColor Green
-    Write-Host "Foram excluídos segredos .env, credenciais, bancos locais, .git, ambientes virtuais, node_modules, caches, builds e ZIPs anteriores."
+    Write-Host "Foram excluídos segredos .env, credenciais, bancos locais, .git, ambientes virtuais, node_modules, caches (incluindo .gradle), builds, uploads locais, arquivos de máquina Android e ZIPs anteriores."
     Write-Host "Dotfiles seguros como .gitignore e .env.example foram preservados."
     Write-Host "O projeto original não teve arquivos removidos nem alterados."
 }

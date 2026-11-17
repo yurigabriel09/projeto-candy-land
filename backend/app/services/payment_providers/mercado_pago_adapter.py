@@ -7,12 +7,12 @@ ou por webhook assinado; nunca confiamos apenas na URL de retorno do navegador.
 import hashlib
 import hmac
 import json
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any
+from urllib.parse import urlencode, urlparse
 
 import requests
-from urllib.parse import urlparse
-
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
     PaymentMethod,
@@ -51,26 +51,42 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         return "mercadopago"
 
     @property
-    def supported_methods(self) -> FrozenSet[PaymentMethod]:
+    def supported_methods(self) -> frozenset[PaymentMethod]:
         return frozenset({PaymentMethod.PIX, PaymentMethod.CARD, PaymentMethod.CREDIT_CARD})
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
         self.validar_metodo(command.method)
-        if command.method is PaymentMethod.PIX:
-            return self._create_pix_payment(command)
-        return_origin = urlparse(self.return_url_base)
-        host = (return_origin.hostname or "").lower()
-        if (
-            return_origin.scheme.lower() != "https"
-            or not host
-            or host in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
-            or "seu-dominio-publico" in host
-        ):
-            raise PaymentProviderError(
-                "Configure MERCADO_PAGO_RETURN_URL_BASE com a URL HTTPS pública do frontend "
-                "(por exemplo, o túnel ngrok da porta 5173). Não use localhost nem a URL do backend."
-            )
-        return_url = f"{self.return_url_base}/checkout/resultado?order_id={command.order_id}"
+        plataforma_android = str(command.metadata.get("client_platform", "")).strip().lower() == "android"
+        if plataforma_android:
+            # Checkout Pro aceita deep links em integrações mobile. O Android
+            # valida o host/path do esquema e consulta o backend ao reabrir o app.
+            back_urls = {
+                resultado: "com.candyland.mobile://payment/return?" + urlencode({
+                    "order_id": command.order_id,
+                    "provider": "mercadopago",
+                    "return": resultado,
+                })
+                for resultado in ("success", "pending", "failure")
+            }
+        else:
+            return_origin = urlparse(self.return_url_base)
+            host = (return_origin.hostname or "").lower()
+            if (
+                return_origin.scheme.lower() != "https"
+                or not host
+                or host in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+                or "seu-dominio-publico" in host
+            ):
+                raise PaymentProviderError(
+                    "Configure MERCADO_PAGO_RETURN_URL_BASE com a URL HTTPS pública do frontend "
+                    "(por exemplo, o túnel ngrok da porta 5173). Não use localhost nem a URL do backend."
+                )
+            return_url = f"{self.return_url_base}/checkout/resultado?order_id={command.order_id}"
+            back_urls = {
+                "success": f"{return_url}&return=success",
+                "pending": f"{return_url}&return=pending",
+                "failure": f"{return_url}&return=failure",
+            }
         payload: dict[str, Any] = {
             "items": [
                 {
@@ -84,11 +100,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
             ],
             "external_reference": str(command.order_id),
             "metadata": {"order_code": str(command.metadata.get("order_code", ""))},
-            "back_urls": {
-                "success": f"{return_url}&return=success",
-                "pending": f"{return_url}&return=pending",
-                "failure": f"{return_url}&return=failure",
-            },
+            "back_urls": back_urls,
             "payment_methods": {"excluded_payment_types": self._excluded_types(command.method)},
         }
         # return_url_base was validated as a public HTTPS frontend URL above.
@@ -210,7 +222,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         provider_payment_id: str,
         idempotency_key: str,
-        amount: Optional[Decimal] = None,
+        amount: Decimal | None = None,
     ) -> PaymentResult:
         if str(provider_payment_id).startswith("pref:"):
             raise PaymentProviderError(
@@ -229,7 +241,7 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         headers: Mapping[str, str],
         raw_body: bytes,
-        query_data_id: Optional[str] = None,
+        query_data_id: str | None = None,
     ) -> VerifiedPaymentEvent:
         if not self.webhook_secret:
             raise PaymentProviderError(
@@ -322,9 +334,9 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         self,
         method: str,
         path: str,
-        payload: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
-        extra_headers: Optional[dict[str, str]] = None,
+        payload: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
         headers.update(extra_headers or {})

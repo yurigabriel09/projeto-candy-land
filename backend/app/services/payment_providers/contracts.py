@@ -5,11 +5,12 @@ payloads. Each provider adapter must translate its API to/from these types.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any
 
 
 class PaymentProviderError(RuntimeError):
@@ -88,8 +89,8 @@ class CreatePaymentCommand:
     amount: Decimal
     method: PaymentMethod
     currency: str = "BRL"
-    return_url: Optional[str] = None
-    payer_email: Optional[str] = None
+    return_url: str | None = None
+    payer_email: str | None = None
     metadata: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -120,16 +121,16 @@ class PaymentResult:
     status: PaymentStatus
     amount: Decimal
     currency: str = "BRL"
-    approval_url: Optional[str] = None
-    pix_copy_paste: Optional[str] = None
-    pix_qr_code_base64: Optional[str] = None
-    boleto_url: Optional[str] = None
-    boleto_line: Optional[str] = None
-    expires_at: Optional[datetime] = None
-    message: Optional[str] = None
+    approval_url: str | None = None
+    pix_copy_paste: str | None = None
+    pix_qr_code_base64: str | None = None
+    boleto_url: str | None = None
+    boleto_line: str | None = None
+    expires_at: datetime | None = None
+    message: str | None = None
     # Populated only when the gateway reports the actual instrument used.
-    payment_type_id: Optional[str] = None
-    payment_method_id: Optional[str] = None
+    payment_type_id: str | None = None
+    payment_method_id: str | None = None
 
     def __post_init__(self) -> None:
         if not str(self.provider or "").strip():
@@ -159,9 +160,9 @@ class VerifiedPaymentEvent:
     status: PaymentStatus
     amount: Decimal
     currency: str = "BRL"
-    occurred_at: Optional[datetime] = None
-    payment_type_id: Optional[str] = None
-    payment_method_id: Optional[str] = None
+    occurred_at: datetime | None = None
+    payment_type_id: str | None = None
+    payment_method_id: str | None = None
 
     def __post_init__(self) -> None:
         required = {
@@ -194,7 +195,7 @@ class PaymentProvider(ABC):
 
     @property
     @abstractmethod
-    def supported_methods(self) -> FrozenSet[PaymentMethod]:
+    def supported_methods(self) -> frozenset[PaymentMethod]:
         """Payment rails enabled for this specific account/adapter configuration."""
 
     def validar_metodo(self, method: PaymentMethod) -> None:
@@ -233,7 +234,7 @@ class PaymentProvider(ABC):
         self,
         provider_payment_id: str,
         idempotency_key: str,
-        amount: Optional[Decimal] = None,
+        amount: Decimal | None = None,
     ) -> PaymentResult:
         """Refund all or part of a captured payment when supported."""
 
@@ -242,6 +243,6 @@ class PaymentProvider(ABC):
         self,
         headers: Mapping[str, str],
         raw_body: bytes,
-        query_data_id: Optional[str] = None,
+        query_data_id: str | None = None,
     ) -> VerifiedPaymentEvent:
         """Authenticate then normalize a provider webhook; reject invalid signatures."""

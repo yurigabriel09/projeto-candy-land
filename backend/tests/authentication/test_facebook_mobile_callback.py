@@ -1,9 +1,8 @@
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from flask import Flask
-
 from app.routes.auth_routes import auth_bp
 from app.services.facebook_auth_service import FacebookAuthService
+from flask import Flask
 
 
 def _oauth_app():
@@ -48,7 +47,7 @@ def test_callback_facebook_android_redireciona_para_deep_link(monkeypatch):
     assert destino.scheme == "com.candyland.mobile"
     assert destino.netloc == "oauth"
     assert destino.path == "/facebook"
-    assert parametros["facebook_ticket"] == ["ticket-mobile-assinado"]
+    assert parametros["ticket"] == ["ticket-mobile-assinado"]
     assert callback.headers["Cache-Control"] == "no-store"
 
 
@@ -70,7 +69,7 @@ def test_callback_facebook_android_sem_cookie_de_sessao_nao_volta_para_web(monke
     assert destino.scheme == "com.candyland.mobile"
     assert destino.netloc == "oauth"
     assert destino.path == "/facebook"
-    assert "facebook_error" in parametros
+    assert "error" in parametros
 
 
 def test_callback_facebook_web_continua_redirecionando_para_frontend(monkeypatch):

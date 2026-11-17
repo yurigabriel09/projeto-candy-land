@@ -17,17 +17,25 @@ import com.candyland.mobile.ui.CandyLandApp
 
 class MainActivity : ComponentActivity() {
     private var oauthUri by mutableStateOf<Uri?>(null)
+    private var paymentUri by mutableStateOf<Uri?>(null)
+
+    private fun routeIncomingUri(uri: Uri?) {
+        oauthUri = uri?.takeIf { it.scheme == "com.candyland.mobile" && it.host == "oauth" }
+        paymentUri = uri?.takeIf { it.scheme == "com.candyland.mobile" && it.host == "payment" }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ApiProvider.initialize(applicationContext)
-        oauthUri = intent?.data
+        routeIncomingUri(intent?.data)
         solicitarPermissaoNotificacoes()
         setContent {
             CandyLandApp(
                 applicationContext = applicationContext,
                 oauthUri = oauthUri,
-                onOAuthUriConsumed = { oauthUri = null }
+                onOAuthUriConsumed = { oauthUri = null },
+                paymentUri = paymentUri,
+                onPaymentUriConsumed = { paymentUri = null }
             )
         }
     }
@@ -35,7 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        oauthUri = intent.data
+        routeIncomingUri(intent.data)
     }
 
     private fun solicitarPermissaoNotificacoes() {

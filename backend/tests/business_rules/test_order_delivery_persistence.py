@@ -1,12 +1,11 @@
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.delivery import EntregaPedido
 from app.models.order import Pedido
 from app.routes.order_routes import pedido_bp
 from app.services.order_service import OrderService
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture

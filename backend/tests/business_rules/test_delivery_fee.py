@@ -1,11 +1,18 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
-from app.models import Categoria, Endereco, EntregaPedido, Pedido, Produto, Restaurante, Usuario
+from app.models import (
+    Categoria,
+    Endereco,
+    EntregaPedido,
+    Pedido,
+    Produto,
+    Restaurante,
+    Usuario,
+)
 from app.services.order_service import OrderService
+from flask import Flask
 
 
 @pytest.fixture
@@ -42,6 +49,7 @@ def seed_delivery_scenario():
         taxa_entrega_base=Decimal("3.50"),
         taxa_entrega_por_km=Decimal("2.00"),
         raio_entrega_km=Decimal("20.00"),
+        status="ABERTO",
     )
     db.session.add_all([customer, restaurant])
     db.session.flush()
@@ -117,10 +125,53 @@ def test_entrega_fora_do_raio_e_rejeitada(app):
         assert "fora do raio" in result["erro"]
         assert Pedido.query.count() == 0
 
-def test_entrega_requer_coordenadas_dos_dois_enderecos(app):
+def test_entrega_geocodifica_automaticamente_enderecos_sem_coordenadas(app, monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "status": "OK",
+                "results": [{
+                    "formatted_address": "Rua B, 2, São Paulo - SP, Brasil",
+                    "geometry": {"location": {"lat": -23.559520, "lng": -46.633308}},
+                }],
+            }
+
+    calls = []
+
+    def fake_get(url, params, timeout):
+        address_text = params["address"]
+        calls.append(address_text)
+        response = FakeResponse()
+        if "Rua A" in address_text:
+            response.json = lambda: {
+                "status": "OK",
+                "results": [{
+                    "formatted_address": "Rua A, 1, São Paulo - SP, Brasil",
+                    "geometry": {"location": {"lat": -23.550520, "lng": -46.633308}},
+                }],
+            }
+        else:
+            response.json = lambda: {
+                "status": "OK",
+                "results": [{
+                    "formatted_address": "Rua B, 2, São Paulo - SP, Brasil",
+                    "geometry": {"location": {"lat": -23.559520, "lng": -46.633308}},
+                }],
+            }
+        return response
+
+    monkeypatch.setattr("app.services.geocoding_service.requests.get", fake_get)
     with app.app_context():
+        app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-key"
         customer, restaurant, address, product = seed_delivery_scenario()
         address.latitude = None
+        address.longitude = None
+        restaurant_address = Endereco.query.filter_by(id=restaurant.address_id).one()
+        restaurant_address.latitude = None
+        restaurant_address.longitude = None
         db.session.commit()
 
         result = OrderService.criar_pedido(
@@ -134,9 +185,14 @@ def test_entrega_requer_coordenadas_dos_dois_enderecos(app):
             },
         )
 
-        assert result["success"] is False
-        assert "latitude do endereço de entrega" in result["erro"]
-        assert Pedido.query.count() == 0
+        assert result["success"] is True, result
+        assert len(calls) == 2
+        assert address.latitude == Decimal("-23.559520")
+        assert restaurant_address.latitude == Decimal("-23.550520")
+        order = Pedido.query.one()
+        assert order.delivery_distance_km == Decimal("1.00")
+        assert order.delivery_fee == Decimal("5.50")
+        assert Pedido.query.count() == 1
 
 def test_raio_precisa_estar_configurado_para_delivery(app):
     with app.app_context():
@@ -158,8 +214,8 @@ def test_raio_precisa_estar_configurado_para_delivery(app):
 
 
 def test_migracao_de_taxa_e_idempotente_para_banco_existente(app):
-    from sqlalchemy import create_engine, text
     from app.database.migrations import migrar_taxa_entrega_por_distancia
+    from sqlalchemy import create_engine, text
 
     engine = create_engine("sqlite:///:memory:")
     with engine.begin() as connection:

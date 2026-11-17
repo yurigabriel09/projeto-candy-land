@@ -46,7 +46,8 @@ class AuthController:
     def verificar_codigo(dados):
         tentativa_id = dados.get("tentativa_id", "")
         codigo = dados.get("codigo", "").strip()
-        tipo_conta = dados.get("tipo_conta") or dados.get("audiencia")
+        # O tipo de conta é descoberto exclusivamente pelo par validado no banco.
+        tipo_conta = None
 
         if not tentativa_id or not codigo:
             return make_response(

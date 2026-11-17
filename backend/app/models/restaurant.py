@@ -61,6 +61,7 @@ class Restaurante(db.Model):
             "horario_funcionamento": self.horario_funcionamento,
             "status": self.status,
             "ativo": bool(self.ativo),
+            "dt_cadastro": self.dt_cadastro.isoformat() if self.dt_cadastro else None,
         }
 
     def to_dict(self):

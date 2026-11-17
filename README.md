@@ -161,7 +161,7 @@ O fluxo é sempre **`main` (entregas de sprint) ← `dev` (integração) ← `fe
 | Frontend | React 19, React DOM 19, React Router 7 | Aplicação web, não aplicativo Android/iOS. |
 | Build frontend | Node.js compatível com Vite 8 (`^20.19.0` ou `>=22.12.0`), npm 10+ recomendado, Vite 8.2.x, `@vitejs/plugin-react` 6.x | `npm run dev`, `npm run build`; não usar `npm start` (script não existe). |
 | Utilitários frontend | `libphonenumber-js`, `@react-oauth/google` | Há também consulta de CEP ViaCEP no serviço de endereço. |
-| Testes | pytest 8.4.2 | 31 testes de regras de negócio em quatro arquivos passaram na validação local da frente de taxa; ainda faltam testes mais amplos de segurança, checkout e ponta a ponta. |
+| Testes | pytest 8.4.2 | Suíte organizada por autenticação, regras de negócio, checkout, integração, notificações e segurança. A aprovação deve ser confirmada na branch atual com `scripts/validar_projeto.cmd`. |
 | Ferramentas de desenvolvimento | Git, GitHub CLI (`gh`), PowerShell (`scripts/`), VS Code | `gh` é ferramenta externa do sistema, instalada via WinGet; não entra em `backend/requirements.txt`. As extensões recomendadas estão em `.vscode/extensions.json`; Docker, Swagger/OpenAPI e CI não foram encontrados. |
 | Extensões VS Code recomendadas | Python, Pylance, ESLint, Prettier e PowerShell | São recomendações de workspace, não uma afirmação de que todos já estejam instalados nos computadores da equipe. |
 | Integrações ausentes/incompletas | Google Maps Routes/Distance Matrix, PayPal, push, NFe/SEFAZ, AWS; homologação real do Mercado Pago | A existência do adaptador não comprova credenciais, webhook e transações de teste funcionando. |
@@ -206,18 +206,25 @@ O frontend Vite informa no terminal o endereço local (padrão `http://localhost
 
 ### Testes e build
 
-```powershell
-# Backend
-Set-Location backend
-..\.venv\Scripts\python.exe -m pytest -q
+Para instalar as dependências e validar backend e frontend com os interpretadores corretos, execute na raiz:
 
-# Frontend: novo terminal ou volte à raiz
-Set-Location ..\frontend
-npm ci
-npm run build
+```powershell
+.\scripts\validar_projeto.cmd
 ```
 
-Não considerar o ambiente validado se os testes não rodarem. Guarde a saída de erro no PR, corrija-a e rode novamente. Não commitar `.env`, tokens, chaves, `node_modules`, `.venv`, banco local ou caches.
+O script usa explicitamente `.venv\Scripts\python.exe`, instala `backend/requirements.txt`, executa `pytest -q`, roda `npm ci` a partir do lockfile e finaliza com `npm run build`. Assim, evita testar com outro Python global e evita tentar compilar o frontend com `node_modules` incompleto.
+
+Para executar manualmente depois da instalação:
+
+```powershell
+Set-Location backend
+..\.venv\Scripts\python.exe -m pytest -q
+Set-Location ..\frontend
+npm run build
+Set-Location ..
+```
+
+Não considerar o ambiente validado se a coleta dos testes ou o build forem interrompidos. Guarde a saída de erro no PR, corrija-a e rode novamente. Não commitar `.env`, tokens, chaves, `node_modules`, `.venv`, banco local ou caches.
 
 ### Gerar ZIP limpo de compartilhamento
 
@@ -388,6 +395,7 @@ Esta tabela consolida as linhas de planejamento fornecidas pela equipe, mantendo
 - `docs/modelo-dados.dot` e `docs/modelo-dados.png` — fonte editável e imagem legível do diagrama ER atual.
 - `backend/app/database/migrations.py` — migração aditiva e idempotente das colunas de taxa/distância; a inicialização executa antes de consultar pedidos, sem apagar dados existentes.
 - `scripts/preparar_ambiente.cmd` e `scripts/preparar_ambiente.ps1` — lançador seguro e instalação/verificação local sem sobrescrever `.env` existente.
+- `scripts/validar_projeto.cmd` e `scripts/validar_projeto.ps1` — instala as dependências no `.venv` e executa a suíte pytest e o build Vite.
 - `scripts/gerenciar_pr.cmd` e `scripts/gerenciar_pr.ps1` — localiza/instala o GitHub CLI, verifica ou inicia autenticação, cria PR para `dev`, consulta status e permite merge explícito após revisão.
 - `scripts/gerar_zip_limpo.cmd` e `scripts/gerar_zip_limpo.ps1` — geração de ZIP de compartilhamento sem apagar o projeto original.
 - `limpar_e_gerar_zip.cmd` e `limpar_e_gerar_zip.ps1` — atalho legado seguro que delega para o gerador; não remove `.venv`, `node_modules`, bancos ou arquivos `.env`.

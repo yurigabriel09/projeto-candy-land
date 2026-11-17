@@ -1,10 +1,9 @@
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import DeviceToken
 from app.routes.device_routes import device_bp
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture

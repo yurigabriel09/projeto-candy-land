@@ -38,8 +38,7 @@ def webhook_mercado_pago():
     is_merchant_order = (
         topic in {"merchant_order", "merchant_orders", "order"}
         or event_type in {"merchant_order", "merchant_orders", "order"}
-        or action.startswith("merchant_order.")
-        or action.startswith("order.")
+        or action.startswith(("merchant_order.", "order."))
     )
     if is_merchant_order:
         return make_response(jsonify({"ok": True, "ignorado": True, "mensagem": "Notificação de ordem recebida; aguardando evento de pagamento."}), 200)
@@ -170,6 +169,7 @@ def criar_pagamento(pedido_id):
         int(g.current_account_id),
         g.current_account_type,
         request.headers.get("Idempotency-Key"),
+        request.headers.get("X-Client-Platform", "web"),
     )
 
 

@@ -1,8 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.category import Categoria
@@ -14,6 +13,7 @@ from app.models.product import Produto
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
 from app.services.order_receipt_service import OrderReceiptService
+from flask import Flask
 
 
 @pytest.fixture
@@ -101,6 +101,9 @@ def test_codigo_de_entrega_pode_ser_validado_quando_pedido_esta_pronto(app):
         business_id = app.config["TEST_BUSINESS_ID"]
         pedido = db.session.get(Pedido, order_id)
         pedido.order_type = "DELIVERY"
+        pedido.status = "ENTREGUE"
+        entrega = EntregaPedido(pedido_id=order_id, status="ENTREGA_CONCLUIDA", concluida_em=datetime.utcnow())  # noqa: DTZ003
+        db.session.add(entrega)
         db.session.commit()
 
         issued = OrderReceiptService.emitir_codigo(order_id, customer_id, "PERSONAL")

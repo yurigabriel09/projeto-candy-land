@@ -34,6 +34,12 @@ def atualizar_restaurante(restaurante_id):
     return RestaurantController.atualizar_restaurante(restaurante_id, dados)
 
 
+@restaurante_bp.route("/geocodificar-endereco/publico", methods=["POST"])
+def geocodificar_endereco_publico():
+    dados = request.get_json(silent=True) or {}
+    return RestaurantController.geocodificar_endereco_publico(dados)
+
+
 @restaurante_bp.route("/geocodificar-endereco/cadastro", methods=["POST"])
 def geocodificar_endereco_cadastro():
     # A tentativa de cadastro precisa ter e-mail e telefone já verificados.
