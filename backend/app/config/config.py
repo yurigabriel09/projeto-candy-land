@@ -29,6 +29,22 @@ def telefone_compartilhado_permitido(config):
     return _valor_verdadeiro(config.get("ALLOW_DUPLICATE_PHONE", False))
 
 
+def autoaprovacao_restaurante_teste_permitida(config):
+    """Permite abrir lojas EM_ANALISE apenas em ambiente não produtivo.
+
+    A opção existe para validar o fluxo de compra localmente. Em produção,
+    a aprovação administrativa continua obrigatória mesmo que a variável
+    ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS esteja definida como true.
+    """
+    ambiente = str(config.get("APP_ENV", "production")).strip().lower()
+    if ambiente not in _AMBIENTES_NAO_PRODUTIVOS:
+        return False
+
+    return _valor_verdadeiro(
+        config.get("ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS", True)
+    )
+
+
 class Config:
     APP_ENV = os.getenv("APP_ENV", "production").strip().lower()
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
@@ -37,6 +53,14 @@ class Config:
         {
             "APP_ENV": APP_ENV,
             "ALLOW_DUPLICATE_PHONE": os.getenv("ALLOW_DUPLICATE_PHONE", "false"),
+        }
+    )
+    ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS = autoaprovacao_restaurante_teste_permitida(
+        {
+            "APP_ENV": APP_ENV,
+            "ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS": os.getenv(
+                "ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS", "true"
+            ),
         }
     )
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-troque-em-producao")

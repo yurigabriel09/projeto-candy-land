@@ -122,3 +122,44 @@ def test_catalogo_publico_inclui_doceria_ativa_em_analise(app):
         loja = next(item for item in lojas if item["id"] == restaurante.id)
         assert loja["ativo"] is True
         assert loja["status"] == "EM_ANALISE"
+
+def test_loja_em_analise_pode_ser_aberta_pelo_titular_em_desenvolvimento(app):
+    with app.app_context():
+        app.config.update(
+            APP_ENV="development",
+            ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS=True,
+        )
+        restaurante = _criar_restaurante("EM_ANALISE")
+        client = app.test_client()
+
+        response = client.patch(
+            f"/restaurantes/{restaurante.id}/status",
+            json={"status": "ABERTO"},
+            headers=_headers(restaurante.id),
+        )
+
+        assert response.status_code == 200
+        assert response.get_json()["dados"]["status"] == "ABERTO"
+
+        # A consulta em uma nova requisição confirma que a mudança foi persistida.
+        consulta = client.get(f"/restaurantes/{restaurante.id}")
+        assert consulta.status_code == 200
+        assert consulta.get_json()["dados"]["status"] == "ABERTO"
+        assert db.session.get(Restaurante, restaurante.id).status == "ABERTO"
+
+
+def test_autoabertura_de_teste_nao_funciona_em_producao_mesmo_com_flag_true(app):
+    with app.app_context():
+        app.config.update(
+            APP_ENV="production",
+            ALLOW_BUSINESS_SELF_APPROVAL_FOR_TESTS=True,
+        )
+        restaurante = _criar_restaurante("EM_ANALISE")
+        response = app.test_client().patch(
+            f"/restaurantes/{restaurante.id}/status",
+            json={"status": "ABERTO"},
+            headers=_headers(restaurante.id),
+        )
+
+        assert response.status_code == 409
+        assert db.session.get(Restaurante, restaurante.id).status == "EM_ANALISE"

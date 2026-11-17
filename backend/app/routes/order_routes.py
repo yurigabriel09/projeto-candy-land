@@ -161,6 +161,7 @@ def criar_pagamento(pedido_id):
         int(g.current_account_id),
         g.current_account_type,
         request.headers.get("Idempotency-Key"),
+        request.headers.get("X-Client-Platform", "web"),
     )
 
 

@@ -4,9 +4,9 @@ from flask import jsonify, make_response
 
 class PaymentController:
     @staticmethod
-    def criar_pagamento(pedido_id, account_id, account_type, idempotency_key=None):
+    def criar_pagamento(pedido_id, account_id, account_type, idempotency_key=None, client_platform="web"):
         resultado = PaymentService.criar_pagamento(
-            pedido_id, account_id, account_type, idempotency_key
+            pedido_id, account_id, account_type, idempotency_key, client_platform
         )
         if not resultado["success"]:
             return make_response(

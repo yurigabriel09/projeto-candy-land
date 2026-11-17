@@ -98,8 +98,30 @@ interface CandyLandApi {
     @POST("pedidos/{orderId}/pagamento")
     suspend fun createPayment(
         @Path("orderId") orderId: Int,
-        @Header("Idempotency-Key") idempotencyKey: String
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Header("X-Client-Platform") clientPlatform: String
     ): Response<PaymentCreateResponse>
+
+    @GET("pedidos/{orderId}")
+    suspend fun order(@Path("orderId") orderId: Int): Response<OrderDetailResponse>
+
+    @GET("pedidos/{orderId}/pagamento")
+    suspend fun getPayment(@Path("orderId") orderId: Int): Response<PaymentCreateResponse>
+
+    @POST("pedidos/{orderId}/pagamento/paypal-capture")
+    suspend fun capturePayPalPayment(
+        @Path("orderId") orderId: Int,
+        @Body body: PayPalOrderActionRequest
+    ): Response<PaymentActionResponse>
+
+    @POST("pedidos/{orderId}/pagamento/paypal-cancel")
+    suspend fun cancelPayPalPayment(
+        @Path("orderId") orderId: Int,
+        @Body body: PayPalOrderActionRequest
+    ): Response<PaymentActionResponse>
+
+    @POST("pedidos/{orderId}/codigo-recebimento")
+    suspend fun generateReceiptCode(@Path("orderId") orderId: Int): Response<ReceiptCodeResponse>
 
     @GET("pedidos")
     suspend fun orders(): Response<OrderListResponse>

@@ -83,11 +83,18 @@ private inline fun <T> runCancellableCatching(block: () -> T): Result<T> {
 private data class RegistrationInfo(val attemptId: String, val email: String, val phone: String)
 private data class CartEntry(val product: ProductDto, val quantity: Int)
 
+private val RECEIPT_CODE_ELIGIBLE_STATUSES = setOf(
+    "PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU",
+    "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE"
+)
+
 @Composable
 fun CandyLandApp(
     applicationContext: Context,
     oauthUri: Uri? = null,
-    onOAuthUriConsumed: () -> Unit = {}
+    onOAuthUriConsumed: () -> Unit = {},
+    paymentUri: Uri? = null,
+    onPaymentUriConsumed: () -> Unit = {}
 ) {
     val appScope = rememberCoroutineScope()
     var session by remember { mutableStateOf(SessionManager.current(applicationContext)) }
@@ -151,7 +158,9 @@ fun CandyLandApp(
                         onSessionUpdated = { updated ->
                             SessionManager.save(applicationContext, updated)
                             session = updated
-                        }
+                        },
+                        paymentUri = paymentUri,
+                        onPaymentUriConsumed = onPaymentUriConsumed
                     )
                 }
             }
@@ -702,7 +711,9 @@ private fun RegistrationForm(
 private fun ShopScreen(
     session: SessionManager.Session,
     onLogout: () -> Unit,
-    onSessionUpdated: (SessionManager.Session) -> Unit
+    onSessionUpdated: (SessionManager.Session) -> Unit,
+    paymentUri: Uri?,
+    onPaymentUriConsumed: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -723,9 +734,11 @@ private fun ShopScreen(
     var createdOrder by remember { mutableStateOf<OrderDto?>(null) }
     var paymentIdempotencyKey by remember { mutableStateOf<String?>(null) }
     var actionBusy by remember { mutableStateOf(false) }
+    var receiptCodes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var receiptCodeErrors by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var receiptCodeLoadingOrderId by remember { mutableStateOf<Int?>(null) }
     var settingsExpanded by remember { mutableStateOf(false) }
     var showPendingOnly by remember { mutableStateOf(false) }
-    var receiptCodes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
 
     suspend fun loadRestaurants() {
         restaurantLoading = true; restaurantError = null
@@ -742,11 +755,28 @@ private fun ShopScreen(
         orderLoading = false
     }
 
+    fun generateReceiptCode(orderId: Int) {
+        if (receiptCodeLoadingOrderId != null) return
+        receiptCodeLoadingOrderId = orderId
+        receiptCodeErrors = receiptCodeErrors - orderId
+        scope.launch {
+            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.generateReceiptCode(orderId)) }
+                .onSuccess { response ->
+                    response.codigo?.let { code ->
+                        receiptCodes = receiptCodes + (orderId to code)
+                    }
+                }
+                .onFailure { err ->
+                    receiptCodeErrors = receiptCodeErrors + (orderId to (err.message ?: "Não foi possível gerar o código."))
+                }
+            receiptCodeLoadingOrderId = null
+        }
+    }
+
     suspend fun initiatePayment(orderId: Int) {
         val idempotencyKey = paymentIdempotencyKey
             ?: "candyland-android-$orderId-${UUID.randomUUID()}".also { paymentIdempotencyKey = it }
-        val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey)).pagamento
-            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
+        val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey, "ANDROID")).pagamento            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
         paymentInfo = payment
         when {
             !payment.approval_url.isNullOrBlank() -> {
@@ -766,6 +796,66 @@ private fun ShopScreen(
         loadRestaurants()
         loadOrders()
         runCatching { PushTokenManager.registerCurrentDevice(context) }
+    }
+
+    LaunchedEffect(paymentUri) {
+        val returnedUri = paymentUri ?: return@LaunchedEffect
+        val orderId = returnedUri.getQueryParameter("order_id")?.toIntOrNull()
+        tab = 1
+        paymentInfo = null
+        checkoutMessage = "Retorno do pagamento recebido. Conferindo seu pedido..."
+
+        if (orderId == null) {
+            checkoutMessage = "O aplicativo foi reaberto pelo pagamento, mas não recebeu o número do pedido. Consulte Meus pedidos."
+        } else {
+            createdOrder = null
+            val provider = returnedUri.getQueryParameter("provider").orEmpty().lowercase()
+            val cancelled = returnedUri.path.orEmpty().endsWith("/cancel")
+            runCatching {
+                when (provider) {
+                    "paypal" -> {
+                        val paypalToken = returnedUri.getQueryParameter("token").orEmpty()
+                        val response = if (cancelled) {
+                            ApiProvider.unwrap(ApiProvider.api.cancelPayPalPayment(orderId, PayPalOrderActionRequest(paypalToken)))
+                        } else {
+                            ApiProvider.unwrap(ApiProvider.api.capturePayPalPayment(orderId, PayPalOrderActionRequest(paypalToken)))
+                        }
+                        paymentInfo = response.pagamento
+                        createdOrder = response.pedido
+                    }
+                    "mercadopago" -> {
+                        // GET /pagamento consulta a API oficial do Mercado Pago e
+                        // reconcilia o pedido; nunca confiamos no status da URL.
+                        paymentInfo = ApiProvider.unwrap(ApiProvider.api.getPayment(orderId)).pagamento
+                    }
+                    else -> throw IllegalStateException("O retorno não identificou um provedor de pagamento válido.")
+                }
+
+                val pedidoAtualizado = ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido
+                    ?: createdOrder
+                    ?: throw IllegalStateException("O servidor não retornou o pedido após o pagamento.")
+                createdOrder = pedidoAtualizado
+                loadOrders()
+                checkoutMessage = when {
+                    pedidoAtualizado.status in RECEIPT_CODE_ELIGIBLE_STATUSES ->
+                        "Pagamento confirmado e pedido criado! Gere seu código de recebimento e apresente-o quando retirar ou receber o pedido."
+                    pedidoAtualizado.status == "CANCELADO" ->
+                        "Este pedido foi cancelado. Consulte o histórico para ver os detalhes."
+                    cancelled ->
+                        "O checkout foi cancelado. O pedido continua aguardando pagamento e não foi enviado à doceria."
+                    paymentInfo?.status == "REJECTED" || paymentInfo?.status == "CANCELLED" ->
+                        "O provedor não aprovou o pagamento. O pedido continua pendente e não foi enviado à doceria."
+                    else ->
+                        "O pedido foi localizado, mas o pagamento ainda está em confirmação. Atualize Meus pedidos em instantes."
+                }
+            }.onFailure { error ->
+                checkoutMessage = error.message ?: "Não foi possível consultar o resultado do pagamento. Atualize Meus pedidos."
+                runCatching { ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido }
+                    .onSuccess { createdOrder = it }
+                loadOrders()
+            }
+        }
+        onPaymentUriConsumed()
     }
 
     Scaffold(
@@ -824,12 +914,17 @@ private fun ShopScreen(
                         products = products,
                         loading = productLoading,
                         error = productsError,
-                        onBack = { selectedRestaurant = null },
+                        onBack = { selectedRestaurant = null; scope.launch { loadRestaurants() } },
                         onAdd = { product ->
-                            val base = if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) emptyList() else cart
-                            val existing = base.firstOrNull { it.product.id == product.id }
-                            cart = if (existing == null) base + CartEntry(product, 1)
-                            else base.map { if (it.product.id == product.id) it.copy(quantity = it.quantity + 1) else it }
+                            if (selectedRestaurant?.ativo != true || selectedRestaurant?.status != "ABERTO") {
+                                productsError = "Esta doceria não está aberta para novos pedidos. Atualize a lista de docerias."
+                            } else {
+                                val base = if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) emptyList() else cart
+                                val existing = base.firstOrNull { it.product.id == product.id }
+                                cart = if (existing == null) base + CartEntry(product, 1)
+                                else base.map { if (it.product.id == product.id) it.copy(quantity = it.quantity + 1) else it }
+                                productsError = null
+                            }
                         },
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -842,6 +937,10 @@ private fun ShopScreen(
                 createdOrder = createdOrder,
                 checkoutMessage = checkoutMessage,
                 paymentInfo = paymentInfo,
+                receiptCode = createdOrder?.let { receiptCodes[it.id] },
+                receiptCodeLoading = createdOrder?.let { receiptCodeLoadingOrderId == it.id } ?: false,
+                receiptCodeError = createdOrder?.let { receiptCodeErrors[it.id] },
+                onGenerateReceiptCode = { generateReceiptCode(it) },
                 onQuantity = { productId, quantity -> cart = if (quantity <= 0) cart.filterNot { it.product.id == productId } else cart.map { if (it.product.id == productId) it.copy(quantity = quantity) else it } },
                 onCheckout = { orderType, addressId, paymentMethod ->
                     if (cart.isEmpty() || cart.firstOrNull() == null) return@CartScreen
@@ -895,22 +994,12 @@ private fun ShopScreen(
             2 -> OrderHistoryScreen(
                 orders = if (showPendingOnly) orders.filter { it.status == "PENDENTE_PAGAMENTO" } else orders,
                 receiptCodes = receiptCodes,
+                receiptCodeErrors = receiptCodeErrors,
+                receiptCodeLoadingOrderId = receiptCodeLoadingOrderId,
                 loading = orderLoading,
                 error = orderError,
                 onRefresh = { scope.launch { loadOrders() } },
-                onIssueReceiptCode = { orderId ->
-                    scope.launch {
-                        actionBusy = true; orderError = null
-                        runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.issueReceiptCode(orderId)) }
-                            .onSuccess { response ->
-                                response.codigo?.let { receiptCodes = receiptCodes + (orderId to it) }
-                                orderError = null
-                            }
-                            .onFailure { orderError = it.message ?: "Não foi possível gerar o código de recebimento." }
-                        actionBusy = false
-                    }
-                },
-                actionBusy = actionBusy,
+                onGenerateReceiptCode = { orderId -> generateReceiptCode(orderId) },
                 modifier = Modifier.padding(innerPadding)
             )
             else -> CustomerSettingsScreen(
@@ -975,6 +1064,7 @@ private fun ProductListScreen(
     onAdd: (ProductDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val lojaDisponivel = restaurant.ativo && restaurant.status == "ABERTO"
     Column(modifier.fillMaxSize().padding(16.dp)) {
         TextButton(onClick = onBack) { Text("← Docerias") }
         Text(restaurant.nome, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -1012,6 +1102,10 @@ private fun CartScreen(
     createdOrder: OrderDto?,
     checkoutMessage: String?,
     paymentInfo: PaymentDto?,
+    receiptCode: String?,
+    receiptCodeLoading: Boolean,
+    receiptCodeError: String?,
+    onGenerateReceiptCode: (Int) -> Unit,
     onQuantity: (Int, Int) -> Unit,
     onCheckout: (String, Int?, String) -> Unit,
     onRetryPayment: (Int) -> Unit,
@@ -1041,6 +1135,28 @@ private fun CartScreen(
                     Text("Status: ${createdOrder.status}")
                     Text("Total calculado pelo servidor: ${money(createdOrder.total)}", fontWeight = FontWeight.Bold)
                     checkoutMessage?.let { Text(it) }
+                    if (createdOrder.status in RECEIPT_CODE_ELIGIBLE_STATUSES) {
+                        Divider()
+                        Text("Código de recebimento", fontWeight = FontWeight.SemiBold)
+                        if (receiptCode == null) {
+                            OutlinedButton(
+                                onClick = { onGenerateReceiptCode(createdOrder.id) },
+                                enabled = !receiptCodeLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(if (receiptCodeLoading) "Gerando código..." else "Gerar código de recebimento") }
+                        } else {
+                            Text(receiptCode, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Apresente este código ao restaurante quando receber ou retirar o pedido.", style = MaterialTheme.typography.bodySmall)
+                            OutlinedButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Código de recebimento", receiptCode))
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Copiar código de recebimento") }
+                        }
+                        receiptCodeError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    }
                     paymentInfo?.pix_copy_paste?.let {
                         Divider()
                         Text("Pix copia e cola", fontWeight = FontWeight.SemiBold)
@@ -1127,12 +1243,13 @@ private fun CartScreen(
 @Composable
 private fun OrderHistoryScreen(
     orders: List<OrderDto>,
-    receiptCodes: Map<Int, String>,
     loading: Boolean,
     error: String?,
-    actionBusy: Boolean,
     onRefresh: () -> Unit,
-    onIssueReceiptCode: (Int) -> Unit,
+    receiptCodes: Map<Int, String>,
+    receiptCodeErrors: Map<Int, String>,
+    receiptCodeLoadingOrderId: Int?,
+    onGenerateReceiptCode: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier.fillMaxSize().padding(16.dp)) {
@@ -1157,8 +1274,12 @@ private fun OrderHistoryScreen(
                         Text("Código de recebimento: $code", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text("Apresente este código ao parceiro quando receber o pedido.", style = MaterialTheme.typography.bodySmall)
                     } else if (order.status in setOf("PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU", "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE")) {
-                        OutlinedButton(onClick = { onIssueReceiptCode(order.id) }, enabled = !actionBusy, modifier = Modifier.fillMaxWidth()) {
-                            Text(if (actionBusy) "Gerando código..." else "Gerar código de recebimento")
+                        val isGenerating = receiptCodeLoadingOrderId == order.id
+                        OutlinedButton(onClick = { onGenerateReceiptCode(order.id) }, enabled = !isGenerating, modifier = Modifier.fillMaxWidth()) {
+                            Text(if (isGenerating) "Gerando código..." else "Gerar código de recebimento")
+                        }
+                        receiptCodeErrors[order.id]?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

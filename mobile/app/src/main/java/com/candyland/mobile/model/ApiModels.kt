@@ -242,6 +242,7 @@ data class CreateOrderRequest(
 )
 data class CreateOrderResponse(val pedido: OrderDto? = null)
 data class OrderListResponse(val pedidos: List<OrderDto> = emptyList())
+data class OrderDetailResponse(val pedido: OrderDto? = null)
 data class OrderDto(
     val id: Int = 0,
     val order_code: String = "",
@@ -267,12 +268,18 @@ data class OrderItemDto(
     val preco_unitario: Double = 0.0
 )
 data class PaymentCreateResponse(val pagamento: PaymentDto? = null)
+data class PaymentActionResponse(
+    val pagamento: PaymentDto? = null,
+    val pedido: OrderDto? = null
+)
+data class PayPalOrderActionRequest(val token: String)
 data class PaymentDto(
     val status: String? = null,
     val approval_url: String? = null,
     val pix_copy_paste: String? = null,
     val pix_qr_code_base64: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val payment_method: String? = null
 )
 data class DeviceTokenRequest(
     val token: String,

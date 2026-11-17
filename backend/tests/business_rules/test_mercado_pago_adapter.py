@@ -175,6 +175,43 @@ def test_create_payment_configura_retorno_automatico_com_url_publica_https(monke
     assert payload["auto_return"] == "approved"
 
 
+def test_checkout_pro_android_usa_deep_links_nativos_sem_url_web(monkeypatch):
+    chamadas = []
+
+    def fake_request(method, url, **kwargs):
+        chamadas.append((method, url, kwargs))
+        return FakeResponse({
+            "id": "pref-android-789",
+            "init_point": "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-android-789",
+            "sandbox_init_point": "https://sandbox.mercadopago.com.br/checkout?pref_id=pref-android-789",
+        })
+
+    monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)
+    provider = MercadoPagoPaymentProvider({
+        "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",
+        "MERCADO_PAGO_SANDBOX": True,
+        # Android não depende de um domínio web público para retornar ao app.
+        "MERCADO_PAGO_RETURN_URL_BASE": "http://localhost:5173",
+    })
+    command = CreatePaymentCommand(
+        order_id="52",
+        idempotency_key="pedido-52-android-v1",
+        amount=Decimal("19.90"),
+        method=PaymentMethod.CARD,
+        metadata={"order_code": "CL-ANDROID52", "client_platform": "android"},
+    )
+
+    provider.create_payment(command)
+
+    payload = chamadas[0][2]["json"]
+    assert payload["back_urls"]["success"] == (
+        "com.candyland.mobile://payment/return?order_id=52&provider=mercadopago&return=success"
+    )
+    assert payload["back_urls"]["pending"].endswith("return=pending")
+    assert payload["back_urls"]["failure"].endswith("return=failure")
+    assert payload["auto_return"] == "approved"
+
+
 def test_metodo_cartao_generico_preserva_credito_debito_e_exclui_pix_boleto():
     excluded = MercadoPagoPaymentProvider._excluded_types(PaymentMethod.CARD)
     ids = {item["id"] for item in excluded}

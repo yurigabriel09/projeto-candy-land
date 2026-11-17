@@ -57,9 +57,14 @@ class PayPalPaymentProvider(PaymentProvider):
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
         self.validar_metodo(command.method)
         query = urlencode({"order_id": command.order_id, "provider": "paypal"})
-        return_url = f"{self.return_url_base}/checkout/resultado?{query}"
         cancel_query = urlencode({"order_id": command.order_id, "provider": "paypal", "cancel": "1"})
-        cancel_url = f"{self.return_url_base}/checkout/resultado?{cancel_query}"
+        plataforma_android = str(command.metadata.get("client_platform", "")).strip().lower() == "android"
+        if plataforma_android:
+            return_url = f"com.candyland.mobile://payment/return?{query}"
+            cancel_url = f"com.candyland.mobile://payment/cancel?{cancel_query}"
+        else:
+            return_url = f"{self.return_url_base}/checkout/resultado?{query}"
+            cancel_url = f"{self.return_url_base}/checkout/resultado?{cancel_query}"
         payload = {
             "intent": "CAPTURE",
             "purchase_units": [
@@ -80,6 +85,24 @@ class PayPalPaymentProvider(PaymentProvider):
                 "cancel_url": cancel_url,
             },
         }
+        if plataforma_android:
+            payload["payment_source"] = {
+                "paypal": {
+                    "experience_context": {
+                        "brand_name": "CandyLand",
+                        "return_url": return_url,
+                        "cancel_url": cancel_url,
+                        "user_action": "PAY_NOW",
+                        "app_switch_context": {
+                            "native_app": {
+                                "return_app_url": return_url,
+                                "cancel_app_url": cancel_url,
+                                "os_type": "ANDROID",
+                            }
+                        },
+                    }
+                }
+            }
         request_id = _idempotency_id(command.idempotency_key, "create")
         response = self._request(
             "POST", "/v2/checkout/orders", payload,

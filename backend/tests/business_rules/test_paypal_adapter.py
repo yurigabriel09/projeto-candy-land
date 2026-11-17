@@ -66,6 +66,50 @@ def test_paypal_create_order_uses_server_amount_and_returns_approval_url(monkeyp
     assert api_calls[0][2]["headers"]["PayPal-Request-Id"]
 
 
+def test_paypal_android_retorna_ao_aplicativo_por_deep_link(monkeypatch):
+    api_calls = []
+    monkeypatch.setattr(requests, "post", lambda *a, **k: _response({"access_token": "test-access"}))
+
+    def api_request(method, url, **kwargs):
+        api_calls.append((method, url, kwargs))
+        return _response({
+            "id": "PAYPAL-ORDER-42",
+            "status": "CREATED",
+            "purchase_units": [{"amount": {"currency_code": "BRL", "value": "35.90"}}],
+            "links": [{"rel": "approve", "href": "https://www.sandbox.paypal.com/checkoutnow?token=PAYPAL-ORDER-42"}],
+        }, 201)
+
+    monkeypatch.setattr(requests, "request", api_request)
+    provider = PayPalPaymentProvider.from_config(_config())
+    command = CreatePaymentCommand(
+        order_id="42",
+        idempotency_key="order:42:android-payment:v1",
+        amount=Decimal("35.90"),
+        method=PaymentMethod.CARD,
+        currency="BRL",
+        metadata={"order_code": "CL-42", "client_platform": "android"},
+    )
+
+    provider.create_payment(command)
+
+    payload = api_calls[0][2]["json"]
+    context = payload["application_context"]
+    assert context["return_url"] == (
+        "com.candyland.mobile://payment/return?order_id=42&provider=paypal"
+    )
+    assert context["cancel_url"] == (
+        "com.candyland.mobile://payment/cancel?order_id=42&provider=paypal&cancel=1"
+    )
+    native_context = payload["payment_source"]["paypal"]["experience_context"]
+    assert native_context["return_url"] == context["return_url"]
+    assert native_context["cancel_url"] == context["cancel_url"]
+    assert native_context["app_switch_context"]["native_app"] == {
+        "return_app_url": context["return_url"],
+        "cancel_app_url": context["cancel_url"],
+        "os_type": "ANDROID",
+    }
+
+
 def test_paypal_capture_maps_completed_to_approved_and_keeps_order_id(monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *a, **k: _response({"access_token": "test-access"}))
     monkeypatch.setattr(requests, "request", lambda *a, **k: _response({

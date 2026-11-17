@@ -1,6 +1,9 @@
 from decimal import Decimal, InvalidOperation
 
-from app.config.config import telefone_compartilhado_permitido
+from app.config.config import (
+    autoaprovacao_restaurante_teste_permitida,
+    telefone_compartilhado_permitido,
+)
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.auth_attempt import TentativaAutenticacao
@@ -373,7 +376,7 @@ class RestauranteService:
 
     @staticmethod
     def atualizar_status_operacional(restaurante_id, status):
-        """Atualiza ABERTO/FECHADO; não permite que o parceiro aprove a própria loja."""
+        """Atualiza o status operacional, com autoabertura restrita a dev/teste."""
         if not isinstance(status, str):
             return {"success": False, "erro": "Informe o status ABERTO ou FECHADO.", "status_code": 400}
         novo_status = status.strip().upper()
@@ -384,11 +387,17 @@ class RestauranteService:
             if not restaurante:
                 return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
             if restaurante.status not in {"ABERTO", "FECHADO"}:
-                return {
-                    "success": False,
-                    "erro": "A loja ainda não está liberada para abrir ou fechar. Consulte a administração.",
-                    "status_code": 409,
-                }
+                autoabertura_de_teste = (
+                    restaurante.status == "EM_ANALISE"
+                    and novo_status == "ABERTO"
+                    and autoaprovacao_restaurante_teste_permitida(current_app.config)
+                )
+                if not autoabertura_de_teste:
+                    return {
+                        "success": False,
+                        "erro": "A loja ainda está em análise. A aprovação administrativa é necessária fora do ambiente de desenvolvimento/teste.",
+                        "status_code": 409,
+                    }
             restaurante.status = novo_status
             db.session.commit()
             return {"success": True, "mensagem": "Status da loja atualizado com sucesso.", "dados": {"id": restaurante.id, "status": restaurante.status}}

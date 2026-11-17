@@ -99,6 +99,7 @@ class PaymentService:
         account_id: int,
         account_type: str,
         idempotency_key: str | None = None,
+        client_platform: str = "web",
     ) -> dict[str, Any]:
         # The create/query contract is provider-neutral. Apply the special
         # environment gate only when someone explicitly selects the mock; real
@@ -180,6 +181,9 @@ class PaymentService:
             provider.validar_metodo(method)
             amount = Decimal(str(pedido.total)).quantize(Decimal("0.01"))
             cliente = db.session.get(Usuario, pedido.user_id)
+            plataforma = str(client_platform or "web").strip().lower()
+            if plataforma not in {"android"}:
+                plataforma = "web"
             command = CreatePaymentCommand(
                 order_id=str(pedido.id),
                 idempotency_key=key,
@@ -187,7 +191,7 @@ class PaymentService:
                 method=method,
                 currency="BRL",
                 payer_email=cliente.email if cliente else None,
-                metadata={"order_code": pedido.order_code},
+                metadata={"order_code": pedido.order_code, "client_platform": plataforma},
             )
             result = provider.create_payment(command)
             if result.amount != amount or result.currency != "BRL":
@@ -595,8 +599,7 @@ class PaymentService:
         attempt = PaymentAttempt.query.filter_by(order_id=pedido_id).first()
         if not attempt or attempt.provider != "paypal":
             return {"success": False, "erro": "Não existe tentativa PayPal para este pedido.", "status_code": 404}
-        if str(paypal_order_id or "").strip() != str(attempt.provider_payment_id):
-            return {"success": False, "erro": "A ordem informada não corresponde à ordem PayPal persistida.", "status_code": 409}
+        if paypal_order_id and str(paypal_order_id).strip() != str(attempt.provider_payment_id):            return {"success": False, "erro": "A ordem informada não corresponde à ordem PayPal persistida.", "status_code": 409}
         if attempt.status == PaymentStatus.APPROVED.value or pedido.status != "PENDENTE_PAGAMENTO":
             return {"success": False, "erro": "O pagamento já foi concluído ou o pedido não está pendente.", "status_code": 409}
         try:
@@ -624,8 +627,7 @@ class PaymentService:
         attempt = PaymentAttempt.query.filter_by(order_id=pedido_id).first()
         if not attempt or attempt.provider != "paypal":
             return {"success": False, "erro": "Não existe tentativa PayPal para este pedido.", "status_code": 404}
-        if not paypal_order_id or str(paypal_order_id).strip() != str(attempt.provider_payment_id):
-            return {"success": False, "erro": "A ordem retornada pelo PayPal não corresponde à ordem persistida.", "status_code": 409}
+        if paypal_order_id and str(paypal_order_id).strip() != str(attempt.provider_payment_id):            return {"success": False, "erro": "A ordem retornada pelo PayPal não corresponde à ordem persistida.", "status_code": 409}
         if attempt.status == PaymentStatus.APPROVED.value:
             return {"success": True, "mensagem": "Pagamento PayPal já capturado.", "pedido": OrderService._to_dict(pedido), "dados": PaymentService._to_dict(attempt)}
         if pedido.status != "PENDENTE_PAGAMENTO":
