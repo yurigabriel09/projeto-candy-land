@@ -1,9 +1,10 @@
+from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.database.database import db
 from app.models.item_order import ItemPedido
 from app.models.order import Pedido
 from app.models.product import Produto
-from sqlalchemy import func
-from sqlalchemy.exc import SQLAlchemyError
 
 LIMITE_PADRAO = 6
 LIMITE_MAXIMO = 20

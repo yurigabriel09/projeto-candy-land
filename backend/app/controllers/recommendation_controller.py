@@ -1,5 +1,6 @@
-from app.services.recommendation_service import RecommendationService
 from flask import jsonify, make_response
+
+from app.services.recommendation_service import RecommendationService
 
 
 class RecommendationController:
