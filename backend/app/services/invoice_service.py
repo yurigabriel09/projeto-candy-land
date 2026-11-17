@@ -3,16 +3,10 @@
 Os dados vêm sempre do banco (pedido já persistido), nunca do frontend.
 """
 import os
-from datetime import timedelta, timezone
+from datetime import UTC, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO
 from xml.sax.saxutils import escape
-
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.database.database import db
 from app.models.address import Endereco
@@ -21,6 +15,11 @@ from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
 from app.models.user import Usuario
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 ROSA = colors.HexColor("#f4356e")
 MARROM = colors.HexColor("#4a1f1d")
@@ -113,7 +112,7 @@ def montar_dados(pedido_id):
 
     criado = pedido.created_at
     if criado is not None:
-        criado = criado.replace(tzinfo=timezone.utc).astimezone(FUSO_BRASIL)
+        criado = criado.replace(tzinfo=UTC).astimezone(FUSO_BRASIL)
 
     return {
         "codigo": pedido.order_code,

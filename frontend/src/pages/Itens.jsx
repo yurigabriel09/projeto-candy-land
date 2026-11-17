@@ -23,6 +23,14 @@ function Itens() {
   const [parametros, setParametros] = useSearchParams();
   const lojaAtiva = parametros.get("loja");
   const buscaInicial = parametros.get("busca") || "";
+  const [enderecoSelecionado] = useState(() => {
+    try {
+      const localizacao = sessionStorage.getItem("candyland_delivery_location");
+      return localizacao ? JSON.parse(localizacao)?.endereco || "" : "";
+    } catch {
+      return "";
+    }
+  });
 
   const [produtos, setProdutos] = useState([]);
   const [lojas, setLojas] = useState([]);
@@ -112,6 +120,11 @@ function Itens() {
         <div className="container">
           <h1>Todos os doces 🍬</h1>
           <p>Busque pelo nome do doce ou filtre por loja</p>
+          {enderecoSelecionado && (
+            <p className="itens-endereco-selecionado" role="status">
+              📍 Endereço localizado: {enderecoSelecionado}
+            </p>
+          )}
 
           <div className="busca-endereco busca-itens">
             <span>🔍</span>
@@ -205,10 +218,14 @@ function Itens() {
                     <strong>{formatarPreco(produto.preco_produto)}</strong>
                     <button
                       className="btn-principal btn-pequeno"
-                      disabled={!produto.produto_disponivel}
+                      disabled={!produto.produto_disponivel || String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() !== "ABERTO"}
                       onClick={() => handleAdicionar(produto)}
                     >
-                      Adicionar
+                      {String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() === "EM_ANALISE"
+                        ? "Aguardando aprovaÃ§Ã£o"
+                        : String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() === "ABERTO"
+                          ? "Adicionar"
+                          : "Loja fechada"}
                     </button>
                   </div>
                 </div>

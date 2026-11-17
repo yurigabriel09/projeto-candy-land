@@ -27,6 +27,14 @@
                     android:host="oauth"
                     android:path="/facebook" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="com.candyland.mobile"
+                    android:host="payment" />
+            </intent-filter>
         </activity>
 
         <service

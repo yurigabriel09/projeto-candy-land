@@ -42,6 +42,20 @@ export async function geocodeRestaurantAddress(endereco, options = {}) {
   return resultado.dados;
 }
 
+export async function geocodePublicAddress(endereco, options = {}) {
+  const response = await fetch(`${API_URL}/geocodificar-endereco/publico`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endereco }),
+    signal: options.signal,
+  });
+  const resultado = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(resultado.erro || "Não foi possível localizar esse endereço.");
+  }
+  return resultado.dados;
+}
+
 export async function getRestaurants() {
   const response = await fetch(API_URL);
   const resultado = await response.json();

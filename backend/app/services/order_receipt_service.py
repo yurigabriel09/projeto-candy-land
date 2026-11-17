@@ -3,9 +3,6 @@ import hashlib
 import hmac
 import re
 
-from flask import current_app
-from sqlalchemy.exc import SQLAlchemyError
-
 from app.database.database import db
 from app.models.order import Pedido
 from app.models.order_receipt_code import OrderReceiptCode
@@ -14,7 +11,8 @@ from app.services.order_workflow_service import (
     validar_transicao_pedido,
 )
 from app.utils.datetime_utils import utc_now_naive
-
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
 
 MAX_FAILED_ATTEMPTS = 5
 STATUSES_WITH_PAID_ORDER = {
@@ -30,13 +28,13 @@ class OrderReceiptService:
 
     @staticmethod
     def _derive_code(pedido: Pedido, generation: int) -> str:
-        message = f"candyland-receipt:{pedido.id}:{pedido.order_code}:{generation}".encode("utf-8")
+        message = f"candyland-receipt:{pedido.id}:{pedido.order_code}:{generation}".encode()
         digest = hmac.new(OrderReceiptService._secret(), message, hashlib.sha256).digest()
         return f"{int.from_bytes(digest[:4], 'big') % 1_000_000:06d}"
 
     @staticmethod
     def _hash_code(order_id: int, code: str) -> str:
-        value = f"candyland-receipt-verify:{order_id}:{code}".encode("utf-8")
+        value = f"candyland-receipt-verify:{order_id}:{code}".encode()
         return hmac.new(OrderReceiptService._secret(), value, hashlib.sha256).hexdigest()
 
     @staticmethod
@@ -140,7 +138,9 @@ class OrderReceiptService:
             registro.used_at = utc_now_naive()
             db.session.commit()
             try:
-                from app.services.push_notification_service import PushNotificationService
+                from app.services.push_notification_service import (
+                    PushNotificationService,
+                )
                 PushNotificationService.notificar_pedido(pedido, status_anterior)
             except Exception:
                 current_app.logger.exception("Falha ao notificar finalização do pedido %s.", pedido.id)

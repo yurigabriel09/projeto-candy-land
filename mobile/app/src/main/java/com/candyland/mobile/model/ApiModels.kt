@@ -85,7 +85,12 @@ data class RestaurantDto(
     val status: String? = null,
     val ativo: Boolean = true,
     val horario_funcionamento: String? = null,
-    val valor_minimo_pedido: Double? = null
+    val valor_minimo_pedido: Double? = null,
+    val taxa_entrega_base: Double? = null,
+    val taxa_entrega_por_km: Double? = null,
+    val raio_entrega_km: Double? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 data class RestaurantListResponse(val dados: List<RestaurantDto> = emptyList())
 
@@ -97,11 +102,32 @@ data class ProductDto(
     @SerializedName("descricao_produto") val description: String? = null,
     @SerializedName("preco_produto") val price: Double = 0.0,
     @SerializedName("produto_disponivel") val available: Boolean = true,
+    @SerializedName("qtd_estoque") val stock: Int = 0,
     @SerializedName("produto_importado") val imported: Boolean = false,
     @SerializedName("permite_personalizacao") val allowsCustomization: Boolean = false,
     @SerializedName("imagem_url") val imageUrl: String? = null
 )
 data class ProductListResponse(val dados: List<ProductDto> = emptyList())
+data class ProductUpsertRequest(
+    val categoria_id: Int,
+    val nome: String,
+    val descricao: String? = null,
+    val preco: Double,
+    val qtd_estoque: Int = 0,
+    val disponivel: Boolean = true,
+    val importado: Boolean = false,
+    val permite_customizacao: Boolean = false
+)
+data class ProductMutationResponse(val produto: ProductDto? = null, val mensagem: String? = null)
+data class CategoryDto(
+    val id: Int = 0,
+    val nome: String = "",
+    val ativa: Boolean = true,
+    val ordem_exibicao: Int = 0
+)
+data class CategoryListResponse(val categorias: List<CategoryDto> = emptyList())
+data class CategoryCreateRequest(val nome: String, val ativa: Boolean = true)
+data class CategoryMutationResponse(val categoria: CategoryDto? = null, val mensagem: String? = null)
 
 data class AddressDto(
     val id: Int = 0,
@@ -114,7 +140,9 @@ data class AddressDto(
     val estado: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val principal: Boolean = false
+    val principal: Boolean = false,
+    val referencia: String? = null,
+    val ativo: Boolean = true
 ) {
     fun label(): String = listOfNotNull(
         listOfNotNull(rua, numero).joinToString(", ").takeIf { it.isNotBlank() },
@@ -123,6 +151,85 @@ data class AddressDto(
     ).joinToString(" · ")
 }
 data class AddressListResponse(val dados: List<AddressDto> = emptyList())
+
+data class UserProfileResponse(val dados: UserProfileDto? = null)
+data class UserProfileDto(
+    val id: Int = 0,
+    val nome_completo: String = "",
+    val email: String = "",
+    val telefone: String = "",
+    val cpf: String = "",
+    val data_nascimento: String? = null
+)
+data class UserProfileUpdateRequest(
+    val nome_completo: String,
+    val data_nascimento: String? = null
+)
+data class AddressUpsertRequest(
+    val cep: String,
+    val rua: String,
+    val numero: String,
+    val complemento: String? = null,
+    val bairro: String,
+    val cidade: String,
+    val estado: String,
+    val referencia: String? = null,
+    val principal: Boolean = false
+)
+data class RestaurantConfigurationResponse(val dados: RestaurantConfigurationData? = null)
+data class RestaurantConfigurationData(
+    val restaurante: RestaurantProfileDto? = null,
+    val endereco: AddressDto? = null
+)
+data class RestaurantProfileDto(
+    val id: Int = 0,
+    val nome: String = "",
+    val razao_social: String = "",
+    val nome_responsavel: String? = null,
+    val cnpj: String = "",
+    val cpf_responsavel: String = "",
+    val email: String = "",
+    val telefone: String = "",
+    val descricao: String? = null,
+    val valor_minimo_pedido: Double? = null,
+    val taxa_entrega_base: Double? = null,
+    val taxa_entrega_por_km: Double? = null,
+    val raio_entrega_km: Double? = null,
+    val horario_funcionamento: String? = null,
+    val status: String = "EM_ANALISE",
+    val ativo: Boolean = true
+)
+data class RestaurantAddressUpdateRequest(
+    val cep: String,
+    val rua: String,
+    val numero: String,
+    val complemento: String? = null,
+    val bairro: String,
+    val cidade: String,
+    val estado: String,
+    val referencia: String? = null
+)
+data class RestaurantConfigurationUpdateRequest(
+    val nome: String,
+    val razao_social: String,
+    val nome_responsavel: String? = null,
+    val descricao: String? = null,
+    val valor_minimo_pedido: Double = 0.0,
+    val taxa_entrega_base: Double = 0.0,
+    val taxa_entrega_por_km: Double = 0.0,
+    val raio_entrega_km: Double? = null,
+    val horario_funcionamento: String? = null,
+    val endereco: RestaurantAddressUpdateRequest
+)
+data class RestaurantStatusRequest(val status: String)
+data class OrderStatusRequest(val status: String)
+data class ReceiptCodeRequest(val codigo: String)
+data class ReceiptCodeResponse(
+    val codigo: String? = null,
+    val mensagem: String? = null,
+    val pedido_id: Int? = null,
+    val tentativas_restantes: Int? = null
+)
 
 data class OrderItemRequest(val produto_id: Int, val quantidade: Int)
 data class CreateOrderRequest(
@@ -135,6 +242,7 @@ data class CreateOrderRequest(
 )
 data class CreateOrderResponse(val pedido: OrderDto? = null)
 data class OrderListResponse(val pedidos: List<OrderDto> = emptyList())
+data class OrderDetailResponse(val pedido: OrderDto? = null)
 data class OrderDto(
     val id: Int = 0,
     val order_code: String = "",
@@ -143,7 +251,15 @@ data class OrderDto(
     val order_type: String = "",
     val total: Double = 0.0,
     val created_at: String? = null,
-    val items: List<OrderItemDto> = emptyList()
+    val items: List<OrderItemDto> = emptyList(),
+    val entrega: DeliveryDto? = null
+)
+data class DeliveryDto(
+    val id: Int? = null,
+    val status: String? = null,
+    val iniciado_em: String? = null,
+    val concluida_em: String? = null,
+    val cancelada_em: String? = null
 )
 data class OrderItemDto(
     @SerializedName("produto_id") val productId: Int = 0,
@@ -152,12 +268,18 @@ data class OrderItemDto(
     val preco_unitario: Double = 0.0
 )
 data class PaymentCreateResponse(val pagamento: PaymentDto? = null)
+data class PaymentActionResponse(
+    val pagamento: PaymentDto? = null,
+    val pedido: OrderDto? = null
+)
+data class PayPalOrderActionRequest(val token: String)
 data class PaymentDto(
     val status: String? = null,
     val approval_url: String? = null,
     val pix_copy_paste: String? = null,
     val pix_qr_code_base64: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val payment_method: String? = null
 )
 data class DeviceTokenRequest(
     val token: String,

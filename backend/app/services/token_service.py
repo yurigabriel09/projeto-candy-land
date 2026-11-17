@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from flask import current_app
@@ -13,7 +13,7 @@ class TokenService:
         Gera um JWT assinado para o usuario (PERSONAL) ou restaurante (BUSINESS)
         recem autenticado.
         """
-        agora = datetime.now(timezone.utc).replace(tzinfo=None)
+        agora = datetime.now(UTC).replace(tzinfo=None)
         horas_expiracao = current_app.config.get("JWT_EXPIRATION_HOURS", 24)
 
         payload = {

@@ -1,9 +1,8 @@
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import Endereco, Restaurante
 from app.services.restaurant_service import RestauranteService
+from flask import Flask
 
 
 @pytest.fixture

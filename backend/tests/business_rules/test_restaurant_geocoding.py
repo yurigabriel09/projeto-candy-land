@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.auth_attempt import TentativaAutenticacao
+from app.routes.restaurant_routes import restaurante_bp
 from app.services.restaurant_service import RestauranteService
+from flask import Flask
 
 
 @pytest.fixture
@@ -19,6 +19,7 @@ def app():
         GOOGLE_MAPS_GEOCODING_API_KEY="",
     )
     db.init_app(application)
+    application.register_blueprint(restaurante_bp)
     with application.app_context():
         db.create_all()
         tentativa = TentativaAutenticacao(
@@ -28,7 +29,8 @@ def app():
             email_validado=True,
             telefone_validado=True,
             concluida=True,
-            expira_em=datetime.utcnow() + timedelta(minutes=10),
+            expira_em=datetime.now(UTC).replace(tzinfo=None)
+            + timedelta(minutes=10),
         )
         db.session.add(tentativa)
         db.session.commit()
@@ -49,12 +51,12 @@ def _address():
     }
 
 
-def test_geocoding_sem_chave_retorna_fallback_manual(app):
+def test_geocoding_sem_chave_exige_configuracao_do_provedor(app):
     with app.app_context():
         result = RestauranteService._geocodificar_dados_endereco(_address())
     assert result["success"] is False
     assert result["status_code"] == 503
-    assert "coordenadas manuais" in result["erro"]
+    assert "GOOGLE_MAPS_GEOCODING_API_KEY" in result["erro"]
 
 
 def test_geocoding_retorna_coordenadas_sem_expor_a_chave(app, monkeypatch):
@@ -77,7 +79,7 @@ def test_geocoding_retorna_coordenadas_sem_expor_a_chave(app, monkeypatch):
         calls.update(url=url, params=params, timeout=timeout)
         return FakeResponse()
 
-    monkeypatch.setattr("app.services.restaurant_service.requests.get", fake_get)
+    monkeypatch.setattr("app.services.geocoding_service.requests.get", fake_get)
     with app.app_context():
         app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-secret"
         result = RestauranteService._geocodificar_dados_endereco(_address())
@@ -97,3 +99,68 @@ def test_geocoding_de_cadastro_exige_tentativa_verificada(app):
         })
     assert result["success"] is False
     assert result["status_code"] == 401
+
+
+def test_geocoding_publico_retorna_coordenadas_sem_persistir_dados(app, monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "status": "OK",
+                "results": [{
+                    "formatted_address": "Rua Haddock Lobo, São Paulo - SP, Brasil",
+                    "geometry": {"location": {"lat": -23.5581, "lng": -46.6602}},
+                }],
+            }
+
+    calls = {}
+
+    def fake_get(url, params, timeout):
+        calls.update(url=url, params=params, timeout=timeout)
+        return FakeResponse()
+
+    monkeypatch.setattr("app.services.geocoding_service.requests.get", fake_get)
+    with app.app_context():
+        app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-secret"
+        response = app.test_client().post(
+            "/restaurantes/geocodificar-endereco/publico",
+            json={"endereco": "Rua Haddock Lobo, 123, São Paulo, SP"},
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()["dados"]
+    assert payload["latitude"] == -23.5581
+    assert payload["longitude"] == -46.6602
+    assert calls["params"]["key"] == "google-test-secret"
+    assert calls["timeout"] == 8
+
+
+def test_geocoding_publico_sem_chave_retorna_503_sem_autenticacao(app):
+    response = app.test_client().post(
+        "/restaurantes/geocodificar-endereco/publico",
+        json={"endereco": "Rua Haddock Lobo, 123, São Paulo, SP"},
+    )
+    assert response.status_code == 503
+    assert "GOOGLE_MAPS_GEOCODING_API_KEY" in response.get_json()["erro"]
+
+
+def test_geocoding_chave_recusada_retorna_503(app, monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"status": "REQUEST_DENIED", "results": []}
+
+    monkeypatch.setattr(
+        "app.services.geocoding_service.requests.get",
+        lambda *args, **kwargs: FakeResponse(),
+    )
+    with app.app_context():
+        app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-secret"
+        result = RestauranteService._geocodificar_dados_endereco(_address())
+    assert result["success"] is False
+    assert result["status_code"] == 503
+    assert "Google recusou" in result["erro"]

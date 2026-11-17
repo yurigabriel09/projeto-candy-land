@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models import Categoria, Produto, Restaurante, Usuario
 from app.routes.category_routes import categoria_bp
@@ -11,6 +9,7 @@ from app.routes.product_routes import produto_bp
 from app.routes.restaurant_routes import restaurante_bp
 from app.routes.user_routes import user_bp
 from app.services.token_service import TokenService
+from flask import Flask
 
 
 @pytest.fixture
@@ -235,7 +234,7 @@ def test_token_assinado_com_claims_invalidos_retorna_401(app):
                 "sub": "not-an-id",
                 "tipo_conta": "PERSONAL",
                 "email": "cliente@example.com",
-                "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             app.config["SECRET_KEY"],
             algorithm="HS256",
@@ -322,7 +321,7 @@ def test_catalogos_publicos_nao_expoem_quantidade_exata_do_estoque(app):
 def test_endpoint_de_gerenciamento_de_estoque_exige_proprietario(app):
     with app.app_context():
         restaurante = _criar_restaurante()
-        produto = _criar_produto(restaurante)
+        _criar_produto(restaurante)
         client = app.test_client()
         sem_token = client.get(
             f"/restaurantes/{restaurante.id}/produtos/gerenciamento"
@@ -376,7 +375,7 @@ def test_token_com_tipo_de_conta_malformado_retorna_401(app):
                 "sub": "1",
                 "tipo_conta": ["PERSONAL"],
                 "email": "cliente@example.com",
-                "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+                "exp": datetime.now(UTC) + timedelta(minutes=5),
             },
             app.config["SECRET_KEY"],
             algorithm="HS256",

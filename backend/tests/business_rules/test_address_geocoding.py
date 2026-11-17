@@ -1,12 +1,11 @@
 from decimal import Decimal
 
 import pytest
-from flask import Flask
-
 from app.database.database import db
 from app.models.address import Endereco
 from app.models.user import Usuario
 from app.services.user_service import UserService
+from flask import Flask
 
 
 @pytest.fixture
@@ -81,7 +80,7 @@ def test_geocoding_persiste_coordenadas_encontradas(app, monkeypatch):
         chamadas.update(url=url, params=params, timeout=timeout)
         return FakeResponse()
 
-    monkeypatch.setattr("app.services.user_service.requests.get", fake_get)
+    monkeypatch.setattr("app.services.geocoding_service.requests.get", fake_get)
     with app.app_context():
         app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-key"
         resultado = UserService.geocodificar_endereco(
@@ -103,3 +102,60 @@ def test_geocoding_nao_permite_localizar_endereco_de_outro_cliente(app):
         )
     assert resultado["success"] is False
     assert resultado["status_code"] == 404
+
+
+def test_salvar_endereco_textual_geocodifica_automaticamente(app, monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "status": "OK",
+                "results": [{
+                    "formatted_address": "Rua Nova, 123, São Paulo - SP, Brasil",
+                    "geometry": {"location": {"lat": -23.551, "lng": -46.634}},
+                }],
+            }
+
+    monkeypatch.setattr(
+        "app.services.geocoding_service.requests.get",
+        lambda *args, **kwargs: FakeResponse(),
+    )
+    with app.app_context():
+        app.config["GOOGLE_MAPS_GEOCODING_API_KEY"] = "google-test-key"
+        resultado = UserService.cadastrar_endereco_usuario(
+            app.config["TEST_USER_ID"],
+            {
+                "cep": "01001-000",
+                "rua": "Rua Nova",
+                "numero": "123",
+                "bairro": "Sé",
+                "cidade": "São Paulo",
+                "estado": "SP",
+                "principal": True,
+            },
+        )
+        assert resultado["success"] is True
+        address = resultado["dados"]
+        assert float(address["latitude"]) == -23.551
+        assert float(address["longitude"]) == -46.634
+
+
+def test_novo_endereco_pode_ser_salvo_sem_geocoding_temporariamente_disponivel(app):
+    with app.app_context():
+        resultado = UserService.cadastrar_endereco_usuario(
+            app.config["TEST_USER_ID"],
+            {
+                "cep": "01001-000",
+                "rua": "Rua Sem Mapa",
+                "numero": "456",
+                "bairro": "Sé",
+                "cidade": "São Paulo",
+                "estado": "SP",
+                "principal": True,
+            },
+        )
+        assert resultado["success"] is True
+        assert resultado["dados"]["latitude"] is None
+        assert resultado["dados"]["longitude"] is None

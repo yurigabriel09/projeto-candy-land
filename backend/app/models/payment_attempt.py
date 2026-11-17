@@ -4,7 +4,7 @@ This table stores normalized fields only; provider payloads and card data are
 never persisted. The initial MVP allows one attempt per order, which makes
 retries idempotent while the UI and gateway-retry policy are being defined.
 """
-from sqlalchemy import Column, DECIMAL, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DECIMAL, Column, DateTime, ForeignKey, Integer, String
 
 from app.database.database import db
 from app.utils.datetime_utils import utc_now_naive

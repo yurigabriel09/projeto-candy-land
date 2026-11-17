@@ -1,12 +1,10 @@
 from decimal import Decimal
 
 import pytest
-
 from app.services.payment_providers.contracts import (
     CreatePaymentCommand,
     PaymentMethod,
     PaymentProviderNotSelected,
-    PaymentProviderNotImplemented,
     PaymentResult,
     PaymentStatus,
     UnsupportedPaymentMethod,

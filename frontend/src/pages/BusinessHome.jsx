@@ -65,7 +65,11 @@ function BusinessHome() {
     }
 
     async function alternarStatusLoja() {
-        if (salvandoStatus || !restaurante || !["ABERTO", "FECHADO"].includes(statusVisual)) return;
+        if (
+            salvandoStatus ||
+            !restaurante ||
+            !["EM_ANALISE", "ABERTO", "FECHADO"].includes(statusVisual)
+        ) return;
         const novoStatus = statusVisual === "ABERTO" ? "FECHADO" : "ABERTO";
         setSalvandoStatus(true);
         setErroStatus("");
@@ -121,11 +125,13 @@ function BusinessHome() {
                             type="button"
                             className={`toggle-loja ${statusVisual === "ABERTO" ? "toggle-loja-aberta" : ""}`}
                             onClick={alternarStatusLoja}
-                            disabled={salvandoStatus || !["ABERTO", "FECHADO"].includes(statusVisual)}
+                            disabled={salvandoStatus || !["EM_ANALISE", "ABERTO", "FECHADO"].includes(statusVisual)}
                             title={
                                 ["ABERTO", "FECHADO"].includes(statusVisual)
                                     ? "Alterar e salvar o status da loja"
-                                    : "A loja precisa estar liberada pela administração antes de ser aberta ou fechada"
+                                    : statusVisual === "EM_ANALISE"
+                                        ? "Abrir para testes em desenvolvimento; em produção depende de aprovação administrativa"
+                                        : "A loja está suspensa e não pode ser aberta ou fechada"
                             }
                         >
                             ● {salvandoStatus ? "Salvando..." : (STATUS_LABEL[statusVisual] || statusVisual)}

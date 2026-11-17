@@ -13,7 +13,7 @@ import { getCustomerAddresses } from "../services/orderService";
  * Logado: logo + busca + endereço + carrinho + avatar (layout do protótipo).
  * Não logado: logo + Seja Parceiro / Entrar / Cadastrar.
  */
-function Header() {
+function Header({ variant = "default" }) {
     const { dadosAutenticacao, autenticado, sair } = useAuth();
     const { quantidadeTotal } = useCart();
     const navigate = useNavigate();
@@ -89,7 +89,11 @@ function Header() {
                 )}
 
                 <nav className="site-nav">
-                    {!logado && <Link to="/parceiros">Seja Parceiro</Link>}
+                    {!logado && (
+                        <Link to={variant === "landing" ? "/itens" : "/parceiros"}>
+                            {variant === "landing" ? "Seja Cliente" : "Seja Parceiro"}
+                        </Link>
+                    )}
 
                     {logado ? (
                         <>

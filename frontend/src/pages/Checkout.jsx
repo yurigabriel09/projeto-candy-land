@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import PixPayment from "../components/PixPayment";
-import { createOrder, createPayment, getDeliveryQuote } from "../services/orderService";
+import { createOrder, createPayment, getCustomerAddresses, getDeliveryQuote } from "../services/orderService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -13,23 +13,13 @@ function Checkout() {
     const { dadosAutenticacao } = useAuth();
     const navigate = useNavigate();
 
-    // Método de pagamento: "PAYPAL", "CARTAO_CREDITO" ou "PIX"
+    // Método de pagamento: "PAYPAL", "MERCADO_PAGO" ou "PIX"
     const [metodoPagamento, setMetodoPagamento] = useState("PAYPAL");
 
     // Endereços do cliente
     const [enderecos, setEnderecos] = useState([]);
     const [enderecoId, setEnderecoId] = useState(null);
     const [carregandoEnderecos, setCarregandoEnderecos] = useState(false);
-
-    // Dados do cartão de crédito
-    const [nomeCartao, setNomeCartao] = useState(dadosAutenticacao?.nome_completo || "");
-    const [numeroCartao, setNumeroCartao] = useState("");
-    const [validadeCartao, setValidadeCartao] = useState("");
-    const [cvvCartao, setCvvCartao] = useState("");
-    const [salvarCartao, setSalvarCartao] = useState(true);
-
-    // Dados do PayPal
-    const [emailPaypal, setEmailPaypal] = useState(dadosAutenticacao?.email || "");
 
     // Estados de processamento e sucesso
     const [processando, setProcessando] = useState(false);
@@ -53,7 +43,7 @@ function Checkout() {
         if (sucesso) {
             const timer = setTimeout(() => {
                 if (pedidoCriadoId) {
-                    navigate(`/pedidos/${pedidoCriadoId}/acompanhar`);
+                    navigate(`/checkout/resultado?order_id=${pedidoCriadoId}`);
                 } else {
                     navigate("/minha-conta/historico-compras");
                 }
@@ -92,33 +82,18 @@ function Checkout() {
             const userId = obterUserId();
             const token = obterToken();
             if (!userId || !token) return;
-
             setCarregandoEnderecos(true);
             try {
-                const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
-                const resposta = await fetch(`${apiBase}/users/${userId}/enderecos`, {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-
-                if (resposta.ok) {
-                    const res = await resposta.json();
-                    const lista = res.dados || [];
-                    setEnderecos(lista);
-
-                    const principal = lista.find((e) => e.principal) || lista[0];
-                    if (principal) {
-                        setEnderecoId(Number(principal.id));
-                    }
-                }
-            } catch (e) {
-                console.error("Erro ao carregar endereços do usuário:", e);
+                const lista = await getCustomerAddresses(userId);
+                setEnderecos(lista);
+                const principal = lista.find((endereco) => endereco.principal) || lista[0];
+                if (principal) setEnderecoId(Number(principal.id));
+            } catch (error) {
+                console.error("Erro ao carregar endereços do usuário:", error);
             } finally {
                 setCarregandoEnderecos(false);
             }
         }
-
         carregarEnderecos();
     }, [dadosAutenticacao]);
 
@@ -171,41 +146,6 @@ function Checkout() {
             return;
         }
 
-        if (metodoPagamento === "CARTAO_CREDITO") {
-            if (!nomeCartao.trim()) {
-                setErro("Informe o nome impresso no cartão.");
-                return;
-            }
-
-            const numLimpo = numeroCartao.replace(/\D/g, "");
-            if (numLimpo.length !== 16) {
-                setErro("O número do cartão deve conter exatamente 16 dígitos.");
-                return;
-            }
-
-            const matchValidade = validadeCartao.trim().match(/^(0[1-9]|1[0-2])\/(\d{2}|\d{4})$/);
-            if (!matchValidade) {
-                setErro("Informe a validade no formato MM/AA ou MM/AAAA.");
-                return;
-            }
-
-            const mes = parseInt(matchValidade[1], 10);
-            let anoValidade = parseInt(matchValidade[2], 10);
-            if (matchValidade[2].length === 2) anoValidade += 2000;
-
-            const agora = new Date();
-            if (anoValidade < agora.getFullYear() || (anoValidade === agora.getFullYear() && mes < agora.getMonth() + 1)) {
-                setErro("A data de validade do cartão expirou.");
-                return;
-            }
-
-            const cvvLimpo = cvvCartao.replace(/\D/g, "");
-            if (cvvLimpo.length !== 3) {
-                setErro("O código de segurança (CVV) deve conter exatamente 3 dígitos.");
-                return;
-            }
-        }
-
         const token = obterToken();
         if (!token) {
             setErro("Sua sessão expirou. Faça login novamente.");
@@ -213,46 +153,74 @@ function Checkout() {
         }
 
         setProcessando(true);
-
         try {
-            const backendPaymentMethod = metodoPagamento;
-
             const payload = {
-                restaurant_id: Number(carrinho.restauranteId) || 1,
+                restaurant_id: Number(carrinho.restauranteId),
                 order_type: carrinho.orderType || "DELIVERY",
-                payment_method: backendPaymentMethod,
+                payment_method: metodoPagamento,
                 delivery_address_id: eEntrega ? Number(enderecoId) : null,
-                items: carrinho.itens.map((i) => ({
-                    produto_id: Number(i.id_produto),
-                    quantidade: Number(i.quantidade),
-                    observacoes: ""
+                items: carrinho.itens.map((item) => ({
+                    produto_id: Number(item.id_produto),
+                    quantidade: Number(item.quantidade),
+                    observacoes: "",
                 })),
-                general_note: ""
+                general_note: "",
             };
 
-            // Cria o pedido e gera o pagamento no backend
             const pedido = await createOrder(payload);
-            const pagamento = await createPayment(pedido.id);
-
-            // Pix: mostra a tela de QR Code
-            if (metodoPagamento === "PIX") {
-                setPedidoCriadoId(pedido.id);
-                setPixPagamento(pagamento);
-                return;
+            if (!pedido?.id) {
+                throw new Error("O servidor não retornou o pedido criado.");
             }
+            setPedidoCriadoId(pedido.id);
 
-            // PayPal e Mercado Pago: abre o checkout do provedor
-            if (!pagamento?.approval_url) {
-                throw new Error(pagamento?.message || "O provedor não retornou o link de pagamento.");
-            }
-            const urlPagamento = new URL(pagamento.approval_url);
-            if (urlPagamento.protocol !== "https:") {
-                throw new Error("O link de pagamento não é HTTPS; o pagamento não foi aberto.");
-            }
-            window.location.assign(urlPagamento.href);
+            try {
+                const pagamento = await createPayment(
+                    pedido.id,
+                    `candyland-web-${pedido.id}-payment-v1`
+                );
 
+                // Pix permanece nesta tela para exibir QR Code e Copia e Cola.
+                if (metodoPagamento === "PIX") {
+                    setPixPagamento(pagamento);
+                    return;
+                }
+
+                // PayPal e Mercado Pago usam checkout hospedado. O CandyLand não
+                // recebe nem armazena número de cartão ou CVV.
+                if (pagamento?.approval_url) {
+                    sessionStorage.setItem(
+                        "candyland_checkout_pending",
+                        JSON.stringify({ pedido })
+                    );
+                    const urlPagamento = new URL(pagamento.approval_url);
+                    if (urlPagamento.protocol !== "https:") {
+                        throw new Error(
+                            "O provedor retornou uma URL de pagamento insegura."
+                        );
+                    }
+                    window.location.assign(urlPagamento.href);
+                    return;
+                }
+
+                // Em modo de integração sem redirecionamento, a tela de resultado
+                // consulta o estado real do pedido no backend.
+                setSucesso(true);
+            } catch (paymentError) {
+                sessionStorage.setItem(
+                    "candyland_checkout_pending",
+                    JSON.stringify({ pedido })
+                );
+                setErro(
+                    paymentError.message ||
+                    "Pedido criado, mas não foi possível iniciar o pagamento. Consulte o status do pedido."
+                );
+                setSucesso(true);
+            }
         } catch (err) {
-            setErro(err.message || "Ocorreu um erro ao processar seu pedido. Tente novamente.");
+            setErro(
+                err.message ||
+                "Ocorreu um erro ao processar seu pedido. Tente novamente."
+            );
         } finally {
             setProcessando(false);
         }
@@ -279,23 +247,24 @@ function Checkout() {
                             Pedido realizado com sucesso!
                         </h1>
                         <p className="checkout-success-desc">
-                            Seu pagamento foi confirmado e o pedido foi enviado ao restaurante. Redirecionando...
+                            Seu pedido foi registrado e aguarda confirmação do provedor. A doceria só receberá o pedido depois da aprovação.
                         </p>
+                        {erro && <p className="auth-error checkout-error" role="alert">{erro}</p>}
                         <div className="checkout-success-badge">
-                            Status: Pagamento confirmado
+                            Status: Aguardando pagamento
                         </div>
                         <button 
                             type="button" 
                             className="btn-principal" 
                             onClick={() => {
                                 if (pedidoCriadoId) {
-                                    navigate(`/pedidos/${pedidoCriadoId}/acompanhar`);
+                                    navigate(`/checkout/resultado?order_id=${pedidoCriadoId}`);
                                 } else {
                                     navigate("/minha-conta/historico-compras");
                                 }
                             }}
                         >
-                            Ver meu pedido agora
+                            Consultar pagamento e pedido
                         </button>
                     </div>
                 </main>
@@ -487,20 +456,18 @@ function Checkout() {
                             <div className="conta-card paypal-box">
                                 <div className="paypal-header">
                                     <h3 className="paypal-title">Pagar com Mercado Pago</h3>
-                                    <span className="paypal-badge">Cartão, Pix ou saldo</span>
+                                    <span className="paypal-badge">Cartão ou saldo</span>
                                 </div>
-
                                 <p className="paypal-desc">
-                                    Você será redirecionado ao Mercado Pago para pagar com cartão, Pix ou saldo da conta e, depois, volta ao Candyland.
+                                    Você será redirecionado ao Mercado Pago para concluir o pagamento e depois retornará ao CandyLand.
                                 </p>
-
                                 <div className="paypal-protecao-card">
                                     <div className="paypal-protecao-header">
                                         <span>🛡️</span>
                                         <strong>Pagamento protegido pelo Mercado Pago</strong>
                                     </div>
                                     <small className="paypal-protecao-texto">
-                                        Seus dados de pagamento ficam com o Mercado Pago, não passam pelo Candyland.
+                                        Os dados do cartão são informados somente no ambiente seguro do provedor. O CandyLand não coleta nem armazena número do cartão ou CVV.
                                     </small>
                                 </div>
                             </div>
@@ -536,7 +503,7 @@ function Checkout() {
                             <div className="checkout-summary-row">
                                 <div>
                                     <span className="checkout-summary-label">
-                                        Valor Total ({quantidadeTotal} {quantidadeTotal === 1 ? "item" : "itens"})
+                                        Subtotal estimado ({quantidadeTotal} {quantidadeTotal === 1 ? "item" : "itens"})
                                     </span>
                                     <strong className="checkout-summary-total">{moeda.format(totalComTaxa)}</strong>
                                     <div className="checkout-breakdown">

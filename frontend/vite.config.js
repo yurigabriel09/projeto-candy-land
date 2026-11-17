@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  envDir: '../',
   server: {
     host: '0.0.0.0',
-    // Permite qualquer subdomínio do ngrok sem precisar configurar variável de ambiente
+    // Permite qualquer subdominio do ngrok sem precisar configurar variável de ambiente
     allowedHosts: ['.ngrok-free.dev', '.ngrok.io'],
     proxy: {
       '^/(auth|users|restaurantes|produtos|categorias|pedidos|uploads)(/|$)': {

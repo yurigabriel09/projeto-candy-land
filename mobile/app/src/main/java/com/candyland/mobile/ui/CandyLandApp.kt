@@ -24,6 +24,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -61,19 +64,37 @@ import com.candyland.mobile.data.ApiProvider
 import com.candyland.mobile.data.SessionManager
 import com.candyland.mobile.model.*
 import com.candyland.mobile.push.PushTokenManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.util.UUID
 import java.text.NumberFormat
 import java.util.Locale
 
+private inline fun <T> runCancellableCatching(block: () -> T): Result<T> {
+    return try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
+}
+
 private data class RegistrationInfo(val attemptId: String, val email: String, val phone: String)
 private data class CartEntry(val product: ProductDto, val quantity: Int)
+
+private val RECEIPT_CODE_ELIGIBLE_STATUSES = setOf(
+    "PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU",
+    "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE"
+)
 
 @Composable
 fun CandyLandApp(
     applicationContext: Context,
     oauthUri: Uri? = null,
-    onOAuthUriConsumed: () -> Unit = {}
+    onOAuthUriConsumed: () -> Unit = {},
+    paymentUri: Uri? = null,
+    onPaymentUriConsumed: () -> Unit = {}
 ) {
     val appScope = rememberCoroutineScope()
     var session by remember { mutableStateOf(SessionManager.current(applicationContext)) }
@@ -85,10 +106,22 @@ fun CandyLandApp(
 
     MaterialTheme(
         colorScheme = MaterialTheme.colorScheme.copy(
-            primary = Color(0xFF9C287B),
-            secondary = Color(0xFFF09ACB),
-            background = Color(0xFFFFF8FC),
-            surface = Color.White
+            primary = Color(0xFFF4356E),
+            onPrimary = Color.White,
+            primaryContainer = Color(0xFFFFDDE7),
+            onPrimaryContainer = Color(0xFF4A1F1D),
+            secondary = Color(0xFFFF7043),
+            onSecondary = Color.White,
+            secondaryContainer = Color(0xFFFFE0D5),
+            onSecondaryContainer = Color(0xFF4A2420),
+            tertiary = Color(0xFF9C287B),
+            background = Color(0xFFFFF1E8),
+            surface = Color(0xFFFFFBF8),
+            surfaceVariant = Color(0xFFFFE7DE),
+            outline = Color(0xFFF2CDBD),
+            onSurface = Color(0xFF4A2420),
+            onSurfaceVariant = Color(0xFF8D6C63),
+            onBackground = Color(0xFF4A2420)
         )
     ) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -107,17 +140,29 @@ fun CandyLandApp(
                     WelcomeScreen(onLogin = { showAuthentication = true })
                 }
             } else {
-                ShopScreen(
-                    session = session!!,
-                    onLogout = {
-                        appScope.launch {
-                            runCatching { PushTokenManager.unregisterCurrentDevice(applicationContext) }
-                            SessionManager.clear(applicationContext)
-                            session = null
-                            showAuthentication = false
-                        }
+                val authenticatedSession = session!!
+                val logout: () -> Unit = {
+                    appScope.launch {
+                        runCatching { PushTokenManager.unregisterCurrentDevice(applicationContext) }
+                        SessionManager.clear(applicationContext)
+                        session = null
+                        showAuthentication = false
                     }
-                )
+                }
+                if (authenticatedSession.accountType == "BUSINESS") {
+                    BusinessSellerScreen(session = authenticatedSession, onLogout = logout)
+                } else {
+                    ShopScreen(
+                        session = authenticatedSession,
+                        onLogout = logout,
+                        onSessionUpdated = { updated ->
+                            SessionManager.save(applicationContext, updated)
+                            session = updated
+                        },
+                        paymentUri = paymentUri,
+                        onPaymentUriConsumed = onPaymentUriConsumed
+                    )
+                }
             }
         }
     }
@@ -131,48 +176,58 @@ private fun WelcomeScreen(onLogin: () -> Unit) {
 
     LaunchedEffect(Unit) {
         runCatching { ApiProvider.unwrap(ApiProvider.api.restaurants()) }
-            .onSuccess { response -> restaurants = response.dados.filter { it.ativo && it.status == "ABERTO" } }
+            .onSuccess { response -> restaurants = response.dados.filter { it.ativo && it.status != "SUSPENSO" } }
             .onFailure { loadError = it.message ?: "Não foi possível carregar as docerias agora." }
         loading = false
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Text("🍬", style = MaterialTheme.typography.displayLarge)
-        Text(
-            "CandyLand",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            "Seu cantinho de doces, pedidos e momentos especiais.",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Button(onClick = onLogin, modifier = Modifier.fillMaxWidth()) {
-            Text("Entrar")
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Text("🍭", style = MaterialTheme.typography.displayMedium)
+                Text(
+                    "CandyLand",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text("Doces de todos os mundos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Encontre sua próxima doceria favorita, acompanhe pedidos e receba seus doces onde estiver.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Button(onClick = onLogin, modifier = Modifier.fillMaxWidth()) {
+                    Text("Entrar ou criar conta")
+                }
+                Text(
+                    "O acesso é validado por e-mail e WhatsApp. Parceiros entram com a conta empresarial.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-        Text(
-            "Ainda não tem conta? O cadastro será iniciado depois da confirmação dos seus contatos.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Divider(Modifier.padding(vertical = 6.dp))
-        Text("Docerias abertas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text("Docerias no CandyLand 🍰", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         when {
             loading -> Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             loadError != null -> Text(loadError!!, color = MaterialTheme.colorScheme.error)
-            restaurants.isEmpty() -> Text("Ainda não há docerias abertas por aqui.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            restaurants.isEmpty() -> Text("Ainda não há docerias cadastradas por aqui.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             else -> restaurants.forEach { restaurant ->
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(restaurant.nome, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         restaurant.descricao?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Loja parceira CandyLand · Aberta", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        Text("Loja parceira CandyLand · ${mobileStoreStatusLabel(restaurant.status)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -231,8 +286,8 @@ private fun AuthenticationScreen(
             error = "O servidor não retornou uma sessão válida."
             return
         }
-        if (data.tipo_conta != "PERSONAL") {
-            error = "Esta versão do CandyLand é destinada a clientes. Entre pela versão de parceiros."
+        if (data.tipo_conta !in setOf("PERSONAL", "BUSINESS")) {
+            error = "O tipo desta conta não é compatível com o aplicativo. Entre novamente ou use o portal web."
             return
         }
         onAuthenticated(
@@ -240,7 +295,7 @@ private fun AuthenticationScreen(
                 id = id,
                 accountType = data.tipo_conta,
                 token = token,
-                name = data.nome_completo ?: data.nome ?: "Cliente",
+                name = data.nome_completo ?: data.nome ?: if (data.tipo_conta == "BUSINESS") "Parceiro" else "Cliente",
                 email = data.email ?: email
             )
         )
@@ -273,23 +328,27 @@ private fun AuthenticationScreen(
     }
 
     LaunchedEffect(oauthUri) {
-        if (oauthUri != null) {
-            onOAuthUriConsumed()
-            val ticket = oauthUri.getQueryParameter("ticket")
-            val oauthError = oauthUri.getQueryParameter("error")
+        val callbackUri = oauthUri ?: return@LaunchedEffect
+        scope.launch {
+            busy = true
+            error = null
+            val ticket = callbackUri.getQueryParameter("ticket")
+            val oauthError = callbackUri.getQueryParameter("error")
             if (!oauthError.isNullOrBlank()) {
                 error = oauthError
             } else if (!ticket.isNullOrBlank()) {
                 socialProvider = "FACEBOOK"
                 socialTicket = ticket
-                busy = true
-                runCatching {
+                runCancellableCatching {
                     ApiProvider.unwrap(ApiProvider.api.completeFacebook(FacebookCompleteRequest(ticket)))
                 }.onSuccess { continueSocialAuthentication(it) }
                     .onFailure { error = it.message ?: "Não foi possível concluir o login com Facebook." }
-                busy = false
+            } else {
+                error = "O Facebook retornou sem um código de autenticação. Inicie o acesso novamente."
             }
+            busy = false
         }
+        onOAuthUriConsumed()
     }
 
     
@@ -304,7 +363,7 @@ private fun AuthenticationScreen(
             error = null
             info = null
 
-            runCatching {
+            runCancellableCatching {
                 // Fluxo próprio do botão "Continuar com Google".
                 val googleOption = GetSignInWithGoogleOption.Builder(
                     BuildConfig.GOOGLE_WEB_CLIENT_ID
@@ -350,7 +409,7 @@ private fun AuthenticationScreen(
 
 
     fun startFacebookLogin() {
-        runCatching {
+        runCancellableCatching {
             val authUri = Uri.parse(BuildConfig.API_BASE_URL).buildUpon()
                 .appendPath("auth")
                 .appendPath("facebook")
@@ -403,7 +462,7 @@ private fun AuthenticationScreen(
                             busy = true; error = null; info = null
                             firstIdentifier = identifier.trim()
                             if (firstChannel == "EMAIL") email = firstIdentifier else phone = firstIdentifier
-                            runCatching {
+                            runCancellableCatching {
                                 ApiProvider.unwrap(ApiProvider.api.startAuthentication(AuthStartRequest(firstChannel, firstIdentifier)))
                             }.onSuccess { response ->
                                 attemptId = response.tentativa_id.orEmpty()
@@ -447,7 +506,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null; info = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
                                 .onSuccess { response ->
                                     if (response.dados != null) acceptAuth(response.dados)
                                     else {
@@ -479,7 +538,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.requestSecondCode(AuthSecondCodeRequest(attemptId, secondValue.trim()))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.requestSecondCode(AuthSecondCodeRequest(attemptId, secondValue.trim()))) }
                                 .onSuccess { response ->
                                     if (secondChannel == "EMAIL") email = secondValue.trim() else phone = secondValue.trim()
                                     code = ""
@@ -501,7 +560,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.verifyCode(AuthVerifyRequest(attemptId, code))) }
                                 .onSuccess { response ->
                                     if (response.dados != null) acceptAuth(response.dados)
                                     else error = response.mensagem ?: "A autenticação ainda não foi concluída."
@@ -527,7 +586,7 @@ private fun AuthenticationScreen(
                     onClick = {
                         scope.launch {
                             busy = true; error = null
-                            runCatching {
+                            runCancellableCatching {
                                 when (socialProvider) {
                                     "GOOGLE" -> ApiProvider.unwrap(ApiProvider.api.authenticateGoogle(GoogleAuthRequest(socialCredential, phone.trim())))
                                     "FACEBOOK" -> ApiProvider.unwrap(ApiProvider.api.completeFacebook(FacebookCompleteRequest(socialTicket, phone.trim())))
@@ -548,7 +607,7 @@ private fun AuthenticationScreen(
                     onSubmit = { request ->
                         scope.launch {
                             busy = true; error = null
-                            runCatching { ApiProvider.unwrap(ApiProvider.api.registerUser(request)) }
+                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.registerUser(request)) }
                                 .onSuccess { result ->
                                     val user = result.dados?.usuario
                                     val token = result.dados?.token
@@ -564,7 +623,7 @@ private fun AuthenticationScreen(
                                         )
                                         onAuthenticated(created)
                                         result.dados.endereco?.id?.let { addressId ->
-                                            runCatching { ApiProvider.unwrap(ApiProvider.api.geocodeAddress(user.id, addressId)) }
+                                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.geocodeAddress(user.id, addressId)) }
                                         }
                                     }
                                 }.onFailure { error = it.message ?: "Não foi possível concluir o cadastro." }
@@ -649,7 +708,13 @@ private fun RegistrationForm(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
+private fun ShopScreen(
+    session: SessionManager.Session,
+    onLogout: () -> Unit,
+    onSessionUpdated: (SessionManager.Session) -> Unit,
+    paymentUri: Uri?,
+    onPaymentUriConsumed: () -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(0) }
@@ -669,11 +734,16 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
     var createdOrder by remember { mutableStateOf<OrderDto?>(null) }
     var paymentIdempotencyKey by remember { mutableStateOf<String?>(null) }
     var actionBusy by remember { mutableStateOf(false) }
+    var receiptCodes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var receiptCodeErrors by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    var receiptCodeLoadingOrderId by remember { mutableStateOf<Int?>(null) }
+    var settingsExpanded by remember { mutableStateOf(false) }
+    var showPendingOnly by remember { mutableStateOf(false) }
 
     suspend fun loadRestaurants() {
         restaurantLoading = true; restaurantError = null
         runCatching { ApiProvider.unwrap(ApiProvider.api.restaurants()) }
-            .onSuccess { restaurants = it.dados.filter { r -> r.ativo && r.status == "ABERTO" } }
+            .onSuccess { restaurants = it.dados.filter { r -> r.ativo && r.status != "SUSPENSO" } }
             .onFailure { restaurantError = it.message ?: "Não foi possível consultar as docerias." }
         restaurantLoading = false
     }
@@ -685,11 +755,28 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
         orderLoading = false
     }
 
+    fun generateReceiptCode(orderId: Int) {
+        if (receiptCodeLoadingOrderId != null) return
+        receiptCodeLoadingOrderId = orderId
+        receiptCodeErrors = receiptCodeErrors - orderId
+        scope.launch {
+            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.generateReceiptCode(orderId)) }
+                .onSuccess { response ->
+                    response.codigo?.let { code ->
+                        receiptCodes = receiptCodes + (orderId to code)
+                    }
+                }
+                .onFailure { err ->
+                    receiptCodeErrors = receiptCodeErrors + (orderId to (err.message ?: "Não foi possível gerar o código."))
+                }
+            receiptCodeLoadingOrderId = null
+        }
+    }
+
     suspend fun initiatePayment(orderId: Int) {
         val idempotencyKey = paymentIdempotencyKey
             ?: "candyland-android-$orderId-${UUID.randomUUID()}".also { paymentIdempotencyKey = it }
-        val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey)).pagamento
-            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
+        val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey, "ANDROID")).pagamento            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
         paymentInfo = payment
         when {
             !payment.approval_url.isNullOrBlank() -> {
@@ -711,6 +798,66 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
         runCatching { PushTokenManager.registerCurrentDevice(context) }
     }
 
+    LaunchedEffect(paymentUri) {
+        val returnedUri = paymentUri ?: return@LaunchedEffect
+        val orderId = returnedUri.getQueryParameter("order_id")?.toIntOrNull()
+        tab = 1
+        paymentInfo = null
+        checkoutMessage = "Retorno do pagamento recebido. Conferindo seu pedido..."
+
+        if (orderId == null) {
+            checkoutMessage = "O aplicativo foi reaberto pelo pagamento, mas não recebeu o número do pedido. Consulte Meus pedidos."
+        } else {
+            createdOrder = null
+            val provider = returnedUri.getQueryParameter("provider").orEmpty().lowercase()
+            val cancelled = returnedUri.path.orEmpty().endsWith("/cancel")
+            runCatching {
+                when (provider) {
+                    "paypal" -> {
+                        val paypalToken = returnedUri.getQueryParameter("token").orEmpty()
+                        val response = if (cancelled) {
+                            ApiProvider.unwrap(ApiProvider.api.cancelPayPalPayment(orderId, PayPalOrderActionRequest(paypalToken)))
+                        } else {
+                            ApiProvider.unwrap(ApiProvider.api.capturePayPalPayment(orderId, PayPalOrderActionRequest(paypalToken)))
+                        }
+                        paymentInfo = response.pagamento
+                        createdOrder = response.pedido
+                    }
+                    "mercadopago" -> {
+                        // GET /pagamento consulta a API oficial do Mercado Pago e
+                        // reconcilia o pedido; nunca confiamos no status da URL.
+                        paymentInfo = ApiProvider.unwrap(ApiProvider.api.getPayment(orderId)).pagamento
+                    }
+                    else -> throw IllegalStateException("O retorno não identificou um provedor de pagamento válido.")
+                }
+
+                val pedidoAtualizado = ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido
+                    ?: createdOrder
+                    ?: throw IllegalStateException("O servidor não retornou o pedido após o pagamento.")
+                createdOrder = pedidoAtualizado
+                loadOrders()
+                checkoutMessage = when {
+                    pedidoAtualizado.status in RECEIPT_CODE_ELIGIBLE_STATUSES ->
+                        "Pagamento confirmado e pedido criado! Gere seu código de recebimento e apresente-o quando retirar ou receber o pedido."
+                    pedidoAtualizado.status == "CANCELADO" ->
+                        "Este pedido foi cancelado. Consulte o histórico para ver os detalhes."
+                    cancelled ->
+                        "O checkout foi cancelado. O pedido continua aguardando pagamento e não foi enviado à doceria."
+                    paymentInfo?.status == "REJECTED" || paymentInfo?.status == "CANCELLED" ->
+                        "O provedor não aprovou o pagamento. O pedido continua pendente e não foi enviado à doceria."
+                    else ->
+                        "O pedido foi localizado, mas o pagamento ainda está em confirmação. Atualize Meus pedidos em instantes."
+                }
+            }.onFailure { error ->
+                checkoutMessage = error.message ?: "Não foi possível consultar o resultado do pagamento. Atualize Meus pedidos."
+                runCatching { ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido }
+                    .onSuccess { createdOrder = it }
+                loadOrders()
+            }
+        }
+        onPaymentUriConsumed()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -720,14 +867,23 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                         Text("Olá, ${session.name}", style = MaterialTheme.typography.labelSmall)
                     }
                 },
-                actions = { TextButton(onClick = onLogout) { Text("Sair") } }
+                actions = {
+                    TextButton(onClick = { settingsExpanded = true }) { Text("⚙") }
+                    DropdownMenu(expanded = settingsExpanded, onDismissRequest = { settingsExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Minha conta e endereços") }, onClick = { settingsExpanded = false; tab = 3 })
+                        DropdownMenuItem(text = { Text("Histórico de pedidos") }, onClick = { settingsExpanded = false; showPendingOnly = false; tab = 2; scope.launch { loadOrders() } })
+                        DropdownMenuItem(text = { Text("Pagamentos pendentes") }, onClick = { settingsExpanded = false; showPendingOnly = true; tab = 2; scope.launch { loadOrders() } })
+                        Divider()
+                        DropdownMenuItem(text = { Text("Sair") }, onClick = { settingsExpanded = false; onLogout() })
+                    }
+                }
             )
         },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Text("🍬") }, label = { Text("Docerias") })
                 NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Text("🛒") }, label = { Text("Carrinho (${cart.sumOf { it.quantity }})") })
-                NavigationBarItem(selected = tab == 2, onClick = { tab = 2; scope.launch { loadOrders() } }, icon = { Text("📦") }, label = { Text("Pedidos") })
+                NavigationBarItem(selected = tab == 2, onClick = { showPendingOnly = false; tab = 2; scope.launch { loadOrders() } }, icon = { Text("📦") }, label = { Text("Pedidos") })
             }
         }
     ) { innerPadding ->
@@ -754,15 +910,21 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                 } else {
                     ProductListScreen(
                         restaurant = selectedRestaurant!!,
+                        restaurantCanReceiveOrders = selectedRestaurant?.status == "ABERTO",
                         products = products,
                         loading = productLoading,
                         error = productsError,
-                        onBack = { selectedRestaurant = null },
+                        onBack = { selectedRestaurant = null; scope.launch { loadRestaurants() } },
                         onAdd = { product ->
-                            val base = if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) emptyList() else cart
-                            val existing = base.firstOrNull { it.product.id == product.id }
-                            cart = if (existing == null) base + CartEntry(product, 1)
-                            else base.map { if (it.product.id == product.id) it.copy(quantity = it.quantity + 1) else it }
+                            if (selectedRestaurant?.ativo != true || selectedRestaurant?.status != "ABERTO") {
+                                productsError = "Esta doceria não está aberta para novos pedidos. Atualize a lista de docerias."
+                            } else {
+                                val base = if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) emptyList() else cart
+                                val existing = base.firstOrNull { it.product.id == product.id }
+                                cart = if (existing == null) base + CartEntry(product, 1)
+                                else base.map { if (it.product.id == product.id) it.copy(quantity = it.quantity + 1) else it }
+                                productsError = null
+                            }
                         },
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -775,6 +937,10 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                 createdOrder = createdOrder,
                 checkoutMessage = checkoutMessage,
                 paymentInfo = paymentInfo,
+                receiptCode = createdOrder?.let { receiptCodes[it.id] },
+                receiptCodeLoading = createdOrder?.let { receiptCodeLoadingOrderId == it.id } ?: false,
+                receiptCodeError = createdOrder?.let { receiptCodeErrors[it.id] },
+                onGenerateReceiptCode = { generateReceiptCode(it) },
                 onQuantity = { productId, quantity -> cart = if (quantity <= 0) cart.filterNot { it.product.id == productId } else cart.map { if (it.product.id == productId) it.copy(quantity = quantity) else it } },
                 onCheckout = { orderType, addressId, paymentMethod ->
                     if (cart.isEmpty() || cart.firstOrNull() == null) return@CartScreen
@@ -825,11 +991,26 @@ private fun ShopScreen(session: SessionManager.Session, onLogout: () -> Unit) {
                 },
                 modifier = Modifier.padding(innerPadding)
             )
-            else -> OrderHistoryScreen(
-                orders = orders,
+            2 -> OrderHistoryScreen(
+                orders = if (showPendingOnly) orders.filter { it.status == "PENDENTE_PAGAMENTO" } else orders,
+                receiptCodes = receiptCodes,
+                receiptCodeErrors = receiptCodeErrors,
+                receiptCodeLoadingOrderId = receiptCodeLoadingOrderId,
                 loading = orderLoading,
                 error = orderError,
                 onRefresh = { scope.launch { loadOrders() } },
+                onGenerateReceiptCode = { orderId -> generateReceiptCode(orderId) },
+                modifier = Modifier.padding(innerPadding)
+            )
+            else -> CustomerSettingsScreen(
+                session = session,
+                onSessionUpdated = onSessionUpdated,
+                onBack = { tab = 0 },
+                onOpenOrders = {
+                    showPendingOnly = false
+                    tab = 2
+                    scope.launch { loadOrders() }
+                },
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -852,7 +1033,7 @@ private fun RestaurantListScreen(
         }
         if (loading) Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        if (!loading && restaurants.isEmpty() && error == null) Text("Nenhuma doceria disponível neste momento.")
+        if (!loading && restaurants.isEmpty() && error == null) Text("Nenhuma doceria cadastrada neste momento.")
         restaurants.forEach { restaurant ->
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -862,6 +1043,7 @@ private fun RestaurantListScreen(
                 Column(Modifier.padding(16.dp)) {
                     Text(restaurant.nome, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     restaurant.descricao?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    Text(mobileStoreStatusLabel(restaurant.status), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(6.dp))
                     Text("Pedido mínimo: ${money(restaurant.valor_minimo_pedido ?: 0.0)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     Text("Ver cardápio  →", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -874,6 +1056,7 @@ private fun RestaurantListScreen(
 @Composable
 private fun ProductListScreen(
     restaurant: RestaurantDto,
+    restaurantCanReceiveOrders: Boolean,
     products: List<ProductDto>,
     loading: Boolean,
     error: String?,
@@ -881,6 +1064,7 @@ private fun ProductListScreen(
     onAdd: (ProductDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val lojaDisponivel = restaurant.ativo && restaurant.status == "ABERTO"
     Column(modifier.fillMaxSize().padding(16.dp)) {
         TextButton(onClick = onBack) { Text("← Docerias") }
         Text(restaurant.nome, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -897,7 +1081,13 @@ private fun ProductListScreen(
                         product.description?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text(money(product.price), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
-                    Button(onClick = { onAdd(product) }, enabled = product.available) { Text(if (product.available) "Adicionar" else "Indisponível") }
+                    val purchaseLabel = when (restaurant.status) {
+                        "EM_ANALISE" -> "Aguardando aprovação"
+                        "SUSPENSO" -> "Indisponível"
+                        "FECHADO" -> "Loja fechada"
+                        else -> if (product.available) "Adicionar" else "Indisponível"
+                    }
+                    Button(onClick = { onAdd(product) }, enabled = product.available && restaurantCanReceiveOrders) { Text(purchaseLabel) }
                 }
             }
         }
@@ -912,6 +1102,10 @@ private fun CartScreen(
     createdOrder: OrderDto?,
     checkoutMessage: String?,
     paymentInfo: PaymentDto?,
+    receiptCode: String?,
+    receiptCodeLoading: Boolean,
+    receiptCodeError: String?,
+    onGenerateReceiptCode: (Int) -> Unit,
     onQuantity: (Int, Int) -> Unit,
     onCheckout: (String, Int?, String) -> Unit,
     onRetryPayment: (Int) -> Unit,
@@ -941,6 +1135,28 @@ private fun CartScreen(
                     Text("Status: ${createdOrder.status}")
                     Text("Total calculado pelo servidor: ${money(createdOrder.total)}", fontWeight = FontWeight.Bold)
                     checkoutMessage?.let { Text(it) }
+                    if (createdOrder.status in RECEIPT_CODE_ELIGIBLE_STATUSES) {
+                        Divider()
+                        Text("Código de recebimento", fontWeight = FontWeight.SemiBold)
+                        if (receiptCode == null) {
+                            OutlinedButton(
+                                onClick = { onGenerateReceiptCode(createdOrder.id) },
+                                enabled = !receiptCodeLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(if (receiptCodeLoading) "Gerando código..." else "Gerar código de recebimento") }
+                        } else {
+                            Text(receiptCode, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Apresente este código ao restaurante quando receber ou retirar o pedido.", style = MaterialTheme.typography.bodySmall)
+                            OutlinedButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Código de recebimento", receiptCode))
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Copiar código de recebimento") }
+                        }
+                        receiptCodeError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    }
                     paymentInfo?.pix_copy_paste?.let {
                         Divider()
                         Text("Pix copia e cola", fontWeight = FontWeight.SemiBold)
@@ -1030,6 +1246,10 @@ private fun OrderHistoryScreen(
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
+    receiptCodes: Map<Int, String>,
+    receiptCodeErrors: Map<Int, String>,
+    receiptCodeLoadingOrderId: Int?,
+    onGenerateReceiptCode: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier.fillMaxSize().padding(16.dp)) {
@@ -1049,10 +1269,31 @@ private fun OrderHistoryScreen(
                     Text(if (order.order_type == "PICKUP") "Retirada" else "Entrega")
                     Text(money(order.total), fontWeight = FontWeight.Bold)
                     order.created_at?.let { Text(it.replace("T", " ").take(16), style = MaterialTheme.typography.bodySmall) }
+                    val code = receiptCodes[order.id]
+                    if (code != null) {
+                        Text("Código de recebimento: $code", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text("Apresente este código ao parceiro quando receber o pedido.", style = MaterialTheme.typography.bodySmall)
+                    } else if (order.status in setOf("PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU", "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE")) {
+                        val isGenerating = receiptCodeLoadingOrderId == order.id
+                        OutlinedButton(onClick = { onGenerateReceiptCode(order.id) }, enabled = !isGenerating, modifier = Modifier.fillMaxWidth()) {
+                            Text(if (isGenerating) "Gerando código..." else "Gerar código de recebimento")
+                        }
+                        receiptCodeErrors[order.id]?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+private fun mobileStoreStatusLabel(status: String?): String = when (status) {
+    "ABERTO" -> "Aberta"
+    "FECHADO" -> "Fechada"
+    "EM_ANALISE" -> "Em análise"
+    "SUSPENSO" -> "Suspensa"
+    else -> status ?: "Indisponível"
 }
 
 private fun money(value: Double): String =

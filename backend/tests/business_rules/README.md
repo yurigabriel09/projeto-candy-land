@@ -1,0 +1,21 @@
+# `tests/business_rules/`
+
+- `test_address_geocoding.py`: resolução de endereço/coordenadas.
+- `test_delivery_fee.py`: taxa por distância, raio de entrega e regras de retirada.
+- `test_mercado_pago_adapter.py`: contrato do adaptador Mercado Pago.
+- `test_mercadopago_pix.py`: fluxo Pix, dados de pagamento e retorno.
+- `test_order_delivery_persistence.py`: persistência dos dados de entrega no pedido.
+- `test_order_receipt_confirmation.py`: código/confirmacão de recebimento.
+- `test_order_service_validation.py`: validações de criação e regras do serviço de pedidos.
+- `test_order_type.py`: tipos DELIVERY/PICKUP e efeitos no pedido.
+- `test_order_workflow.py`: transições permitidas no ciclo de vida do pedido.
+- `test_payment_gateway_reconciliation.py`: conciliação com estado retornado pelo gateway.
+- `test_payment_mock_flow.py`: cenário de pagamento simulado.
+- `test_payment_provider_contract.py`: contrato comum dos provedores.
+- `test_payment_provider_dispatch.py`: seleção/dispatch do provedor.
+- `test_payment_stock_integrity.py`: integridade de estoque e idempotência na confirmação/cancelamento.
+- `test_paypal_adapter.py`: comportamento do adaptador PayPal.
+- `test_restaurant_catalog_active.py`: catálogo e estado ativo do restaurante.
+- `test_restaurant_configuration.py`: leitura/atualização de configuração do restaurante.
+- `test_restaurant_geocoding.py`: geocoding de endereço de restaurante.
+- `test_restaurant_status.py`: status operacional do restaurante.

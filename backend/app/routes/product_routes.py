@@ -1,4 +1,5 @@
 from app.controllers.product_controller import ProductController
+from app.controllers.recommendation_controller import RecommendationController
 from app.utils.auth_decorator import token_required
 from flask import Blueprint, g, request
 
@@ -8,6 +9,14 @@ produto_bp = Blueprint("product", __name__, url_prefix="/produtos")
 @produto_bp.route("", methods=["GET"])
 def listar_produtos():
     return ProductController.listar_produtos()
+
+
+# Recomendações a partir do carrinho (vários produto_id) ou de um item selecionado.
+# Fica antes das rotas "/<int:produto_id>" para deixar claro que é um caminho fixo.
+@produto_bp.route("/recomendacoes", methods=["GET"])
+@token_required
+def recomendar_produtos():
+    return RecommendationController.recomendar(request.args)
 
 
 @produto_bp.route("/<int:produto_id>", methods=["GET"])
