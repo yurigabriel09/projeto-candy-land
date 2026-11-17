@@ -374,6 +374,20 @@ class OrderService:
                 "status_code": 500,
             }
 
+    # Estimativa simples: tempo de preparo fixo + deslocamento pela velocidade média.
+    TEMPO_PREPARO_MIN = 20
+    VELOCIDADE_MEDIA_KMH = 25
+    MARGEM_TEMPO_MIN = 10
+
+    @staticmethod
+    def _estimar_tempo_entrega(distance_km):
+        minutos = OrderService.TEMPO_PREPARO_MIN
+        if distance_km is not None:
+            deslocamento = (float(distance_km) / OrderService.VELOCIDADE_MEDIA_KMH) * 60
+            minutos += math.ceil(deslocamento)
+        minimo = int(math.ceil(minutos / 5.0) * 5)
+        return {"minimo": minimo, "maximo": minimo + OrderService.MARGEM_TEMPO_MIN}
+
     @staticmethod
     def cotar_entrega(user_id, restaurant_id, order_type, address_id):
         try:
@@ -393,6 +407,7 @@ class OrderService:
                         "order_type": "PICKUP",
                         "taxa_entrega": 0.0,
                         "distancia_km": None,
+                        "tempo_estimado": OrderService._estimar_tempo_entrega(None),
                     },
                 }
 
@@ -414,6 +429,7 @@ class OrderService:
                     "order_type": "DELIVERY",
                     "taxa_entrega": float(delivery_fee),
                     "distancia_km": float(distance_km),
+                    "tempo_estimado": OrderService._estimar_tempo_entrega(distance_km),
                 },
             }
         except (TypeError, ValueError) as exc:

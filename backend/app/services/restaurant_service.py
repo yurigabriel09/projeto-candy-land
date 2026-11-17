@@ -449,10 +449,20 @@ class RestauranteService:
             if not restaurante:
                 return {"success": False, "erro": "Restaurante não encontrado.", "status_code": 404}
             produtos = Produto.query.filter_by(restaurant_id=restaurante_id).order_by(Produto.id).all()
+            from app.models.category import Categoria
+            nomes_categoria = {
+                c.id: c.nome
+                for c in Categoria.query.filter_by(id_restaurante=restaurante_id).all()
+            }
+            dados = []
+            for produto in produtos:
+                item = produto.to_dict() if incluir_estoque else produto.to_catalog_dict()
+                item["nome_categoria"] = nomes_categoria.get(produto.category_id)
+                dados.append(item)
             return {
                 "success": True,
                 "mensagem": "Produtos do restaurante:",
-                "dados": [produto.to_dict() if incluir_estoque else produto.to_catalog_dict() for produto in produtos],
+                "dados": dados,
             }
         except SQLAlchemyError:
             return {"success": False, "erro": "Falha ao consultar o banco de dados.", "status_code": 500}
