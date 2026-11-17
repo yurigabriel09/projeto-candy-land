@@ -56,6 +56,9 @@ class MercadoPagoPaymentProvider(PaymentProvider):
 
     def create_payment(self, command: CreatePaymentCommand) -> PaymentResult:
         self.validar_metodo(command.method)
+        if command.method == PaymentMethod.PIX:
+            return self._create_pix_payment(command)
+        
         plataforma_android = str(command.metadata.get("client_platform", "")).strip().lower() == "android"
         if plataforma_android:
             # Checkout Pro aceita deep links em integrações mobile. O Android
