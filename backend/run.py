@@ -9,6 +9,7 @@ from app.routes.device_routes import device_bp
 from app.routes.order_routes import pedido_bp
 from app.routes.product_routes import produto_bp
 from app.routes.restaurant_routes import restaurante_bp
+from app.routes.report_routes import relatorio_bp
 from app.routes.user_routes import user_bp
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -47,6 +48,7 @@ def create_app():
     app.register_blueprint(produto_bp)
     app.register_blueprint(categoria_bp)
     app.register_blueprint(pedido_bp)
+    app.register_blueprint(relatorio_bp)
     return app
 
 

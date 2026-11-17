@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import PixPayment from "../components/PixPayment";
-import { createOrder, createPayment, getCustomerAddresses } from "../services/orderService";
+import { createOrder, createPayment, getCustomerAddresses, getDeliveryQuote } from "../services/orderService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -29,6 +29,11 @@ function Checkout() {
 
     // Pix: dados do pagamento gerado (QR Code + Copia e Cola)
     const [pixPagamento, setPixPagamento] = useState(null);
+
+    // Taxa de entrega calculada pelo servidor (a mesma usada na criação do pedido)
+    const [cotacao, setCotacao] = useState(null);
+    const [erroCotacao, setErroCotacao] = useState("");
+    const [calculandoTaxa, setCalculandoTaxa] = useState(false);
 
     const nomeUsuario = dadosAutenticacao?.nome_completo || "Cliente Candyland";
     const ano = new Date().getFullYear();
@@ -91,6 +96,40 @@ function Checkout() {
         }
         carregarEnderecos();
     }, [dadosAutenticacao]);
+
+    useEffect(() => {
+        const entrega = (carrinho.orderType || "DELIVERY") === "DELIVERY";
+        if (!carrinho.restauranteId || (entrega && !enderecoId)) {
+            setCotacao(null);
+            setErroCotacao("");
+            return undefined;
+        }
+
+        let cancelado = false;
+        setCalculandoTaxa(true);
+        setErroCotacao("");
+        getDeliveryQuote({
+            restaurantId: carrinho.restauranteId,
+            orderType: carrinho.orderType || "DELIVERY",
+            addressId: entrega ? enderecoId : null,
+        })
+            .then((resultado) => {
+                if (!cancelado) setCotacao(resultado);
+            })
+            .catch((error) => {
+                if (!cancelado) {
+                    setCotacao(null);
+                    setErroCotacao(error.message || "Não foi possível calcular a taxa de entrega.");
+                }
+            })
+            .finally(() => {
+                if (!cancelado) setCalculandoTaxa(false);
+            });
+
+        return () => {
+            cancelado = true;
+        };
+    }, [carrinho.restauranteId, carrinho.orderType, enderecoId]);
 
     async function handleFinalizarPedido(e) {
         e.preventDefault();
@@ -234,6 +273,8 @@ function Checkout() {
     }
 
     const isDelivery = (carrinho.orderType || "DELIVERY") === "DELIVERY";
+    const taxaEntrega = cotacao?.taxa_entrega ?? 0;
+    const totalComTaxa = total + taxaEntrega;
 
     return (
         <div className="cart-page-wrapper">
@@ -436,7 +477,7 @@ function Checkout() {
                             <PixPayment
                                 pedidoId={pedidoCriadoId}
                                 pagamento={pixPagamento}
-                                total={total}
+                                total={totalComTaxa}
                                 onConfirmado={handlePixConfirmado}
                                 onVoltar={handlePixVoltar}
                             />
@@ -453,6 +494,10 @@ function Checkout() {
                             </div>
                         )}
 
+                        {erroCotacao && !pixPagamento && (
+                            <p className="auth-error checkout-error" role="alert">{erroCotacao}</p>
+                        )}
+
                         {!pixPagamento && (
                         <div className="conta-card checkout-summary-card">
                             <div className="checkout-summary-row">
@@ -460,7 +505,34 @@ function Checkout() {
                                     <span className="checkout-summary-label">
                                         Subtotal estimado ({quantidadeTotal} {quantidadeTotal === 1 ? "item" : "itens"})
                                     </span>
-                                    <strong className="checkout-summary-total">{moeda.format(total)}</strong>
+                                    <strong className="checkout-summary-total">{moeda.format(totalComTaxa)}</strong>
+                                    <div className="checkout-breakdown">
+                                        <div className="checkout-breakdown-row">
+                                            <span>Subtotal</span>
+                                            <span>{moeda.format(total)}</span>
+                                        </div>
+                                        <div className="checkout-breakdown-row">
+                                            <span>{isDelivery ? "Taxa de entrega" : "Retirada na loja"}</span>
+                                            {calculandoTaxa ? (
+                                                <span className="checkout-breakdown-muted">Calculando...</span>
+                                            ) : !isDelivery || (cotacao && taxaEntrega === 0) ? (
+                                                <span className="checkout-breakdown-gratis">Grátis</span>
+                                            ) : cotacao ? (
+                                                <span>{moeda.format(taxaEntrega)}</span>
+                                            ) : (
+                                                <span className="checkout-breakdown-muted">Escolha o endereço</span>
+                                            )}
+                                        </div>
+                                        {cotacao?.tempo_estimado && !calculandoTaxa && (
+                                            <div className="checkout-breakdown-tempo">
+                                                <span aria-hidden="true">{isDelivery ? "🛵" : "🛍️"}</span>
+                                                <span>
+                                                    {isDelivery ? "Entrega estimada em " : "Pronto para retirada em "}
+                                                    <strong>{cotacao.tempo_estimado.minimo}{"–"}{cotacao.tempo_estimado.maximo} min</strong>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="checkout-summary-delivery">
                                     <span className="checkout-summary-delivery-label">Entrega:</span>
@@ -474,7 +546,7 @@ function Checkout() {
                                 type="button"
                                 className={`primary-button checkout-btn-pay ${metodoPagamento === "PAYPAL" ? "paypal-theme" : ""}`}
                                 onClick={handleFinalizarPedido}
-                                disabled={processando}
+                                disabled={processando || calculandoTaxa || Boolean(erroCotacao)}
                             >
                                 {processando
                                     ? "Processando..."

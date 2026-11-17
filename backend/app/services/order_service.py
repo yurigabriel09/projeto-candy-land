@@ -398,6 +398,73 @@ class OrderService:
                 "status_code": 500,
             }
 
+    # Estimativa simples: tempo de preparo fixo + deslocamento pela velocidade média.
+    TEMPO_PREPARO_MIN = 20
+    VELOCIDADE_MEDIA_KMH = 25
+    MARGEM_TEMPO_MIN = 10
+
+    @staticmethod
+    def _estimar_tempo_entrega(distance_km):
+        minutos = OrderService.TEMPO_PREPARO_MIN
+        if distance_km is not None:
+            deslocamento = (float(distance_km) / OrderService.VELOCIDADE_MEDIA_KMH) * 60
+            minutos += math.ceil(deslocamento)
+        minimo = int(math.ceil(minutos / 5.0) * 5)
+        return {"minimo": minimo, "maximo": minimo + OrderService.MARGEM_TEMPO_MIN}
+
+    @staticmethod
+    def cotar_entrega(user_id, restaurant_id, order_type, address_id):
+        try:
+            try:
+                restaurant_id = int(restaurant_id)
+            except (TypeError, ValueError):
+                raise TypeError("restaurant_id é obrigatório e deve ser inteiro.")
+
+            order_type = order_type or "DELIVERY"
+            OrderService._validate_order_type(order_type)
+
+            if order_type == "PICKUP":
+                return {
+                    "success": True,
+                    "mensagem": "Retirada não cobra taxa de entrega.",
+                    "dados": {
+                        "order_type": "PICKUP",
+                        "taxa_entrega": 0.0,
+                        "distancia_km": None,
+                        "tempo_estimado": OrderService._estimar_tempo_entrega(None),
+                    },
+                }
+
+            try:
+                address_id = int(address_id)
+            except (TypeError, ValueError):
+                raise TypeError(
+                    "delivery_address_id é obrigatório para entrega no endereço."
+                )
+
+            customer_address = OrderService._validate_address(user_id, address_id)
+            delivery_fee, distance_km = OrderService._calcular_taxa_entrega(
+                restaurant_id, customer_address
+            )
+            return {
+                "success": True,
+                "mensagem": "Taxa de entrega calculada.",
+                "dados": {
+                    "order_type": "DELIVERY",
+                    "taxa_entrega": float(delivery_fee),
+                    "distancia_km": float(distance_km),
+                    "tempo_estimado": OrderService._estimar_tempo_entrega(distance_km),
+                },
+            }
+        except (TypeError, ValueError) as exc:
+            return {"success": False, "erro": str(exc), "status_code": 400}
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao calcular a taxa de entrega.",
+                "status_code": 500,
+            }
+
     @staticmethod
     def listar_pedidos(account_id, account_type):
         try:
