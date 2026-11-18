@@ -8,6 +8,8 @@ import { useCart } from "../context/CartContext";
 
 const CHECKOUT_SESSION_KEY = "candyland_checkout_pending";
 
+const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
 function rotuloFormaPagamento(metodo) {
     if (metodo === "PIX") return "Pix";
     if (metodo === "PAYPAL") return "PayPal";
@@ -28,6 +30,16 @@ const STATUS_LABEL = {
     ENTREGUE: "Entregue",
     FINALIZADO: "Finalizado",
     CANCELADO: "Cancelado",
+};
+
+const STATUS_PAGAMENTO_LABEL = {
+    APPROVED: "Aprovado",
+    PENDING: "Pendente",
+    IN_PROCESS: "Em análise",
+    REJECTED: "Recusado",
+    CANCELLED: "Cancelado",
+    ACTION_REQUIRED: "Ação necessária",
+    REFUNDED: "Reembolsado",
 };
 
 function CheckoutResult() {
@@ -150,46 +162,92 @@ function CheckoutResult() {
 
     const confirmado = pedido && pedido.status !== "PENDENTE_PAGAMENTO" && pedido.status !== "CANCELADO";
     const pagamentoPrecisaAtencao = ["REJECTED", "CANCELLED", "ACTION_REQUIRED", "REFUNDED"].includes(pagamento?.status);
-        useEffect(() => {
+
+    useEffect(() => {
         // Pedido confirmado: o carrinho já virou pedido, então é esvaziado.
         if (confirmado) {
             limparCarrinho();
         }
     }, [confirmado]);
 
+    // Só visual: define o ícone e os textos do topo do cartão.
+    let situacao = "pendente";
+    if (confirmado) situacao = "ok";
+    else if (pedido?.status === "CANCELADO" || pagamentoPrecisaAtencao) situacao = "erro";
+
+    const TOPO = {
+        ok: {
+            icone: "✓",
+            titulo: "Pagamento confirmado!",
+            texto: "Seu pedido está registrado e você pode acompanhar o andamento.",
+        },
+        pendente: {
+            icone: "⏳",
+            titulo: "Aguardando pagamento",
+            texto: "Estamos consultando o provedor. Não pague de novo enquanto esta tentativa estiver pendente.",
+        },
+        erro: {
+            icone: "!",
+            titulo: pedido?.status === "CANCELADO" ? "Pedido cancelado" : "Pagamento não aprovado",
+            texto: "Confira os detalhes abaixo.",
+        },
+    }[situacao];
+
+    const statusPagamento = pagamento?.status
+        ? STATUS_PAGAMENTO_LABEL[pagamento.status] || pagamento.status
+        : "Ainda sem confirmação";
+
     return (
         <>
             <Header />
             <main className="container secao checkout-result">
-                <section className="cart-pedido-sucesso">
-                    <h1>Resultado do pagamento</h1>
-                    {carregando && <p role="status">Consultando o provedor de pagamento...</p>}
+                <section className="rs-cartao">
+                    <p className="rs-etiqueta">Resultado do pagamento</p>
+
+                    {pedido && (
+                        <div className={`rs-topo rs-topo-${situacao}`}>
+                            <span className="rs-icone" aria-hidden="true">{TOPO.icone}</span>
+                            <h1>{TOPO.titulo}</h1>
+                            <p>{TOPO.texto}</p>
+                        </div>
+                    )}
+
+                    {carregando && <p className="rs-carregando" role="status">Consultando o provedor de pagamento...</p>}
                     {erro && <p className="cart-checkout-erro" role="alert">{erro}</p>}
+
                     {pedido && (
                         <>
-                            <p>Pedido <strong>{pedido.order_code}</strong></p>
-                            <dl>
+                            <p className="rs-codigo">Pedido <strong>{pedido.order_code}</strong></p>
+
+                            <dl className="rs-info">
                                 <div><dt>Status do pedido</dt><dd>{STATUS_LABEL[pedido.status] || pedido.status}</dd></div>
-                                <div><dt>Status do pagamento</dt><dd>{pagamento?.status || "Ainda sem confirmação"}</dd></div>
+                                <div><dt>Status do pagamento</dt><dd>{statusPagamento}</dd></div>
                                 <div><dt>Forma de pagamento</dt><dd>{rotuloFormaPagamento(pagamento?.payment_method || pedido.payment_method)}</dd></div>
-                                <div><dt>Total</dt><dd><strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total || 0)}</strong></dd></div>
+                                <div><dt>Total</dt><dd className="rs-total">{moeda.format(pedido.total || 0)}</dd></div>
                             </dl>
-                            {pedido.order_type === "DELIVERY" && <LocationMap latitude={pedido.delivery_location?.latitude} longitude={pedido.delivery_location?.longitude} label={pedido.delivery_location?.endereco || "Endereço de entrega"} />}
-                            {pedido.order_type === "PICKUP" && <LocationMap latitude={pedido.pickup_location?.latitude} longitude={pedido.pickup_location?.longitude} label={pedido.pickup_location?.endereco || "Unidade de retirada"} />}
-                            {erroPagamento && <p className="cart-aviso-checkout" role="status">Ainda não foi possível consultar uma transação no Mercado Pago: {erroPagamento}</p>}
+
+                            {pedido.order_type === "DELIVERY" && (
+                                <div className="rs-mapa">
+                                    <h2>Endereço de entrega</h2>
+                                    <LocationMap latitude={pedido.delivery_location?.latitude} longitude={pedido.delivery_location?.longitude} label={pedido.delivery_location?.endereco || "Endereço de entrega"} />
+                                </div>
+                            )}
+                            {pedido.order_type === "PICKUP" && (
+                                <div className="rs-mapa">
+                                    <h2>Local de retirada</h2>
+                                    <LocationMap latitude={pedido.pickup_location?.latitude} longitude={pedido.pickup_location?.longitude} label={pedido.pickup_location?.endereco || "Unidade de retirada"} />
+                                </div>
+                            )}
+
+                            {erroPagamento && <p className="cart-aviso-checkout" role="status">Ainda não foi possível consultar uma transação no provedor de pagamento: {erroPagamento}</p>}
+
                             {confirmado ? (
-                                <>
-                                    <p className="field-message">Pagamento confirmado pelo provedor. Seu pedido está registrado no histórico e você pode acompanhar o andamento.</p>
-                                    <div className="checkout-result-actions">
-                                        <Link to={`/pedidos/${pedido.id}/acompanhar`} className="btn-principal">Acompanhar pedido</Link>
-                                        <Link to="/minha-conta/historico-compras" className="btn-contorno">Ver histórico de compras</Link>
-                                    </div>
-                                </>
+                                <p className="rs-nota">Pagamento confirmado pelo provedor. Seu pedido está registrado no histórico.</p>
                             ) : pedido.status === "CANCELADO" ? (
                                 <p className="cart-checkout-erro">Este pedido foi cancelado. Entre em contato com o restaurante se precisar de ajuda.</p>
                             ) : pagamentoPrecisaAtencao ? (
                                 <>
-                                    <p className="cart-checkout-erro">O provedor informou <strong>{pagamento.status}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>
+                                    <p className="cart-checkout-erro">O provedor informou <strong>{statusPagamento}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>
                                     {["REJECTED", "CANCELLED"].includes(pagamento?.status) && pagamento?.payment_method !== "PIX" && (
                                         <button className="btn-principal" type="button" disabled={iniciandoNovaTentativa} onClick={tentarPagarNovamente}>
                                             {iniciandoNovaTentativa ? "Reabrindo pagamento..." : "Tentar pagamento novamente"}
@@ -209,13 +267,21 @@ function CheckoutResult() {
                             )}
                         </>
                     )}
+
                     {erroNovaTentativa && <p className="cart-checkout-erro" role="alert">{erroNovaTentativa}</p>}
-                    <div className="checkout-result-actions">
-                        <button className="btn-principal" type="button" disabled={carregando || iniciandoNovaTentativa} onClick={() => { setCarregando(true); setAtualizacao((n) => n + 1); }}>
-                            Consultar novamente
-                        </button>
-                        {pedido && <Link to={`/pedidos/${pedido.id}/acompanhar`} className="btn-contorno">Acompanhar entrega</Link>}
-                        <Link to="/home" className="btn-contorno">Voltar às lojas</Link>
+
+                    <div className="rs-acoes">
+                        {pedido && (
+                            <Link to={`/pedidos/${pedido.id}/acompanhar`} className="btn-principal">Acompanhar pedido</Link>
+                        )}
+                        {confirmado ? (
+                            <Link to="/minha-conta/historico-compras" className="btn-contorno">Ver histórico de compras</Link>
+                        ) : (
+                            <button className="btn-contorno" type="button" disabled={carregando || iniciandoNovaTentativa} onClick={() => { setCarregando(true); setAtualizacao((n) => n + 1); }}>
+                                Consultar novamente
+                            </button>
+                        )}
+                        <Link to="/home" className="rs-link">Voltar às lojas</Link>
                     </div>
                 </section>
             </main>
