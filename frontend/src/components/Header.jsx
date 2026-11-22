@@ -26,12 +26,13 @@ function Header({ variant = "default" }) {
 
     // Endereço principal do cliente, mostrado ao lado da busca.
     useEffect(() => {
-        if (!logado) return undefined;
+        const userId = dadosAutenticacao?.id || dadosAutenticacao?.user_id || dadosAutenticacao?.usuario?.id;
+        if (!logado || !userId) return undefined;
         let cancelado = false;
 
         async function carregarEndereco() {
             try {
-                const lista = await getCustomerAddresses();
+                const lista = await getCustomerAddresses(userId);
                 if (cancelado || !Array.isArray(lista)) return;
                 const principal = lista.find((e) => e.principal) || lista[0];
                 if (principal) {
@@ -48,7 +49,7 @@ function Header({ variant = "default" }) {
         return () => {
             cancelado = true;
         };
-    }, [logado]);
+    }, [logado, dadosAutenticacao]);
 
     function handleSair() {
         // Limpa a sessão e força a navegação completa para a área pública.
