@@ -75,8 +75,6 @@ def atualizar_usuario(user_id):
 
 
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
-@token_required
-@account_owner_required("PERSONAL", "user_id")
 def deletar_usuario(user_id):
     return UserController.deletar_usuario(user_id)
 

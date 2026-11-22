@@ -144,41 +144,103 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         )
 
     def _create_pix_payment(self, command: CreatePaymentCommand) -> PaymentResult:
+        """Cria Pix pela Orders API, sem afetar Checkout Pro de cartão.
+
+        Identificador persistido: ord:<id externo da order>. Nunca confundir com
+        um payment_id da API legado /v1/payments.
+        """
         if not command.payer_email:
             raise PaymentProviderError("O e-mail do cliente é obrigatório para gerar o Pix.")
+        valor = str(command.amount.quantize(Decimal("0.01")))
+        payer = {"email": command.payer_email}
+        if self.sandbox:
+            # Cenário documentado do sandbox: APRO sinaliza pagamento de teste
+            # que pode passar de action_required para processed/approved.
+            payer = {"email": "test_payer@example.com", "first_name": "APRO"}
         payload = {
-            "transaction_amount": float(command.amount),
-            "description": f"CandyLand - Pedido {command.metadata.get('order_code', command.order_id)}",
-            "payment_method_id": "pix",
+            "type": "online",
+            "processing_mode": "automatic",
             "external_reference": str(command.order_id),
-            "payer": {"email": command.payer_email},
-            "metadata": {"order_code": str(command.metadata.get("order_code", ""))},
+            "total_amount": valor,
+            "payer": payer,
+            "transactions": {
+                "payments": [{
+                    "amount": valor,
+                    "payment_method": {"id": "pix", "type": "bank_transfer"},
+                }],
+            },
         }
-        if self.notification_url:
-            if not self.notification_url.lower().startswith("https://"):
-                raise PaymentProviderError("MERCADO_PAGO_NOTIFICATION_URL precisa usar HTTPS.")
-            payload["notification_url"] = self.notification_url
-        response = self._request(
-            "POST", "/v1/payments", payload,
+        # O webhook atual processa eventos da Payments API. Não configuramos
+        # notification_url para Orders sem suporte a eventos Orders verificados.
+        data = self._request(
+            "POST", "/v1/orders", payload,
             extra_headers={"X-Idempotency-Key": command.idempotency_key},
         )
-        transaction = ((response.get("point_of_interaction") or {}).get("transaction_data") or {})
-        payment_id = str(response.get("id") or "").strip()
-        copy_paste = str(transaction.get("qr_code") or "").strip() or None
-        qr_base64 = str(transaction.get("qr_code_base64") or "").strip() or None
-        if not payment_id or not copy_paste or not qr_base64:
-            raise PaymentProviderError("O Mercado Pago não retornou QR Code e código Pix Copia e Cola.")
-        result = self._payment_result(response)
+        return self._order_result(data, expected_order_id=str(command.order_id))
+
+    def _order_result(self, data: Mapping[str, Any], expected_order_id: str | None = None) -> PaymentResult:
+        """Normaliza uma Order do Mercado Pago para o contrato atual do projeto."""
+        mp_order_id = str(data.get("id") or "").strip()
+        if not mp_order_id:
+            raise PaymentProviderError("A API de Orders não retornou o ID da order.")
+        external_ref = str(data.get("external_reference") or "").strip()
+        if expected_order_id is not None and external_ref != str(expected_order_id):
+            raise PaymentProviderError("A order do Mercado Pago não corresponde ao pedido do Candy Land.")
+        payments = ((data.get("transactions") or {}).get("payments") or [])
+        transaction = payments[0] if payments else {}
+        method = transaction.get("payment_method") or {}
+        if transaction and str(method.get("id") or "").lower() != "pix":
+            raise PaymentProviderError("A order retornada não corresponde a um pagamento Pix.")
+        order_state = str(data.get("status") or "").lower()
+        transaction_state = str(transaction.get("status") or "").lower()
+        # Não tratar 'processed' da order isoladamente como prova de aprovação
+        # se a transação associada estiver em um estado contraditório.
+        if order_state in {"cancelled", "canceled", "expired", "failed"} or transaction_state in {"cancelled", "canceled", "expired", "failed", "rejected"}:
+            status = PaymentStatus.CANCELLED if order_state in {"cancelled", "canceled", "expired"} or transaction_state in {"cancelled", "canceled", "expired"} else PaymentStatus.REJECTED
+        elif (transaction_state in {"approved", "processed"}
+              and order_state in {"processed", "approved"}
+              and str(data.get("status_detail") or "").lower() not in {"partially_refunded", "refunded"}
+              and str(transaction.get("status_detail") or "").lower() not in {"partially_refunded", "refunded"}):
+            status = PaymentStatus.APPROVED
+        else:
+            status = PaymentStatus.PENDING
+        amount_raw = data.get("total_amount")
+        if amount_raw is None:
+            amount_raw = transaction.get("amount")
+        if amount_raw is None:
+            raise PaymentProviderError("A order retornada não informa o valor total.")
+        amount = Decimal(str(amount_raw)).quantize(Decimal("0.01"))
+        code = str(method.get("qr_code") or "").strip() or None
+        base64 = str(method.get("qr_code_base64") or "").strip() or None
+        # PaymentAttempt reserva 8.000 caracteres para a imagem. Quando o
+        # gateway devolver PNG maior, o frontend ainda gera SVG a partir do
+        # Pix Copia e Cola (sem truncar uma imagem potencialmente inválida).
+        if base64 and len(base64) > 8000:
+            base64 = None
         return PaymentResult(
-            provider=self.provider_name, provider_payment_id=payment_id,
-            status=result.status, amount=command.amount, currency="BRL",
-            pix_copy_paste=copy_paste, pix_qr_code_base64=qr_base64,
-            approval_url=transaction.get("ticket_url"), message="Pix criado. Aguardando confirmação do Mercado Pago.",
-            payment_type_id=result.payment_type_id, payment_method_id="pix",
+            provider=self.provider_name,
+            provider_payment_id=f"ord:{mp_order_id}",
+            status=status,
+            amount=amount,
+            currency="BRL",
+            approval_url=method.get("ticket_url"),
+            pix_copy_paste=code,
+            pix_qr_code_base64=base64,
+            message=str(transaction.get("status_detail") or data.get("status_detail") or transaction_state or order_state or "Aguardando Pix."),
+            payment_type_id="bank_transfer",
+            payment_method_id="pix",
         )
 
     def get_payment(self, provider_payment_id: str) -> PaymentResult:
         raw_id = str(provider_payment_id or "").strip()
+        if raw_id.startswith("ord:"):
+            mp_order_id = raw_id[4:]
+            if not mp_order_id or not mp_order_id.startswith("ORD"):
+                raise PaymentProviderError("ID da order Pix do Mercado Pago inválido.")
+            data = self._request("GET", f"/v1/orders/{mp_order_id}")
+            # Mantém sempre o identificador da Order em PaymentAttempt;
+            # não o substitui pelo identificador de uma transação interna.
+            return self._order_result(data)
         if raw_id.startswith("pref:"):
             parts = raw_id.split(":", 2)
             if len(parts) != 3 or not parts[1] or not parts[2]:
@@ -209,6 +271,8 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         return self.get_payment(provider_payment_id)
 
     def cancel_payment(self, provider_payment_id: str, idempotency_key: str) -> PaymentResult:
+        if str(provider_payment_id).startswith("ord:"):
+            raise PaymentProviderError("Cancelamento de Pix via Orders não está implementado.")
         if str(provider_payment_id).startswith("pref:"):
             raise PaymentProviderError(
                 "Não é possível cancelar uma preferência antes que o Mercado Pago crie um pagamento."
@@ -227,6 +291,8 @@ class MercadoPagoPaymentProvider(PaymentProvider):
         idempotency_key: str,
         amount: Decimal | None = None,
     ) -> PaymentResult:
+        if str(provider_payment_id).startswith("ord:"):
+            raise PaymentProviderError("Reembolso de Pix via Orders não está implementado.")
         if str(provider_payment_id).startswith("pref:"):
             raise PaymentProviderError(
                 "O pedido ainda não tem um ID de pagamento confirmado para reembolso."

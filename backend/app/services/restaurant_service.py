@@ -183,14 +183,11 @@ class RestauranteService:
                 return {"success": False, "erro": "Telefone já cadastrado.", "status_code": 409}
 
             geocodificacao = GeocodingService.geocodificar(endereco)
-            if geocodificacao["success"]:
-                coordenadas = geocodificacao["dados"]
-            elif geocodificacao.get("status_code") in (502, 503):
-                # O cadastro permanece possível durante indisponibilidade temporária.
-                # O checkout tentará localizar o endereço antes de calcular a entrega.
-                coordenadas = {"latitude": None, "longitude": None}
-            else:
+            if not geocodificacao["success"]:
+                # Sem coordenadas verificadas, não conclui o cadastro da loja:
+                # elas são necessárias para o cálculo seguro das entregas.
                 return geocodificacao
+            coordenadas = geocodificacao["dados"]
 
             novo_restaurante = Restaurante(
                 cnpj=cnpj, razao_social=razao_social, nome=nome,

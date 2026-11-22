@@ -215,7 +215,13 @@ class PaymentService:
                 provider_payment_id=result.provider_payment_id,
                 idempotency_key=key,
                 payment_method=pedido.payment_method,
-                status=result.status.value,
+                # Mesmo se o sandbox aprovar instantaneamente, confirmar
+                # a compra apenas após nova consulta autenticada ao provedor.
+                status=(
+                    PaymentStatus.PENDING.value
+                    if pedido.payment_method == "PIX" and result.status == PaymentStatus.APPROVED
+                    else result.status.value
+                ),
                 amount=result.amount,
                 currency=result.currency,
                 approval_url=result.approval_url,
@@ -285,6 +291,7 @@ class PaymentService:
         if (
             attempt.provider == "mercadopago"
             and attempt.status in {PaymentStatus.REJECTED.value, PaymentStatus.CANCELLED.value}
+            and attempt.payment_method != "PIX"
             and not str(attempt.provider_payment_id).startswith("pref:")
         ):
             referencia_preferencia = PaymentService._referencia_preferencia_da_url(
@@ -318,9 +325,11 @@ class PaymentService:
             try:
                 provider = get_payment_provider(attempt.provider)
                 result = provider.get_payment(attempt.provider_payment_id)
-                PaymentService._registrar_resultado_gateway(
+                atualizacao = PaymentService._registrar_resultado_gateway(
                     pedido, attempt, result, event_id=None
                 )
+                if not atualizacao.get("success"):
+                    db.session.rollback()
                 attempt = db.session.get(PaymentAttempt, attempt.id)
             except (PaymentProviderError, ValueError):
                 # Sem pagamento aprovado ainda ou API indisponível: retornar o
@@ -506,6 +515,21 @@ class PaymentService:
             }
 
         previous_provider_payment_id = attempt.provider_payment_id
+        # Orders API pode gerar QR de forma assíncrona. Atualize os dados ao
+        # consultar sem apagar valores anteriormente recebidos.
+        if str(previous_provider_payment_id).startswith("ord:"):
+            if result.provider_payment_id != previous_provider_payment_id:
+                return {
+                    "success": False,
+                    "erro": "O identificador da order Pix mudou inesperadamente.",
+                    "status_code": 409,
+                }
+            if getattr(result, "pix_copy_paste", None):
+                attempt.pix_copy_paste = result.pix_copy_paste
+            if getattr(result, "pix_qr_code_base64", None):
+                attempt.pix_qr_code_base64 = result.pix_qr_code_base64
+            if getattr(result, "approval_url", None):
+                attempt.approval_url = result.approval_url
         # Keep the preference reference while a payment is pending/rejected so
         # get_payment() can search for the latest attempt made through that same
         # Checkout Pro preference. Once approved, persist the actual payment ID.
