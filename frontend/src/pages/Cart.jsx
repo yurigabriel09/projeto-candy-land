@@ -9,6 +9,8 @@ import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getDeliv
 import { geocodeCustomerAddress, saveAddressCoordinates } from "../services/userService";
 import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
+import { getProducts } from "../services/productService";
+import { limiteDoItem } from "../context/CartContext";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -33,9 +35,22 @@ function obterUrlImagem(url) {
 }
 
 function Cart() {
-    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal, quantidadeMaxima } = useCart();
+    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal, quantidadeMaxima, sincronizarEstoque } = useCart();
     const navigate = useNavigate();
     const [cupom, setCupom] = useState("");
+    const [erroEstoque, setErroEstoque] = useState("");
+    const [consultandoEstoque, setConsultandoEstoque] = useState(true);
+    useEffect(() => {
+        let ativo = true;
+        getProducts().then(produtos => {
+            if (ativo) sincronizarEstoque(produtos);
+        }).catch(() => {
+            if (ativo) setErroEstoque("Não foi possível consultar o estoque. Tente novamente.");
+        }).finally(() => { if (ativo) setConsultandoEstoque(false); });
+        return () => { ativo = false; };
+    }, []);
+    const estoqueInvalido = carrinho.itens.some(i =>
+        i.disponivel === false || i.estoque == null || i.quantidade > limiteDoItem(i));
     const [cupomAplicado, setCupomAplicado] = useState(false);
     const [mensagemCupom, setMensagemCupom] = useState("");
 
@@ -128,7 +143,7 @@ function Cart() {
     }
 
     function handleIrParaPagamento() {
-        if (!carrinho.itens || carrinho.itens.length === 0) return;
+        if (!carrinho.itens || carrinho.itens.length === 0 || consultandoEstoque || erroEstoque || estoqueInvalido) return;
         navigate("/checkout");
     }
 
@@ -228,6 +243,11 @@ function Cart() {
                                             </div>
                                             <div className="cart-item-detalhes">
                                                 <h4 className="cart-item-nome">{item.nome}</h4>
+                                                {!consultandoEstoque && (item.disponivel === false || item.estoque == null || item.quantidade > limiteDoItem(item)) && (
+                                                    <small role="alert" style={{ color: "#b91c1c" }}>
+                                                        {item.estoque == null ? "Estoque indisponível para consulta" : `Estoque atual: ${item.estoque} unidade(s). Ajuste ou remova o produto.`}
+                                                    </small>
+                                                )}
                                                 <span className="cart-item-preco">
                                                     {moeda.format(item.preco)}
                                                 </span>
@@ -247,7 +267,7 @@ function Cart() {
                                                         type="button"
                                                         onClick={() => atualizarQuantidade(item.id_produto, item.quantidade + 1)}
                                                         aria-label="Aumentar quantidade"
-                                                        disabled={item.quantidade >= quantidadeMaxima}
+                                                        disabled={consultandoEstoque || item.disponivel === false || item.quantidade >= limiteDoItem(item)}
                                                     >
                                                         +
                                                     </button>                                             </div>
@@ -386,8 +406,11 @@ function Cart() {
                                     </div>
                                 </div>
 
+                                {erroEstoque && <p role="alert">{erroEstoque}</p>}
+                                {estoqueInvalido && !consultandoEstoque && <p role="alert">Revise os itens sem estoque antes de continuar.</p>}
                                 <button
                                     type="button"
+                                    disabled={consultandoEstoque || !!erroEstoque || estoqueInvalido}
                                     className="primary-button cart-btn-checkout"
                                     onClick={handleIrParaPagamento}
                                 >

@@ -225,7 +225,7 @@ function Home() {
                     <div className="hm-banner-texto">
                         <span className="hm-banner-selo">🎁 Oferta especial de hoje</span>
                         <h2>Frete grátis em qualquer doce!</h2>
-                        <p>Use o cupom SWEET10 e ganhe frete grátis no seu próximo pedido</p>
+                        <p>Use o cupom CANDY10 e ganhe frete grátis no seu próximo pedido</p>
                         <button
                             type="button"
                             className="hm-banner-botao"

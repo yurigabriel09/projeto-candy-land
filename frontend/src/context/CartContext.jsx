@@ -11,6 +11,20 @@ const CARRINHO_VAZIO = {
     orderType: "DELIVERY"
 };
 
+// Estoque desconhecido nunca é tratado como disponibilidade ilimitada.
+export function lerEstoque(produto) {
+    const valor = produto?.qtd_estoque ?? produto?.estoque ?? produto?.current_stock;
+    if (valor === undefined || valor === null || valor === "") return null;
+    const numero = Number(valor);
+    return Number.isInteger(numero) && numero >= 0 ? numero : null;
+}
+
+export function limiteDoItem(item) {
+    return item.estoque === null || item.estoque === undefined
+        ? 0
+        : Math.min(QUANTIDADE_MAXIMA, Math.max(0, Number(item.estoque) || 0));
+}
+
 // Garante uma quantidade inteira entre 1 e o limite
 function normalizarQuantidade(valor) {
     const numero = Math.floor(Number(valor));
@@ -36,7 +50,9 @@ function carregarCarrinhoInicial() {
                 itens: dados.itens.map((i) => ({
                     ...i,
                     preco: Number(i.preco),
-                    quantidade: normalizarQuantidade(i.quantidade)
+                    quantidade: normalizarQuantidade(i.quantidade),
+                    estoque: lerEstoque(i) ?? (Number.isInteger(i.estoque) && i.estoque >= 0 ? i.estoque : null),
+                    disponivel: i.disponivel !== false
                 })),
                 orderType: dados.orderType || "DELIVERY"
             };
@@ -69,19 +85,25 @@ export function CartProvider({ children }) {
         // Captura qualquer propriedade de imagem enviada pelo objeto do produto
         const imagemUrl = produto.image_url || produto.imagem_url || produto.foto_url || produto.imagem || produto.foto || null;
 
+        const estoque = lerEstoque(produto);
+        const disponivel = produto.produto_disponivel !== false;
+        if (!disponivel || estoque === null || estoque < 1) return false;
+
         const itemNovo = {
             id_produto: produto.id_produto || produto.id,
             nome: produto.nome_produto || produto.nome || produto.name,
             preco: Number(produto.preco_produto || produto.preco || produto.price),
             imagem_url: imagemUrl,
-            quantidade: 1
+            quantidade: 1,
+            estoque,
+            disponivel
         };
 
         if (carrinho.restauranteId && String(carrinho.restauranteId) !== String(restauranteId)) {
             const confirmou = window.confirm(
                 "Seu carrinho tem itens de outro restaurante. Deseja esvaziar e adicionar este novo item?"
             );
-            if (!confirmou) return;
+            if (!confirmou) return false;
 
             atualizar(() => ({
                 ...CARRINHO_VAZIO,
@@ -89,7 +111,7 @@ export function CartProvider({ children }) {
                 restauranteNome,
                 itens: [itemNovo],
             }));
-            return;
+            return true;
         }
 
         atualizar((atual) => {
@@ -100,7 +122,9 @@ export function CartProvider({ children }) {
                     mesmoProduto(i.id_produto, itemNovo.id_produto)
                         ? {
                             ...i,
-                            quantidade: Math.min(i.quantidade + 1, QUANTIDADE_MAXIMA),
+                            quantidade: Math.min(i.quantidade + 1, estoque, QUANTIDADE_MAXIMA),
+                            estoque,
+                            disponivel,
                             imagem_url: i.imagem_url || imagemUrl
                         }
                         : i
@@ -115,6 +139,23 @@ export function CartProvider({ children }) {
                 orderType: atual.orderType || "DELIVERY",
             };
         });
+        return true;
+    }
+
+    function sincronizarEstoque(produtos) {
+        if (!Array.isArray(produtos)) return;
+        const mapa = new Map(produtos.map(p => [String(p.id_produto ?? p.id), p]));
+        atualizar(atual => ({
+            ...atual,
+            itens: atual.itens.map(item => {
+                const produto = mapa.get(String(item.id_produto));
+                return produto ? {
+                    ...item,
+                    estoque: lerEstoque(produto),
+                    disponivel: produto.produto_disponivel !== false
+                } : { ...item, estoque: 0, disponivel: false }
+            })
+        }));
     }
 
     function removerItem(idProduto) {
@@ -133,12 +174,16 @@ export function CartProvider({ children }) {
             return;
         }
 
-        const novaQuantidade = normalizarQuantidade(numero);
         atualizar((atual) => ({
             ...atual,
-            itens: atual.itens.map((i) =>
-                mesmoProduto(i.id_produto, idProduto) ? { ...i, quantidade: novaQuantidade } : i
-            )
+            itens: atual.itens.map((i) => {
+                if (!mesmoProduto(i.id_produto, idProduto)) return i;
+                const limite = limiteDoItem(i);
+                // Reduzir é permitido mesmo quando o estoque caiu para zero.
+                if (numero < i.quantidade) return { ...i, quantidade: normalizarQuantidade(numero) };
+                if (!i.disponivel || limite === 0) return i;
+                return { ...i, quantidade: Math.min(normalizarQuantidade(numero), limite) };
+            })
         }));
     }
 
@@ -160,6 +205,7 @@ export function CartProvider({ children }) {
                 carrinho,
                 adicionarItem,
                 atualizarQuantidade,
+                sincronizarEstoque,
                 removerItem,
                 atualizarTipoPedido,
                 limparCarrinho,

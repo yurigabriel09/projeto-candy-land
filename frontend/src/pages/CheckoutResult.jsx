@@ -187,6 +187,26 @@ function CheckoutResult() {
                                 </>
                             ) : pedido.status === "CANCELADO" ? (
                                 <p className="cart-checkout-erro">Este pedido foi cancelado. Entre em contato com o restaurante se precisar de ajuda.</p>
+                            ) : !pagamento ? (
+                                <div>
+                                    <p className="cart-aviso-checkout">
+                                        Este pedido ainda não possui uma tentativa de pagamento.
+                                        Você pode iniciar o pagamento agora.
+                                    </p>
+
+                                    {pedido.payment_method === "PAYPAL" && (
+                                        <button
+                                            className="btn-principal"
+                                            type="button"
+                                            disabled={iniciandoNovaTentativa}
+                                            onClick={tentarPagarNovamente}
+                                        >
+                                            {iniciandoNovaTentativa
+                                                ? "Iniciando pagamento..."
+                                                : "Pagar com PayPal"}
+                                        </button>
+                                    )}
+                                </div>
                             ) : pagamentoPrecisaAtencao ? (
                                 <>
                                     <p className="cart-checkout-erro">O provedor informou <strong>{pagamento.status}</strong>. O pedido continua pendente no CandyLand e não será enviado ao restaurante até a aprovação.</p>

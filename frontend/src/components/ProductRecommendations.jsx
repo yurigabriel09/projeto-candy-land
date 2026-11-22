@@ -26,7 +26,7 @@ function lerProduto(produto) {
 // Carrossel de produtos sugeridos.
 // produtoIds: ids base (um item selecionado ou todos os itens do carrinho).
 function ProductRecommendations({ produtoIds, restauranteId, restauranteNome, titulo = "Você também pode gostar", limite = 8 }) {
-    const { adicionarItem } = useCart();
+    const { adicionarItem, carrinho } = useCart();
     const [produtos, setProdutos] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [adicionado, setAdicionado] = useState(null);
@@ -61,8 +61,11 @@ function ProductRecommendations({ produtoIds, restauranteId, restauranteNome, ti
     }
 
     function adicionar(produto) {
+        const id = lerProduto(produto).id;
+        const item = carrinho.itens.find(i => String(i.id_produto) === String(id));
+        if (produto.qtd_estoque == null || Number(produto.qtd_estoque) <= (item?.quantidade || 0)) return;
         adicionarItem(produto, restauranteId, restauranteNome);
-        setAdicionado(lerProduto(produto).id);
+        setAdicionado(id);
         setTimeout(() => setAdicionado(null), 1800);
     }
 
@@ -86,6 +89,9 @@ function ProductRecommendations({ produtoIds, restauranteId, restauranteNome, ti
                     : produtos.map((produto) => {
                         const { id, nome, preco, imagem: caminhoImagem } = lerProduto(produto);
                         const imagem = caminhoImagem ? resolverImagemUrl(caminhoImagem) : null;
+                        const noCarrinho = String(carrinho.restauranteId) === String(restauranteId)
+                            ? carrinho.itens.find(i => String(i.id_produto) === String(id)) : null;
+                        const esgotado = produto.qtd_estoque == null || Number(produto.qtd_estoque) <= (noCarrinho?.quantidade || 0);
                         return (
                             <article className="recs-card" key={id}>
                                 <div className="recs-imagem">
@@ -96,7 +102,7 @@ function ProductRecommendations({ produtoIds, restauranteId, restauranteNome, ti
                                 <h4 className="recs-nome">{nome}</h4>
                                 <div className="recs-rodape">
                                     <strong className="recs-preco">{moeda.format(Number.isFinite(preco) ? preco : 0)}</strong>
-                                    <button type="button" className="recs-add" onClick={() => adicionar(produto)} aria-label={`Adicionar ${nome} ao carrinho`}>
+                                    <button type="button" className="recs-add" disabled={esgotado} onClick={() => adicionar(produto)} aria-label={`Adicionar ${nome} ao carrinho`}>
                                         {adicionado === id ? "✓ Adicionado" : "+ Adicionar"}
                                     </button>
                                 </div>

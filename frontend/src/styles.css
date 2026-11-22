@@ -5167,6 +5167,8 @@ select:focus-visible {
     padding: 36px 18px;
     border-radius: 22px;
   }
+
+}
 /* ===== Resumo do pagamento (taxa e tempo de entrega) ===== */
 .checkout-breakdown {
   margin-top: 0.9rem;

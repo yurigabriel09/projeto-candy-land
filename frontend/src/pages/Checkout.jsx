@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import PixPayment from "../components/PixPayment";
 import { createOrder, createPayment, getCustomerAddresses, getDeliveryQuote } from "../services/orderService";
+import { getProducts } from "../services/productService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -154,6 +155,17 @@ function Checkout() {
 
         setProcessando(true);
         try {
+            // Consulta atualizada para evitar iniciar pagamento com estoque insuficiente.
+            const catalogo = await getProducts();
+            const mapa = new Map(catalogo.map(p => [String(p.id_produto), p]));
+            const semEstoque = carrinho.itens.find(item => {
+                const produto = mapa.get(String(item.id_produto));
+                return !produto || produto.produto_disponivel === false ||
+                    produto.qtd_estoque == null || Number(produto.qtd_estoque) < item.quantidade;
+            });
+            if (semEstoque) {
+                throw new Error(`O estoque de ${semEstoque.nome} mudou. Volte ao carrinho para ajustar a quantidade.`);
+            }
             const payload = {
                 restaurant_id: Number(carrinho.restauranteId),
                 order_type: carrinho.orderType || "DELIVERY",
