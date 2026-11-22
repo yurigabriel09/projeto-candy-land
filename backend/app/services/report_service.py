@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from app.database.database import db
 from app.models.item_order import ItemPedido
@@ -323,5 +323,68 @@ class ReportService:
             return {
                 "success": False,
                 "erro": "Falha ao gerar o relatório administrativo.",
+                "status_code": 500,
+            }
+
+    @staticmethod
+    def relatorio_cliente(user_id):
+        """Resumo dos últimos 30 dias, somente de pedidos FINALIZADO.
+
+        A janela móvel é baseada em Pedido.created_at (e não no momento
+        da aprovação/finalização). A regra considera 30 dias completos
+        anteriores ao instante da consulta, no fuso de Brasília.
+        """
+        try:
+            agora = agora_brasilia()
+            inicio = brasilia_para_utc_naive(agora - timedelta(days=30))
+            fim = brasilia_para_utc_naive(agora)
+
+            quantidade, gasto, economia = (
+                db.session.query(
+                    func.count(Pedido.id),
+                    func.coalesce(func.sum(Pedido.total), 0),
+                    func.coalesce(func.sum(Pedido.discount), 0),
+                )
+                .filter(
+                    Pedido.user_id == user_id,
+                    Pedido.status == "FINALIZADO",
+                    Pedido.created_at >= inicio,
+                    Pedido.created_at <= fim,
+                )
+                .one()
+            )
+
+            quantidade = int(quantidade or 0)
+            gasto = Decimal(str(gasto or 0))
+            economia = Decimal(str(economia or 0))
+            ticket_medio = (
+                gasto / Decimal(quantidade) if quantidade else Decimal("0.00")
+            )
+
+            def valor_monetario(valor):
+                return float(
+                    valor.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                )
+
+            return {
+                "success": True,
+                "mensagem": "Relatório do cliente gerado.",
+                "dados": {
+                    "gerado_em": agora.isoformat(),
+                    "periodo_dias": 30,
+                    "criterio_data": "created_at",
+                    "status_considerado": "FINALIZADO",
+                    "cards": {
+                        "pedidos": quantidade,
+                        "gasto_total": valor_monetario(gasto),
+                        "ticket_medio": valor_monetario(ticket_medio),
+                        "economia_cupons": valor_monetario(economia),
+                    },
+                },
+            }
+        except SQLAlchemyError:
+            return {
+                "success": False,
+                "erro": "Falha ao gerar o relatório do cliente.",
                 "status_code": 500,
             }

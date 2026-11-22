@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import { getRestaurant, getRestaurantProducts } from "../services/restaurantService";
+import { getProducts } from "../services/productService";
 import { useCart } from "../context/CartContext";
 import ProductRecommendations from "../components/ProductRecommendations";
 import { resolverImagemUrl } from "../utils/imageUrl";
@@ -54,11 +55,18 @@ function Restaurant() {
         setProdutos([]);
         setCategoriaAtiva("");
 
-        Promise.all([getRestaurant(restauranteId), getRestaurantProducts(restauranteId)])
-            .then(([loja, itens]) => {
+        Promise.all([getRestaurant(restauranteId), getRestaurantProducts(restauranteId), getProducts()])
+            .then(([loja, itens, catalogo]) => {
+                const estoques = new Map(catalogo.map(p => [String(p.id_produto), p]));
+                const itensComEstoque = itens.map(p => ({
+                    ...p,
+                    qtd_estoque: estoques.get(String(p.id_produto))?.qtd_estoque ?? null,
+                    produto_disponivel: p.produto_disponivel !== false &&
+                        estoques.get(String(p.id_produto))?.produto_disponivel !== false
+                }));
                 if (ativo) {
                     setRestaurante(loja);
-                    setProdutos(itens);
+                    setProdutos(itensComEstoque);
                 }
             })
             .catch((error) => {
@@ -172,6 +180,9 @@ function Restaurant() {
                                     <div className="lj-lista">
                                         {produtosVisiveis.map((produto) => {
                                             const quantidade = quantidadeDoProduto(produto.id_produto);
+                                            const estoque = Number(produto.qtd_estoque);
+                                            const limite = produto.qtd_estoque == null ? 0 : Math.min(99, estoque);
+                                            const esgotado = !produto.produto_disponivel || limite <= 0;
                                             return (
                                                 <article className="lj-produto" key={produto.id_produto}>
                                                     <div className="lj-produto-capa">
@@ -189,7 +200,7 @@ function Restaurant() {
                                                         </strong>
                                                     </div>
 
-                                                    {!produto.produto_disponivel ? (
+                                                    {esgotado ? (
                                                         <span className="selo-indisponivel">Indisponível</span>
                                                     ) : quantidade > 0 ? (
                                                         <div className="lj-qtd">
@@ -204,7 +215,7 @@ function Restaurant() {
                                                                 type="button"
                                                                 className="lj-qtd-mais"
                                                                 aria-label={`Aumentar ${produto.nome_produto}`}
-                                                                disabled={quantidade >= quantidadeMaxima}
+                                                                disabled={quantidade >= limite}
                                                                 onClick={() => adicionarItem(produto, restaurante.id, restaurante.nome)}
                                                             >+</button>
                                                         </div>

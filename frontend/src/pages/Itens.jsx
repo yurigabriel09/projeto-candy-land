@@ -200,7 +200,7 @@ function Itens() {
                   ) : (
                     EMOJIS_PRODUTO[i % EMOJIS_PRODUTO.length]
                   )}
-                  {!produto.produto_disponivel && (
+                  {(!produto.produto_disponivel || produto.qtd_estoque == null || Number(produto.qtd_estoque) <= 0) && (
                     <span className="selo-indisponivel">Indisponível</span>
                   )}
                 </div>
@@ -218,7 +218,7 @@ function Itens() {
                     <strong>{formatarPreco(produto.preco_produto)}</strong>
                     <button
                       className="btn-principal btn-pequeno"
-                      disabled={!produto.produto_disponivel || String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() !== "ABERTO"}
+                      disabled={!produto.produto_disponivel || produto.qtd_estoque == null || Number(produto.qtd_estoque) <= 0 || (String(carrinho.restauranteId) === String(produto.id_restaurante) && carrinho.itens.some(i => String(i.id_produto) === String(produto.id_produto) && i.quantidade >= Math.min(99, Number(produto.qtd_estoque)))) || String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() !== "ABERTO"}
                       onClick={() => handleAdicionar(produto)}
                     >
                       {String(lojas.find((loja) => loja.id === produto.id_restaurante)?.status || "").toUpperCase() === "EM_ANALISE"

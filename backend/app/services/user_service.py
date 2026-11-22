@@ -156,13 +156,11 @@ class UserService:
             if not isinstance(endereco, dict):
                 return {"success": False, "erro": "Informe um endereço residencial completo.", "status_code": 400}
             geocodificacao = GeocodingService.geocodificar(endereco)
-            if geocodificacao["success"]:
-                coordenadas = geocodificacao["dados"]
-            elif geocodificacao.get("status_code") in (502, 503):
-                # Não bloqueia a criação da conta; o checkout repetirá a geocodificação.
-                coordenadas = {"latitude": None, "longitude": None}
-            else:
+            if not geocodificacao["success"]:
+                # Evita cadastrar endereço sem localização, pois o cálculo de frete
+                # e a entrega dependem das coordenadas desse endereço.
                 return geocodificacao
+            coordenadas = geocodificacao["dados"]
 
             if data_nascimento:
                 data_nascimento = date.fromisoformat(data_nascimento)

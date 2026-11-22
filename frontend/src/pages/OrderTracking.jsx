@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "../components/Header";
+import "./OrderTracking.css";
 import LocationMap from "../components/LocationMap";
 import { getOrder } from "../services/orderService";
 
@@ -160,11 +161,11 @@ function OrderTracking() {
                                 </p>
                             )}
 
-                            <dl>
+                            <dl className="track-resumo">
                                 <div><dt>Modalidade</dt><dd>{pedido.order_type === "PICKUP" ? "Retirada no restaurante" : "Entrega no endereço"}</dd></div>
                                 <div><dt>Pagamento</dt><dd>{pedido.status === "PENDENTE_PAGAMENTO" ? "Pendente" : cancelado ? "Pedido cancelado" : "Confirmado"}</dd></div>
                                 {pedido.entrega && <div><dt>Status da entrega</dt><dd>{STATUS_ENTREGA[pedido.entrega.status] || pedido.entrega.status}</dd></div>}
-                                <div><dt>Total</dt><dd><strong>{moeda.format(pedido.total || 0)}</strong></dd></div>
+                                <div className="track-resumo-total"><dt>Total</dt><dd><strong>{moeda.format(pedido.total || 0)}</strong></dd></div>
                             </dl>
 
                             {itens.length > 0 && (

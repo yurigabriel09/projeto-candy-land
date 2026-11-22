@@ -5167,6 +5167,10 @@ select:focus-visible {
     padding: 36px 18px;
     border-radius: 22px;
   }
+
+}
+
+
 /* ===== Resumo do pagamento (taxa e tempo de entrega) ===== */
 .checkout-breakdown {
   margin-top: 0.9rem;
@@ -5771,4 +5775,117 @@ select:focus-visible {
   .lj-pedido { position: static; }
   .lj-hero-info h1 { font-size: 1.9rem; }
   .lj-hero-capa { width: 72px; height: 72px; font-size: 2.4rem; }
+}
+
+/* ===== RESULTADO DO PAGAMENTO ===== */
+.rs-cartao {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #fff;
+  border: 2px solid #fbe3cc;
+  border-radius: 28px;
+  padding: 2rem 2.2rem;
+  box-shadow: 0 12px 32px rgba(255, 90, 110, 0.08);
+}
+.rs-etiqueta {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff3d71;
+}
+.rs-topo {
+  text-align: center;
+  border-radius: 20px;
+  padding: 1.6rem 1rem;
+}
+.rs-topo-ok { background: #ecfdf3; }
+.rs-topo-pendente { background: #fff4e5; }
+.rs-topo-erro { background: #ffe9ee; }
+.rs-icone {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.rs-topo-ok .rs-icone { background: linear-gradient(135deg, #34d27b, #16a34a); }
+.rs-topo-pendente .rs-icone { background: linear-gradient(135deg, #ffb347, #ff8a3d); }
+.rs-topo-erro .rs-icone { background: linear-gradient(135deg, #ff5c85, #ff3d71); }
+.rs-topo h1 {
+  margin: 0.9rem 0 0.3rem;
+  font-size: 1.8rem;
+  color: #4a1f1f;
+}
+.rs-topo p { margin: 0; color: #8a7470; }
+.rs-carregando { text-align: center; color: #8a7470; }
+.rs-codigo {
+  text-align: center;
+  margin: 1.3rem 0;
+  color: #8a7470;
+}
+.rs-codigo strong { color: #4a1f1f; letter-spacing: 0.03em; }
+.rs-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin: 0;
+}
+.rs-info > div {
+  background: #fff8f3;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+}
+.rs-info dt {
+  font-size: 0.85rem;
+  color: #8a7470;
+  margin: 0 0 0.25rem;
+}
+.rs-info dd {
+  margin: 0;
+  font-weight: 600;
+  color: #4a1f1f;
+}
+.rs-info .rs-total {
+  color: #ff3d71;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.rs-mapa { margin-top: 1.5rem; }
+.rs-mapa h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  color: #4a1f1f;
+}
+.rs-nota {
+  text-align: center;
+  margin: 1.2rem 0 0;
+  color: #2e9e5b;
+  font-size: 0.95rem;
+}
+.rs-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+}
+.rs-link {
+  color: #ff3d71;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+}
+.rs-link:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .rs-cartao { padding: 1.4rem 1.1rem; }
+  .rs-info { grid-template-columns: 1fr; }
+  .rs-topo h1 { font-size: 1.5rem; }
 }

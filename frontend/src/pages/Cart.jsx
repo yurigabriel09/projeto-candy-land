@@ -9,6 +9,9 @@ import { cancelOrder, createOrder, createPayment, getCustomerAddresses, getDeliv
 import { geocodeCustomerAddress, saveAddressCoordinates } from "../services/userService";
 import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
+import { getProducts } from "../services/productService";
+import { validateCoupon } from "../services/orderService";
+import { limiteDoItem } from "../context/CartContext";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -33,9 +36,24 @@ function obterUrlImagem(url) {
 }
 
 function Cart() {
-    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal, quantidadeMaxima } = useCart();
+    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, aplicarCupom, total, quantidadeTotal, quantidadeMaxima, sincronizarEstoque } = useCart();
     const navigate = useNavigate();
-    const [cupom, setCupom] = useState("");
+    const [cupom, setCupom] = useState(carrinho.couponCode || "");
+    const [cotacaoCupom, setCotacaoCupom] = useState(null);
+    const [validandoCupom, setValidandoCupom] = useState(false);
+    const [erroEstoque, setErroEstoque] = useState("");
+    const [consultandoEstoque, setConsultandoEstoque] = useState(true);
+    useEffect(() => {
+        let ativo = true;
+        getProducts().then(produtos => {
+            if (ativo) sincronizarEstoque(produtos);
+        }).catch(() => {
+            if (ativo) setErroEstoque("Não foi possível consultar o estoque. Tente novamente.");
+        }).finally(() => { if (ativo) setConsultandoEstoque(false); });
+        return () => { ativo = false; };
+    }, []);
+    const estoqueInvalido = carrinho.itens.some(i =>
+        i.disponivel === false || i.estoque == null || i.quantidade > limiteDoItem(i));
     const [cupomAplicado, setCupomAplicado] = useState(false);
     const [mensagemCupom, setMensagemCupom] = useState("");
 
@@ -115,20 +133,66 @@ function Cart() {
         };
     }, [ehRetirada, carrinho.restauranteId, enderecoEntrega]);
 
-    function handleAplicarCupom(e) {
+    const assinaturaItens = JSON.stringify(carrinho.itens.map(i => [i.id_produto, i.quantidade]));
+
+    useEffect(() => {
+        if (!carrinho.couponCode || !carrinho.restauranteId || !carrinho.itens.length) {
+            setCotacaoCupom(null);
+            return;
+        }
+        let ativo = true;
+        setValidandoCupom(true);
+        setCotacaoCupom(null);
+        validateCoupon({
+            restaurantId: carrinho.restauranteId,
+            items: carrinho.itens,
+            couponCode: carrinho.couponCode,
+        }).then(resultado => {
+            if (ativo) {
+                setCotacaoCupom(resultado);
+                setCupomAplicado(true);
+                setMensagemCupom(`Cupom ${resultado.coupon_code} aplicado!`);
+            }
+        }).catch(error => {
+            if (ativo) {
+                setCupomAplicado(false);
+                setMensagemCupom(error.message);
+                aplicarCupom(null);
+            }
+        }).finally(() => { if (ativo) setValidandoCupom(false); });
+        return () => { ativo = false; };
+    }, [carrinho.couponCode, carrinho.restauranteId, assinaturaItens]);
+
+    async function handleAplicarCupom(e) {
         e.preventDefault();
-        if (!cupom.trim()) return;
-        if (cupom.toUpperCase() === "CANDY10") {
+        const codigo = cupom.trim().toUpperCase();
+        if (!codigo || validandoCupom) return;
+        setValidandoCupom(true);
+        setMensagemCupom("");
+        try {
+            const resultado = await validateCoupon({
+                restaurantId: carrinho.restauranteId,
+                items: carrinho.itens,
+                couponCode: codigo,
+            });
+            setCotacaoCupom(resultado);
+            aplicarCupom(resultado.coupon_code);
             setCupomAplicado(true);
-            setMensagemCupom("Cupom CANDY10 aplicado!");
-        } else {
+            setMensagemCupom(`Cupom ${resultado.coupon_code} aplicado!`);
+        } catch (error) {
+            setCotacaoCupom(null);
+            aplicarCupom(null);
             setCupomAplicado(false);
-            setMensagemCupom("Cupom inválido");
+            setMensagemCupom(error.message);
+        } finally {
+            setValidandoCupom(false);
         }
     }
 
+    const desconto = carrinho.couponCode && cotacaoCupom ? cotacaoCupom.discount : 0;
+
     function handleIrParaPagamento() {
-        if (!carrinho.itens || carrinho.itens.length === 0) return;
+        if (!carrinho.itens || carrinho.itens.length === 0 || consultandoEstoque || erroEstoque || estoqueInvalido || validandoCupom || (carrinho.couponCode && !cotacaoCupom)) return;
         navigate("/checkout");
     }
 
@@ -228,6 +292,11 @@ function Cart() {
                                             </div>
                                             <div className="cart-item-detalhes">
                                                 <h4 className="cart-item-nome">{item.nome}</h4>
+                                                {!consultandoEstoque && (item.disponivel === false || item.estoque == null || item.quantidade > limiteDoItem(item)) && (
+                                                    <small role="alert" style={{ color: "#b91c1c" }}>
+                                                        {item.estoque == null ? "Estoque indisponível para consulta" : `Estoque atual: ${item.estoque} unidade(s). Ajuste ou remova o produto.`}
+                                                    </small>
+                                                )}
                                                 <span className="cart-item-preco">
                                                     {moeda.format(item.preco)}
                                                 </span>
@@ -247,7 +316,7 @@ function Cart() {
                                                         type="button"
                                                         onClick={() => atualizarQuantidade(item.id_produto, item.quantidade + 1)}
                                                         aria-label="Aumentar quantidade"
-                                                        disabled={item.quantidade >= quantidadeMaxima}
+                                                        disabled={consultandoEstoque || item.disponivel === false || item.quantidade >= limiteDoItem(item)}
                                                     >
                                                         +
                                                     </button>                                             </div>
@@ -351,8 +420,8 @@ function Cart() {
                                         value={cupom}
                                         onChange={(e) => setCupom(e.target.value)}
                                     />
-                                    <button type="submit" className="btn-aplicar-cupom">
-                                        Aplicar
+                                    <button type="submit" className="btn-aplicar-cupom" disabled={validandoCupom}>
+                                        {validandoCupom ? "Validando..." : "Aplicar"}
                                     </button>
                                 </form>
                                 {mensagemCupom && (
@@ -366,6 +435,12 @@ function Cart() {
                                         <span>Subtotal</span>
                                         <strong>{moeda.format(total)}</strong>
                                     </div>
+                                    {desconto > 0 && (
+                                        <div className="resumo-linha">
+                                            <span>Desconto ({carrinho.couponCode})</span>
+                                            <strong>-{moeda.format(desconto)}</strong>
+                                        </div>
+                                    )}
                                     <div className="resumo-linha">
                                         <span>Taxa de entrega</span>
                                         {ehRetirada ? (
@@ -380,16 +455,20 @@ function Cart() {
                                     <div className="resumo-linha resumo-total">
                                         <span>Total</span>
                                         <div className="resumo-total-valor">
-                                            <strong>{moeda.format(total)}</strong>
-                                            <small>Pagamento na próxima etapa</small>
+                                            <strong>{moeda.format(Math.max(0, total - desconto))}</strong>
+                                            <small>Frete calculado no pagamento</small>
                                         </div>
                                     </div>
                                 </div>
 
+                                {erroEstoque && <p role="alert">{erroEstoque}</p>}
+                                {estoqueInvalido && !consultandoEstoque && <p role="alert">Revise os itens sem estoque antes de continuar.</p>}
                                 <button
                                     type="button"
+                                    disabled={consultandoEstoque || !!erroEstoque || estoqueInvalido}
                                     className="primary-button cart-btn-checkout"
                                     onClick={handleIrParaPagamento}
+                                    disabled={validandoCupom || Boolean(carrinho.couponCode && !cotacaoCupom)}
                                 >
                                     Ir para pagamento
                                 </button>

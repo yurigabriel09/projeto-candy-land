@@ -52,6 +52,7 @@ class EmailService:
         if not response.ok:
             logger.warning(
                 "Brevo recusou o envio de OTP (HTTP %s).",
+                response.text[:500],
                 response.status_code,
             )
             raise ValueError(

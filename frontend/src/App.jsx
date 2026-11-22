@@ -21,7 +21,6 @@ import CheckoutResult from "./pages/CheckoutResult";
 import OrderTracking from "./pages/OrderTracking";
 import BusinessOrders from "./pages/BusinessOrders";
 import BusinessFinance from "./pages/BusinessFinance";
-import BusinessReviews from "./pages/BusinessReviews";
 import Checkout from "./pages/Checkout";
 
 import AuthProvider from "./context/AuthContext";
@@ -166,14 +165,6 @@ function App() {
                                 }
                             />
 
-                            <Route
-                                path="/business/avaliacoes"
-                                element={
-                                    <ProtectedRoute tipoConta="BUSINESS">
-                                        <BusinessReviews />
-                                    </ProtectedRoute>
-                                }
-                            />
 
                             <Route
                                 path="/business/products/new"

@@ -5,6 +5,7 @@ import re
 
 from app.database.database import db
 from app.models.order import Pedido
+from app.models.delivery import EntregaPedido
 from app.models.order_receipt_code import OrderReceiptCode
 from app.services.order_workflow_service import (
     OrderTransitionError,
@@ -99,8 +100,8 @@ class OrderReceiptService:
             return {"success": False, "erro": "O pedido já está encerrado ou cancelado.", "status_code": 409}
         if pedido.order_type == "PICKUP" and pedido.status != "PRONTO_PARA_ENTREGA":
             return {"success": False, "erro": "A retirada só pode ser finalizada quando o pedido estiver pronto para retirada.", "status_code": 409}
-        if pedido.order_type == "DELIVERY" and pedido.status != "ENTREGUE":
-            return {"success": False, "erro": "Para entrega, primeiro registre a conclusão logística; depois valide o código do destinatário.", "status_code": 409}
+        if pedido.order_type == "DELIVERY" and pedido.status not in {"PRONTO_PARA_ENTREGA", "ENTREGUE"}:
+            return {"success": False, "erro": "A entrega só pode ser finalizada quando o pedido estiver pronto para entrega.", "status_code": 409}
 
         codigo = str(codigo or "").strip()
         if not re.fullmatch(r"\d{6}", codigo):
@@ -126,16 +127,31 @@ class OrderReceiptService:
                     "status_code": 429 if blocked else 400,
                 }
 
-            if pedido.order_type == "PICKUP":
+            # Neste fluxo acadêmico, o PIN fornecido pelo cliente comprova a
+            # entrega/retirada. A conclusão logística e a finalização são atômicas.
+            status_anterior = pedido.status
+            agora = utc_now_naive()
+            if pedido.order_type == "DELIVERY":
+                entrega = EntregaPedido.query.filter_by(pedido_id=pedido.id).first()
+                if entrega is None:
+                    entrega = EntregaPedido(pedido_id=pedido.id)
+                    db.session.add(entrega)
+                if entrega.status == "CANCELADO":
+                    return {"success": False, "erro": "A entrega logística foi cancelada.", "status_code": 409}
+                # O PIN válido funciona como comprovação de entrega, mesmo sem
+                # um integrador de entregadores que atualize cada etapa intermediária.
+                entrega.status = "ENTREGA_CONCLUIDA"
+                if entrega.concluida_em is None:
+                    entrega.concluida_em = agora
+
+            if pedido.status == "PRONTO_PARA_ENTREGA":
                 validar_transicao_pedido(pedido.status, "ENTREGUE")
                 pedido.status = "ENTREGUE"
-                pedido.delivered_at = utc_now_naive()
             validar_transicao_pedido(pedido.status, "FINALIZADO")
             pedido.status = "FINALIZADO"
             if pedido.delivered_at is None:
-                pedido.delivered_at = utc_now_naive()
-            status_anterior = "ENTREGUE" if pedido.order_type == "DELIVERY" else "PRONTO_PARA_ENTREGA"
-            registro.used_at = utc_now_naive()
+                pedido.delivered_at = agora
+            registro.used_at = agora
             db.session.commit()
             try:
                 from app.services.push_notification_service import (

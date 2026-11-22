@@ -79,6 +79,7 @@ class GeocodingService:
             }
 
         status = str(payload.get("status", "")) if isinstance(payload, dict) else ""
+        detalhe = str(payload.get("error_message") or "") if isinstance(payload, dict) else ""
         resultados = payload.get("results") or [] if isinstance(payload, dict) else []
         if status != "OK" or not resultados:
             mensagens = {
@@ -95,7 +96,23 @@ class GeocodingService:
             mensagem = mensagens.get(
                 status, "Não foi possível localizar esse endereço. Confira os dados e tente novamente."
             )
-            codigo_http = 422 if status == "ZERO_RESULTS" else 503 if status in {"REQUEST_DENIED", "OVER_QUERY_LIMIT"} else 502
+            # Diagnóstico seguro: não expõe a mensagem bruta do Google ao cliente.
+            # A resposta pode variar com faturamento, permissões e restrições da chave.
+            detalhe_lower = detalhe.lower()
+            if status == "REQUEST_DENIED":
+                if "referer" in detalhe_lower or "referrer" in detalhe_lower:
+                    mensagem = (
+                        "A chave de geocodificação está restrita a sites, mas esta consulta "
+                        "é feita pelo backend. Configure uma chave de servidor para a Geocoding API."
+                    )
+                elif "billing" in detalhe_lower or "fatur" in detalhe_lower:
+                    mensagem = "O Google recusou a geocodificação: verifique o faturamento do projeto Google Cloud."
+                elif "not authorized" in detalhe_lower or "not enabled" in detalhe_lower or "not activated" in detalhe_lower:
+                    mensagem = "O Google recusou a geocodificação: verifique se a Geocoding API está habilitada e autorizada para a chave."
+            if status == "OVER_DAILY_LIMIT":
+                mensagem = "A geocodificação está indisponível: confira faturamento, chave e limites do Google Cloud."
+
+            codigo_http = 422 if status == "ZERO_RESULTS" else 503 if status in {"REQUEST_DENIED", "OVER_QUERY_LIMIT", "OVER_DAILY_LIMIT"} else 502
             return {"success": False, "erro": mensagem, "status_code": codigo_http}
 
         try:

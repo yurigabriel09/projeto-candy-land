@@ -290,6 +290,42 @@ class OrderService:
 
         return snapshots, subtotal.quantize(Decimal("0.01"))
 
+    # Cupom demonstrativo: 10% sobre os produtos, sem desconto no frete.
+    # Nunca confiar em desconto numérico enviado pelo navegador.
+    @staticmethod
+    def _calcular_desconto(subtotal, codigo):
+        if codigo is None or codigo == "":
+            return Decimal("0.00")
+        if not isinstance(codigo, str) or len(codigo) > 40:
+            raise ValueError("Cupom inválido.")
+        if codigo.strip().upper() != "CANDY10":
+            raise ValueError("Cupom inválido ou expirado.")
+        return (subtotal * Decimal("0.10")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    @staticmethod
+    def cotar_cupom(dados):
+        try:
+            if not isinstance(dados, dict):
+                raise TypeError("Informe os dados do pedido.")
+            restaurante_id = dados.get("restaurant_id")
+            if isinstance(restaurante_id, bool) or not isinstance(restaurante_id, int):
+                raise TypeError("restaurant_id deve ser um inteiro.")
+            _, subtotal = OrderService._build_items(restaurante_id, dados.get("items"))
+            codigo = dados.get("coupon_code")
+            if not codigo or not isinstance(codigo, str):
+                raise ValueError("Informe um código de cupom.")
+            desconto = OrderService._calcular_desconto(subtotal, codigo)
+            return {"success": True, "dados": {
+                "coupon_code": codigo.strip().upper(),
+                "subtotal": float(subtotal),
+                "discount": float(desconto),
+                "total_produtos": float(subtotal - desconto),
+            }}
+        except (TypeError, ValueError) as exc:
+            return {"success": False, "erro": str(exc), "status_code": 400}
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao consultar produtos.", "status_code": 500}
+
     @staticmethod
     def criar_pedido(user_id, dados):
         try:
@@ -334,9 +370,9 @@ class OrderService:
                 ).id
 
             snapshots, subtotal = OrderService._build_items(restaurant_id, items)
-            # Ainda não existe motor server-side de promoções ou taxa da plataforma.
-            # Não aceitar desconto/taxa enviados livremente pelo cliente.
-            discount = Decimal("0.00")
+            # Desconto calculado exclusivamente pelo servidor a partir do cupom.
+            # O campo numérico "discount" enviado pelo cliente é ignorado.
+            discount = OrderService._calcular_desconto(subtotal, dados.get("coupon_code"))
             if order_type == "PICKUP":
                 # Retirada nunca cobra taxa de entrega nem registra distância logística.
                 delivery_fee = Decimal("0.00")

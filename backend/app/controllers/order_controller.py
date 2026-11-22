@@ -26,6 +26,15 @@ class OrderController:
         )
 
     @staticmethod
+    def cotar_cupom(dados, tipo_conta):
+        if tipo_conta != "PERSONAL":
+            return make_response(jsonify({"erro": "Apenas clientes podem usar cupons."}), 403)
+        resultado = OrderService.cotar_cupom(dados)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify(resultado["dados"]), 200)
+
+    @staticmethod
     def cotar_entrega(args, user_id, tipo_conta):
         if tipo_conta != "PERSONAL":
             return make_response(
