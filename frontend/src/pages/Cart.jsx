@@ -10,6 +10,7 @@ import { geocodeCustomerAddress, saveAddressCoordinates } from "../services/user
 import AddressCoordinates from "../components/AddressCoordinates";
 import { getRestaurantPickupAddresses } from "../services/restaurantService";
 import { getProducts } from "../services/productService";
+import { validateCoupon } from "../services/orderService";
 import { limiteDoItem } from "../context/CartContext";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -35,9 +36,11 @@ function obterUrlImagem(url) {
 }
 
 function Cart() {
-    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, total, quantidadeTotal, quantidadeMaxima, sincronizarEstoque } = useCart();
+    const { carrinho, atualizarQuantidade, removerItem, atualizarTipoPedido, aplicarCupom, total, quantidadeTotal, quantidadeMaxima, sincronizarEstoque } = useCart();
     const navigate = useNavigate();
-    const [cupom, setCupom] = useState("");
+    const [cupom, setCupom] = useState(carrinho.couponCode || "");
+    const [cotacaoCupom, setCotacaoCupom] = useState(null);
+    const [validandoCupom, setValidandoCupom] = useState(false);
     const [erroEstoque, setErroEstoque] = useState("");
     const [consultandoEstoque, setConsultandoEstoque] = useState(true);
     useEffect(() => {
@@ -130,20 +133,66 @@ function Cart() {
         };
     }, [ehRetirada, carrinho.restauranteId, enderecoEntrega]);
 
-    function handleAplicarCupom(e) {
+    const assinaturaItens = JSON.stringify(carrinho.itens.map(i => [i.id_produto, i.quantidade]));
+
+    useEffect(() => {
+        if (!carrinho.couponCode || !carrinho.restauranteId || !carrinho.itens.length) {
+            setCotacaoCupom(null);
+            return;
+        }
+        let ativo = true;
+        setValidandoCupom(true);
+        setCotacaoCupom(null);
+        validateCoupon({
+            restaurantId: carrinho.restauranteId,
+            items: carrinho.itens,
+            couponCode: carrinho.couponCode,
+        }).then(resultado => {
+            if (ativo) {
+                setCotacaoCupom(resultado);
+                setCupomAplicado(true);
+                setMensagemCupom(`Cupom ${resultado.coupon_code} aplicado!`);
+            }
+        }).catch(error => {
+            if (ativo) {
+                setCupomAplicado(false);
+                setMensagemCupom(error.message);
+                aplicarCupom(null);
+            }
+        }).finally(() => { if (ativo) setValidandoCupom(false); });
+        return () => { ativo = false; };
+    }, [carrinho.couponCode, carrinho.restauranteId, assinaturaItens]);
+
+    async function handleAplicarCupom(e) {
         e.preventDefault();
-        if (!cupom.trim()) return;
-        if (cupom.toUpperCase() === "CANDY10") {
+        const codigo = cupom.trim().toUpperCase();
+        if (!codigo || validandoCupom) return;
+        setValidandoCupom(true);
+        setMensagemCupom("");
+        try {
+            const resultado = await validateCoupon({
+                restaurantId: carrinho.restauranteId,
+                items: carrinho.itens,
+                couponCode: codigo,
+            });
+            setCotacaoCupom(resultado);
+            aplicarCupom(resultado.coupon_code);
             setCupomAplicado(true);
-            setMensagemCupom("Cupom CANDY10 aplicado!");
-        } else {
+            setMensagemCupom(`Cupom ${resultado.coupon_code} aplicado!`);
+        } catch (error) {
+            setCotacaoCupom(null);
+            aplicarCupom(null);
             setCupomAplicado(false);
-            setMensagemCupom("Cupom inválido");
+            setMensagemCupom(error.message);
+        } finally {
+            setValidandoCupom(false);
         }
     }
 
+    const desconto = carrinho.couponCode && cotacaoCupom ? cotacaoCupom.discount : 0;
+
     function handleIrParaPagamento() {
-        if (!carrinho.itens || carrinho.itens.length === 0 || consultandoEstoque || erroEstoque || estoqueInvalido) return;
+        if (!carrinho.itens || carrinho.itens.length === 0 || consultandoEstoque || erroEstoque || estoqueInvalido || validandoCupom || (carrinho.couponCode && !cotacaoCupom)) return;
         navigate("/checkout");
     }
 
@@ -371,8 +420,8 @@ function Cart() {
                                         value={cupom}
                                         onChange={(e) => setCupom(e.target.value)}
                                     />
-                                    <button type="submit" className="btn-aplicar-cupom">
-                                        Aplicar
+                                    <button type="submit" className="btn-aplicar-cupom" disabled={validandoCupom}>
+                                        {validandoCupom ? "Validando..." : "Aplicar"}
                                     </button>
                                 </form>
                                 {mensagemCupom && (
@@ -386,6 +435,12 @@ function Cart() {
                                         <span>Subtotal</span>
                                         <strong>{moeda.format(total)}</strong>
                                     </div>
+                                    {desconto > 0 && (
+                                        <div className="resumo-linha">
+                                            <span>Desconto ({carrinho.couponCode})</span>
+                                            <strong>-{moeda.format(desconto)}</strong>
+                                        </div>
+                                    )}
                                     <div className="resumo-linha">
                                         <span>Taxa de entrega</span>
                                         {ehRetirada ? (
@@ -400,8 +455,8 @@ function Cart() {
                                     <div className="resumo-linha resumo-total">
                                         <span>Total</span>
                                         <div className="resumo-total-valor">
-                                            <strong>{moeda.format(total)}</strong>
-                                            <small>Pagamento na próxima etapa</small>
+                                            <strong>{moeda.format(Math.max(0, total - desconto))}</strong>
+                                            <small>Frete calculado no pagamento</small>
                                         </div>
                                     </div>
                                 </div>
@@ -413,6 +468,7 @@ function Cart() {
                                     disabled={consultandoEstoque || !!erroEstoque || estoqueInvalido}
                                     className="primary-button cart-btn-checkout"
                                     onClick={handleIrParaPagamento}
+                                    disabled={validandoCupom || Boolean(carrinho.couponCode && !cotacaoCupom)}
                                 >
                                     Ir para pagamento
                                 </button>

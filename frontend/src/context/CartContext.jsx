@@ -8,7 +8,8 @@ const CARRINHO_VAZIO = {
     restauranteId: null,
     restauranteNome: null,
     itens: [],
-    orderType: "DELIVERY"
+    orderType: "DELIVERY",
+    couponCode: null
 };
 
 // Estoque desconhecido nunca é tratado como disponibilidade ilimitada.
@@ -187,6 +188,10 @@ export function CartProvider({ children }) {
         }));
     }
 
+    function aplicarCupom(codigo) {
+        atualizar(atual => ({ ...atual, couponCode: codigo || null }));
+    }
+
     function atualizarTipoPedido(orderType) {
         if (!["DELIVERY", "PICKUP"].includes(orderType)) return;
         atualizar((atual) => ({ ...atual, orderType }));
@@ -208,6 +213,7 @@ export function CartProvider({ children }) {
                 sincronizarEstoque,
                 removerItem,
                 atualizarTipoPedido,
+                aplicarCupom,
                 limparCarrinho,
                 total,
                 quantidadeTotal,

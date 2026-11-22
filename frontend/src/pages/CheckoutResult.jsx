@@ -51,6 +51,7 @@ function CheckoutResult() {
     const paypalToken = searchParams.get("token");
     const paypalCancelled = searchParams.get("cancel") === "1";
     const paypalCaptureStarted = useRef(false);
+    const redirecionamentoIniciado = useRef(false);
     const [pedido, setPedido] = useState(null);
     const [pagamento, setPagamento] = useState(null);
     const [erro, setErro] = useState("");
@@ -164,11 +165,14 @@ function CheckoutResult() {
     const pagamentoPrecisaAtencao = ["REJECTED", "CANCELLED", "ACTION_REQUIRED", "REFUNDED"].includes(pagamento?.status);
 
     useEffect(() => {
-        // Pedido confirmado: o carrinho já virou pedido, então é esvaziado.
-        if (confirmado) {
-            limparCarrinho();
-        }
-    }, [confirmado]);
+        // Somente um pedido confirmado pelo backend autoriza limpar a sacola.
+        // A rota de resultado continua disponível para pendências/cancelamentos.
+        if (!confirmado || !pedido?.id || redirecionamentoIniciado.current) return;
+        redirecionamentoIniciado.current = true;
+        limparCarrinho();
+        sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+        navigate(`/pedidos/${pedido.id}/acompanhar`, { replace: true });
+    }, [confirmado, pedido?.id, limparCarrinho, navigate]);
 
     // Só visual: define o ícone e os textos do topo do cartão.
     let situacao = "pendente";

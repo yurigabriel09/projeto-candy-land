@@ -36,3 +36,21 @@ class ReportController:
             jsonify({"mensagem": resultado["mensagem"], "relatorio": resultado["dados"]}),
             200,
         )
+
+    @staticmethod
+    def relatorio_cliente(account_id, tipo_conta):
+        if tipo_conta != "PERSONAL":
+            return make_response(
+                jsonify({"erro": "Apenas clientes podem acessar este relatório."}),
+                403,
+            )
+
+        resultado = ReportService.relatorio_cliente(account_id)
+        if not resultado["success"]:
+            return make_response(
+                jsonify({"erro": resultado["erro"]}), resultado["status_code"]
+            )
+        return make_response(
+            jsonify({"mensagem": resultado["mensagem"], "relatorio": resultado["dados"]}),
+            200,
+        )

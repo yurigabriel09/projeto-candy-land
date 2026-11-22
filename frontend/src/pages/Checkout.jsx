@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import PixPayment from "../components/PixPayment";
-import { createOrder, createPayment, getCustomerAddresses, getDeliveryQuote } from "../services/orderService";
+import { createOrder, createPayment, getCustomerAddresses, getDeliveryQuote, validateCoupon, getOrder } from "../services/orderService";
 import { getProducts } from "../services/productService";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -25,7 +25,6 @@ function Checkout() {
     // Estados de processamento e sucesso
     const [processando, setProcessando] = useState(false);
     const [erro, setErro] = useState("");
-    const [sucesso, setSucesso] = useState(false);
     const [pedidoCriadoId, setPedidoCriadoId] = useState(null);
 
     // Pix: dados do pagamento gerado (QR Code + Copia e Cola)
@@ -33,26 +32,30 @@ function Checkout() {
 
     // Taxa de entrega calculada pelo servidor (a mesma usada na criação do pedido)
     const [cotacao, setCotacao] = useState(null);
+    const [cotacaoCupom, setCotacaoCupom] = useState(null);
+    const [erroCupom, setErroCupom] = useState("");
+    const [validandoCupom, setValidandoCupom] = useState(false);
     const [erroCotacao, setErroCotacao] = useState("");
     const [calculandoTaxa, setCalculandoTaxa] = useState(false);
 
     const nomeUsuario = dadosAutenticacao?.nome_completo || "Cliente Candyland";
     const ano = new Date().getFullYear();
 
-    // Redirecionamento automático gerenciado pelo ciclo de vida do React
-    useEffect(() => {
-        if (sucesso) {
-            const timer = setTimeout(() => {
-                if (pedidoCriadoId) {
-                    navigate(`/checkout/resultado?order_id=${pedidoCriadoId}`);
-                } else {
-                    navigate("/minha-conta/historico-compras");
-                }
-            }, 2000);
+    // Somente o backend confirma que o pagamento transformou o pedido em compra.
+    const STATUS_PAGOS = new Set([
+        "PAGAMENTO_CONFIRMADO", "RESTAURANTE_RECEBEU", "RESTAURANTE_ACEITOU",
+        "PROCESSANDO", "PRONTO_PARA_ENTREGA", "ENTREGUE", "FINALIZADO"
+    ]);
 
-            return () => clearTimeout(timer);
+    async function concluirPedidoConfirmado(id) {
+        const pedidoAtual = await getOrder(id);
+        if (!STATUS_PAGOS.has(pedidoAtual?.status)) {
+            throw new Error("O pagamento foi informado como aprovado, mas o pedido ainda não foi confirmado. Consulte o status do pagamento.");
         }
-    }, [sucesso, pedidoCriadoId, navigate]);
+        limparCarrinho();
+        sessionStorage.removeItem("candyland_checkout_pending");
+        navigate(`/pedidos/${id}/acompanhar`, { replace: true });
+    }
 
     function obterToken() {
         if (dadosAutenticacao?.token) return dadosAutenticacao.token;
@@ -132,6 +135,28 @@ function Checkout() {
         };
     }, [carrinho.restauranteId, carrinho.orderType, enderecoId]);
 
+    const assinaturaItens = JSON.stringify(carrinho.itens.map(i => [i.id_produto, i.quantidade]));
+    useEffect(() => {
+        if (!carrinho.couponCode || !carrinho.restauranteId || !carrinho.itens.length) {
+            setCotacaoCupom(null);
+            setErroCupom("");
+            return;
+        }
+        let ativo = true;
+        setValidandoCupom(true);
+        setCotacaoCupom(null);
+        validateCoupon({
+            restaurantId: carrinho.restauranteId,
+            items: carrinho.itens,
+            couponCode: carrinho.couponCode,
+        }).then(resultado => {
+            if (ativo) { setCotacaoCupom(resultado); setErroCupom(""); }
+        }).catch(error => {
+            if (ativo) { setErroCupom(error.message); setCotacaoCupom(null); }
+        }).finally(() => { if (ativo) setValidandoCupom(false); });
+        return () => { ativo = false; };
+    }, [carrinho.couponCode, carrinho.restauranteId, assinaturaItens]);
+
     async function handleFinalizarPedido(e) {
         e.preventDefault();
         setErro("");
@@ -144,6 +169,11 @@ function Checkout() {
         const eEntrega = (carrinho.orderType || "DELIVERY") === "DELIVERY";
         if (eEntrega && !enderecoId) {
             setErro("Selecione um endereço de entrega para continuar.");
+            return;
+        }
+
+        if (carrinho.couponCode && (validandoCupom || !cotacaoCupom)) {
+            setErro(erroCupom || "Não foi possível confirmar o cupom. Volte ao carrinho.");
             return;
         }
 
@@ -170,6 +200,7 @@ function Checkout() {
                 restaurant_id: Number(carrinho.restauranteId),
                 order_type: carrinho.orderType || "DELIVERY",
                 payment_method: metodoPagamento,
+                coupon_code: carrinho.couponCode || null,
                 delivery_address_id: eEntrega ? Number(enderecoId) : null,
                 items: carrinho.itens.map((item) => ({
                     produto_id: Number(item.id_produto),
@@ -214,9 +245,8 @@ function Checkout() {
                     return;
                 }
 
-                // Em modo de integração sem redirecionamento, a tela de resultado
-                // consulta o estado real do pedido no backend.
-                setSucesso(true);
+                // Sem URL de checkout: consultar o resultado real, sem declarar sucesso.
+                navigate(`/checkout/resultado?order_id=${pedido.id}`, { replace: true });
             } catch (paymentError) {
                 sessionStorage.setItem(
                     "candyland_checkout_pending",
@@ -226,7 +256,9 @@ function Checkout() {
                     paymentError.message ||
                     "Pedido criado, mas não foi possível iniciar o pagamento. Consulte o status do pedido."
                 );
-                setSucesso(true);
+                // Pedido existe, mas o pagamento falhou: preservar o carrinho e
+                // permitir que a tela de resultado oriente uma nova tentativa.
+                navigate(`/checkout/resultado?order_id=${pedido.id}`, { replace: true });
             }
         } catch (err) {
             setErro(
@@ -238,9 +270,14 @@ function Checkout() {
         }
     }
 
-    function handlePixConfirmado() {
-        limparCarrinho();
-        setSucesso(true);
+    async function handlePixConfirmado() {
+        if (!pedidoCriadoId) return;
+        try {
+            await concluirPedidoConfirmado(pedidoCriadoId);
+        } catch (error) {
+            setErro(error.message || "Não foi possível confirmar o pedido. Consulte o pagamento.");
+            navigate(`/checkout/resultado?order_id=${pedidoCriadoId}`, { replace: true });
+        }
     }
 
     function handlePixVoltar() {
@@ -248,45 +285,10 @@ function Checkout() {
         navigate("/cart");
     }
 
-    if (sucesso) {
-        return (
-            <div className="cart-page-wrapper">
-                <Header />
-                <main className="container secao checkout-success-container">
-                    <div className="auth-card checkout-success-card">
-                        <span className="checkout-success-emoji">🎉</span>
-                        <h1 className="checkout-success-title">
-                            Pedido realizado com sucesso!
-                        </h1>
-                        <p className="checkout-success-desc">
-                            Seu pedido foi registrado e aguarda confirmação do provedor. A doceria só receberá o pedido depois da aprovação.
-                        </p>
-                        {erro && <p className="auth-error checkout-error" role="alert">{erro}</p>}
-                        <div className="checkout-success-badge">
-                            Status: Aguardando pagamento
-                        </div>
-                        <button 
-                            type="button" 
-                            className="btn-principal" 
-                            onClick={() => {
-                                if (pedidoCriadoId) {
-                                    navigate(`/checkout/resultado?order_id=${pedidoCriadoId}`);
-                                } else {
-                                    navigate("/minha-conta/historico-compras");
-                                }
-                            }}
-                        >
-                            Consultar pagamento e pedido
-                        </button>
-                    </div>
-                </main>
-            </div>
-        );
-    }
-
     const isDelivery = (carrinho.orderType || "DELIVERY") === "DELIVERY";
     const taxaEntrega = cotacao?.taxa_entrega ?? 0;
-    const totalComTaxa = total + taxaEntrega;
+    const desconto = carrinho.couponCode && cotacaoCupom ? cotacaoCupom.discount : 0;
+    const totalComTaxa = Math.max(0, total - desconto + taxaEntrega);
 
     return (
         <div className="cart-page-wrapper">
@@ -506,6 +508,9 @@ function Checkout() {
                             </div>
                         )}
 
+                        {erroCupom && !pixPagamento && (
+                            <p className="auth-error checkout-error" role="alert">Cupom: {erroCupom}</p>
+                        )}
                         {erroCotacao && !pixPagamento && (
                             <p className="auth-error checkout-error" role="alert">{erroCotacao}</p>
                         )}
@@ -523,6 +528,12 @@ function Checkout() {
                                             <span>Subtotal</span>
                                             <span>{moeda.format(total)}</span>
                                         </div>
+                                        {desconto > 0 && (
+                                            <div className="checkout-breakdown-row">
+                                                <span>Desconto ({carrinho.couponCode})</span>
+                                                <span>-{moeda.format(desconto)}</span>
+                                            </div>
+                                        )}
                                         <div className="checkout-breakdown-row">
                                             <span>{isDelivery ? "Taxa de entrega" : "Retirada na loja"}</span>
                                             {calculandoTaxa ? (
@@ -558,7 +569,7 @@ function Checkout() {
                                 type="button"
                                 className={`primary-button checkout-btn-pay ${metodoPagamento === "PAYPAL" ? "paypal-theme" : ""}`}
                                 onClick={handleFinalizarPedido}
-                                disabled={processando || calculandoTaxa || Boolean(erroCotacao)}
+                                disabled={processando || calculandoTaxa || validandoCupom || Boolean(erroCotacao) || Boolean(erroCupom) || Boolean(carrinho.couponCode && !cotacaoCupom)}
                             >
                                 {processando
                                     ? "Processando..."

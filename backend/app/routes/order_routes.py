@@ -74,6 +74,14 @@ def criar_pedido():
     )
 
 
+@pedido_bp.route("/cupom-validar", methods=["POST"])
+@token_required
+def validar_cupom():
+    return OrderController.cotar_cupom(
+        request.get_json(silent=True) or {}, g.current_account_type
+    )
+
+
 @pedido_bp.route("/taxa-entrega", methods=["GET"])
 @token_required
 def cotar_taxa_entrega():

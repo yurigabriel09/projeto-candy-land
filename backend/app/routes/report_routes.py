@@ -19,4 +19,9 @@ def relatorio_admin():
     return ReportController.relatorio_admin()
 
 
-# TODO: GET /relatorios/cliente (protótipo ainda não definido)
+@relatorio_bp.route("/cliente", methods=["GET"])
+@token_required
+def relatorio_cliente():
+    return ReportController.relatorio_cliente(
+        int(g.current_account_id), g.current_account_type
+    )

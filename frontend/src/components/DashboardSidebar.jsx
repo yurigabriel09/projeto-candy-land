@@ -6,7 +6,6 @@ const ITENS_NAV = [
     { chave: "pedidos", rotulo: "🧾 Pedidos", para: "/business/pedidos" },
     { chave: "cardapio", rotulo: "📋 Cardápio", para: "/business/cardapio" },
     { chave: "financeiro", rotulo: "💰 Financeiro", para: "/business/financeiro" },
-    { chave: "avaliacoes", rotulo: "⭐ Avaliações", para: "/business/avaliacoes" },
     { chave: "config", rotulo: "⚙️ Config", para: "/business/configuracao" },
 ];
 

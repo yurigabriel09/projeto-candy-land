@@ -29,6 +29,23 @@ export async function getCustomerAddresses(userId) {
     return resultado.dados || [];
 }
 
+export async function validateCoupon({ restaurantId, items, couponCode }) {
+    const response = await fetch(`${API_BASE}/pedidos/cupom-validar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+            restaurant_id: Number(restaurantId),
+            coupon_code: couponCode,
+            items: items.map(item => ({
+                produto_id: Number(item.id_produto),
+                quantidade: Number(item.quantidade),
+            })),
+        }),
+        cache: "no-store",
+    });
+    return lerResposta(response, "Não foi possível validar o cupom.");
+}
+
 export async function createOrder(dados) {
     const response = await fetch(`${API_BASE}/pedidos`, {
         method: "POST",

@@ -1,0 +1,49 @@
+/* Resumo do pedido na tela de acompanhamento.
+   Escopo exclusivo: não altera checkout, relatórios ou outros <dl> do site. */
+.order-tracking-page .track-resumo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+  padding: 0;
+  align-items: stretch;
+}
+
+.order-tracking-page .track-resumo > div {
+  min-width: 0;
+  padding: 16px 18px;
+  background: #fff8f3;
+  border-radius: 16px;
+}
+
+.order-tracking-page .track-resumo dt {
+  margin: 0 0 5px;
+  color: #8a7470;
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.order-tracking-page .track-resumo dd {
+  margin: 0;
+  color: #4a1f1f;
+  font-size: 0.96rem;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.order-tracking-page .track-resumo-total dd,
+.order-tracking-page .track-resumo-total dd strong {
+  color: #ff3d71;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* Quando a coluna lateral ficar estreita, manter leitura confortável. */
+@media (max-width: 600px) {
+  .order-tracking-page .track-resumo {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
