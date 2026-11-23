@@ -16,7 +16,7 @@ def read(root: Path, rel: str) -> str:
 def replace_once(content: str, old: str, new: str, label: str) -> str:
     count = content.count(old)
     if count == 0 and new in content:
-        return content  # já aplicado
+        return content
     if count != 1:
         raise RuntimeError(f"{label}: esperado 1 trecho original, encontrado {count}.")
     return content.replace(old, new, 1)
@@ -28,6 +28,18 @@ def replace_in_function(content: str, function_name: str, old: str, new: str, la
         raise RuntimeError(f"{label}: função não encontrada.")
     next_def = content.find("\ndef ", start + len(function_name))
     end = next_def if next_def >= 0 else len(content)
+    block = content[start:end]
+    updated = replace_once(block, old, new, label)
+    return content[:start] + updated + content[end:]
+
+
+def replace_in_method(content: str, method_name: str, old: str, new: str, label: str) -> str:
+    """Limita a substituição ao método da classe, não a métodos vizinhos."""
+    start = content.find(method_name)
+    if start < 0:
+        raise RuntimeError(f"{label}: método não encontrado.")
+    next_method = content.find("\n    def ", start + len(method_name))
+    end = next_method if next_method >= 0 else len(content)
     block = content[start:end]
     updated = replace_once(block, old, new, label)
     return content[:start] + updated + content[end:]
@@ -46,6 +58,7 @@ def pix_order_fixture(order_id: str, amount: str, code: str, base64: str, ticket
             "status_detail": "waiting_transfer",
             "payment_method": {{
                 "id": "pix",
+                "type": "bank_transfer",
                 "qr_code": "{code}",
                 "qr_code_base64": "{base64}",
                 "ticket_url": "{ticket}"
@@ -57,8 +70,7 @@ def pix_order_fixture(order_id: str, amount: str, code: str, base64: str, ticket
 def patch(root: Path) -> list[str]:
     changes: dict[str, str] = {}
 
-    # 1) Logging bug: one %s placeholder was receiving two arguments, and the
-    # provider's response body should not be logged at all.
+    # 1. Corrige logger.warning: um placeholder recebia dois argumentos.
     rel = "backend/app/services/email_service.py"
     s = read(root, rel)
     s = replace_once(
@@ -69,7 +81,7 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 2) Protect user deletion with authentication and ownership (the route was public).
+    # 2. Exclusão de usuário exige token e titularidade PERSONAL.
     rel = "backend/app/routes/user_routes.py"
     s = read(root, rel)
     s = replace_once(
@@ -80,7 +92,7 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 3) Protect restaurant deletion with authenticated owner role.
+    # 3. Exclusão de doceria exige token e titularidade BUSINESS.
     rel = "backend/app/routes/restaurant_routes.py"
     s = read(root, rel)
     s = replace_once(
@@ -91,18 +103,20 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 4) Remove exact stock quantity from public catalog; private to_dict stays unchanged.
+    # 4. Retira o estoque exato APENAS do serializer público do catálogo.
+    #    O to_dict() interno continua contendo qtd_estoque para o proprietário.
     rel = "backend/app/models/product.py"
     s = read(root, rel)
-    s = replace_once(
+    s = replace_in_method(
         s,
+        "def to_catalog_dict(self):",
         '''            "produto_disponivel": self.is_available,\n            "produto_importado": self.is_imported,\n            "qtd_estoque": self.current_stock,\n            "permite_personalizacao": self.allows_customization,\n''',
         '''            "produto_disponivel": self.is_available,\n            "produto_importado": self.is_imported,\n            "permite_personalizacao": self.allows_customization,\n''',
         "remover estoque do catálogo público",
     )
     changes[rel] = s
 
-    # 5) Isolate account identity tests from the real Google Geocoding service.
+    # 5. Os testes de identidade não devem chamar a API real do Google.
     rel = "backend/tests/authentication/test_account_identity.py"
     s = read(root, rel)
     s = replace_once(
@@ -133,7 +147,7 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 6) The restaurant configuration unit test should not call an external API.
+    # 6. O teste de configuração isola a chamada externa de geocodificação.
     rel = "backend/tests/business_rules/test_restaurant_configuration.py"
     s = read(root, rel)
     s = replace_once(
@@ -144,7 +158,7 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 7) Checkout tests must represent a shop that is open; production guard remains intact.
+    # 7. A fixture de checkout representa doceria aberta; a regra de produção fica.
     rel = "backend/tests/checkout/test_checkout_api.py"
     s = read(root, rel)
     s = replace_once(
@@ -155,102 +169,29 @@ def patch(root: Path) -> list[str]:
     )
     changes[rel] = s
 
-    # 8) Test Pix adapter against the current Orders API contract, not the legacy Payments API.
+    # 8. O teste PIX precisa modelar a resposta atual de POST /v1/orders.
     rel = "backend/tests/business_rules/test_mercado_pago_adapter.py"
     s = read(root, rel)
     marker = "def test_create_pix_retorna_qr_code_e_copia_e_cola(monkeypatch):"
     start = s.find(marker)
     if start < 0:
-        if "def test_create_pix_usa_orders_api_e_retorna_qr_code" in s:
-            pass
-        else:
+        if "def test_create_pix_usa_orders_api_e_retorna_qr_code" not in s:
             raise RuntimeError("teste de Pix do adaptador Mercado Pago não encontrado")
     else:
-        replacement = f'''def test_create_pix_usa_orders_api_e_retorna_qr_code(monkeypatch):
-    chamadas = []
-    ordem = {pix_order_fixture("17", "35.50", "000201PIX-COPIA-E-COLA-TESTE", "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB", "https://www.mercadopago.com.br/pix/17")}
-
-    def fake_request(method, url, **kwargs):
-        chamadas.append((method, url, kwargs))
-        return FakeResponse(ordem)
-
-    monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)
-    provider = MercadoPagoPaymentProvider({
-        "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",
-        "MERCADO_PAGO_SANDBOX": True,
-    })
-    command = CreatePaymentCommand(
-        order_id="17", idempotency_key="pedido-17-pix-v1",
-        amount=Decimal("35.50"), method=PaymentMethod.PIX,
-        payer_email="cliente@example.com", metadata={{"order_code": "CL-ABC123"}},
-    )
-
-    result = provider.create_payment(command)
-
-    assert chamadas[0][0] == "POST"
-    assert chamadas[0][1].endswith("/v1/orders")
-    assert chamadas[0][2]["headers"]["X-Idempotency-Key"] == "pedido-17-pix-v1"
-    payload = chamadas[0][2]["json"]
-    assert payload["type"] == "online"
-    assert payload["total_amount"] == "35.50"
-    assert payload["transactions"]["payments"][0]["payment_method"] == {{"id": "pix", "type": "bank_transfer"}}
-    assert payload["payer"]["email"] == "test_payer@example.com"
-    assert result.provider_payment_id == "ord:ORD-PIX-17"
-    assert result.status is PaymentStatus.PENDING
-    assert result.pix_copy_paste == "000201PIX-COPIA-E-COLA-TESTE"
-    assert result.pix_qr_code_base64 == "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB"
-'''
-        # The PIX test is the final test in this file in the inspected main branch.
+        replacement = f'''def test_create_pix_usa_orders_api_e_retorna_qr_code(monkeypatch):\n    chamadas = []\n    ordem = {pix_order_fixture("17", "35.50", "000201PIX-COPIA-E-COLA-TESTE", "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB", "https://www.mercadopago.com.br/pix/17")}\n\n    def fake_request(method, url, **kwargs):\n        chamadas.append((method, url, kwargs))\n        return FakeResponse(ordem)\n\n    monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)\n    provider = MercadoPagoPaymentProvider({{\n        "MERCADO_PAGO_ACCESS_TOKEN": "token-falso-para-teste",\n        "MERCADO_PAGO_SANDBOX": True,\n    }})\n    command = CreatePaymentCommand(\n        order_id="17", idempotency_key="pedido-17-pix-v1",\n        amount=Decimal("35.50"), method=PaymentMethod.PIX,\n        payer_email="cliente@example.com", metadata={{"order_code": "CL-ABC123"}},\n    )\n\n    result = provider.create_payment(command)\n\n    assert chamadas[0][0] == "POST"\n    assert chamadas[0][1].endswith("/v1/orders")\n    assert chamadas[0][2]["headers"]["X-Idempotency-Key"] == "pedido-17-pix-v1"\n    payload = chamadas[0][2]["json"]\n    assert payload["type"] == "online"\n    assert payload["total_amount"] == "35.50"\n    assert payload["transactions"]["payments"][0]["payment_method"] == {{"id": "pix", "type": "bank_transfer"}}\n    assert payload["payer"]["email"] == "test_payer@example.com"\n    assert result.provider_payment_id == "ord:ORD-PIX-17"\n    assert result.status is PaymentStatus.PENDING\n    assert result.pix_copy_paste == "000201PIX-COPIA-E-COLA-TESTE"\n    assert result.pix_qr_code_base64 == "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB"\n    assert result.approval_url == "https://www.mercadopago.com.br/pix/17"\n'''
         s = s[:start] + replacement
     changes[rel] = s
 
-    # 9) Replace the standalone outdated legacy-API Pix test with Orders API assertions.
+    # 9. Substitui o teste isolado antigo, que ainda esperava /v1/payments.
     rel = "backend/tests/business_rules/test_mercadopago_pix.py"
     s = read(root, rel)
-    replacement = f'''from decimal import Decimal
-
-from app.services.payment_providers.contracts import (
-    CreatePaymentCommand,
-    PaymentMethod,
-    PaymentStatus,
-)
-from app.services.payment_providers.mercado_pago_adapter import (
-    MercadoPagoPaymentProvider,
-)
-
-
-def test_mercadopago_pix_cria_order_e_retorna_qr_code_sem_redirect():
-    provider = MercadoPagoPaymentProvider({{"MERCADO_PAGO_ACCESS_TOKEN": "test-token", "MERCADO_PAGO_SANDBOX": True}})
-    calls = []
-
-    def fake_request(method, path, payload=None, params=None, extra_headers=None):
-        calls.append((method, path, payload, extra_headers))
-        return {pix_order_fixture("42", "35.90", "000201-pix-copia-cola", "aGVsbG8=", "https://www.mercadopago.com.br/ticket/42")}
-
-    provider._request = fake_request
-    command = CreatePaymentCommand(
-        order_id="42", idempotency_key="order:42:pix:v1", amount=Decimal("35.90"),
-        method=PaymentMethod.PIX, payer_email="cliente@example.com", metadata={{"order_code": "CL-42"}},
-    )
-    result = provider.create_payment(command)
-
-    assert calls[0][0:2] == ("POST", "/v1/orders")
-    assert calls[0][2]["type"] == "online"
-    assert calls[0][2]["external_reference"] == "42"
-    assert calls[0][2]["total_amount"] == "35.90"
-    assert calls[0][3]["X-Idempotency-Key"] == "order:42:pix:v1"
-    assert result.provider_payment_id == "ord:ORD-PIX-42"
-    assert result.status is PaymentStatus.PENDING
-    assert result.pix_copy_paste == "000201-pix-copia-cola"
-    assert result.pix_qr_code_base64 == "aGVsbG8="
-    assert result.approval_url == "https://www.mercadopago.com.br/ticket/42"
-'''
+    replacement = f'''from decimal import Decimal\n\nfrom app.services.payment_providers.contracts import (\n    CreatePaymentCommand,\n    PaymentMethod,\n    PaymentStatus,\n)\nfrom app.services.payment_providers.mercado_pago_adapter import (\n    MercadoPagoPaymentProvider,\n)\n\n\ndef test_mercadopago_pix_cria_order_e_retorna_qr_code_sem_redirect():\n    provider = MercadoPagoPaymentProvider({{"MERCADO_PAGO_ACCESS_TOKEN": "test-token", "MERCADO_PAGO_SANDBOX": True}})\n    calls = []\n\n    def fake_request(method, path, payload=None, params=None, extra_headers=None):\n        calls.append((method, path, payload, extra_headers))\n        return {pix_order_fixture("42", "35.90", "000201-pix-copia-cola", "aGVsbG8=", "https://www.mercadopago.com.br/ticket/42")}\n\n    provider._request = fake_request\n    command = CreatePaymentCommand(\n        order_id="42", idempotency_key="order:42:pix:v1", amount=Decimal("35.90"),\n        method=PaymentMethod.PIX, payer_email="cliente@example.com", metadata={{"order_code": "CL-42"}},\n    )\n    result = provider.create_payment(command)\n\n    assert calls[0][0:2] == ("POST", "/v1/orders")\n    assert calls[0][2]["type"] == "online"\n    assert calls[0][2]["external_reference"] == "42"\n    assert calls[0][2]["total_amount"] == "35.90"\n    assert calls[0][3]["X-Idempotency-Key"] == "order:42:pix:v1"\n    assert result.provider_payment_id == "ord:ORD-PIX-42"\n    assert result.status is PaymentStatus.PENDING\n    assert result.pix_copy_paste == "000201-pix-copia-cola"\n    assert result.pix_qr_code_base64 == "aGVsbG8="\n    assert result.approval_url == "https://www.mercadopago.com.br/ticket/42"\n'''
     changes[rel] = replacement
 
-    # Write only after every source file passed its expected-content assertions.
-    backup = root.parent / f"CandyLand-backup-testfix-{datetime.now():%Y%m%d-%H%M%S}"
+    # Preflight concluído: só agora cria backups e grava arquivos.
+    backup = root.parent / f"CandyLand-backup-validation-{datetime.now():%Y%m%d-%H%M%S}"
     backup.mkdir(parents=True, exist_ok=False)
-    changed_files = []
+    updated = []
     for rel, content in changes.items():
         path = root / rel
         original = path.read_bytes()
@@ -258,18 +199,18 @@ def test_mercadopago_pix_cria_order_e_retorna_qr_code_sem_redirect():
         backup_path.parent.mkdir(parents=True, exist_ok=True)
         backup_path.write_bytes(original)
         path.write_text(content, encoding="utf-8", newline="\n")
-        changed_files.append(rel)
+        updated.append(rel)
 
-    print("Arquivos corrigidos:")
-    for rel in changed_files:
+    print("Arquivos atualizados:")
+    for rel in updated:
         print(f"  - {rel}")
-    print(f"Backup criado em: {backup}")
-    print("Nenhuma regra de produção de pagamento, frete ou autorização foi afrouxada.")
-    return changed_files
+    print(f"Backup: {backup}")
+    print("As regras de autorização, cobrança, estoque e frete em produção foram preservadas.")
+    return updated
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Corrige as falhas remanescentes de validação do CandyLand.")
     parser.add_argument("--project-root", required=True)
     args = parser.parse_args()
     root = Path(args.project_root).expanduser().resolve()

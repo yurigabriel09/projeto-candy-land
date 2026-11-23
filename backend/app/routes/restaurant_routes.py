@@ -92,6 +92,8 @@ def atualizar_status_operacional(restaurante_id):
 
 
 @restaurante_bp.route("/<int:restaurante_id>", methods=["DELETE"])
+@token_required
+@account_owner_required("BUSINESS", "restaurante_id")
 def deletar_restaurante(restaurante_id):
     return RestaurantController.deletar_restaurante(restaurante_id)
 
