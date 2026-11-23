@@ -33,7 +33,7 @@ export default defineConfig({
     // Permite qualquer subdominio do ngrok sem precisar configurar variável de ambiente
     allowedHosts: ['.ngrok-free.dev', '.ngrok.io'],
     proxy: {
-      '^/(auth|users|restaurantes|produtos|categorias|pedidos|uploads)(/|$)': {
+      '^/(auth|users|restaurantes|produtos|categorias|pedidos|uploads|relatorios)(/|$)': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: true,
