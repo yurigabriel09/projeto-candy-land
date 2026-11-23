@@ -1,0 +1,896 @@
+-- Merging decision tree log ---
+application
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:8:5-49:19
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:8:5-49:19
+MERGED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:23:5-50:19
+MERGED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:23:5-50:19
+MERGED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:22:5-38:19
+MERGED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:22:5-38:19
+MERGED from [com.google.android.gms:play-services-location:21.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\581e81c006e58e655a44dd0edf560c85\transformed\play-services-location-21.4.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-location:21.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\581e81c006e58e655a44dd0edf560c85\transformed\play-services-location-21.4.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-auth-blockstore:16.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192f09fc36b154044bee3db80da43721\transformed\play-services-auth-blockstore-16.4.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-auth-blockstore:16.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192f09fc36b154044bee3db80da43721\transformed\play-services-auth-blockstore-16.4.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-fido:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7c9c551704d700aa0f7c34d824c6aa38\transformed\play-services-fido-21.0.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.android.gms:play-services-fido:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7c9c551704d700aa0f7c34d824c6aa38\transformed\play-services-fido-21.0.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:28:5-64:19
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:28:5-64:19
+MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\731f26431890f42f733a31782f8fc0b0\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\731f26431890f42f733a31782f8fc0b0\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
+MERGED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:22:5-29:19
+MERGED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:22:5-29:19
+MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:22:5-27:19
+MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:22:5-27:19
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:22:5-26:19
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:22:5-39:19
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:22:5-39:19
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\05122464c31610c8e0890f49bfd8a321\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\05122464c31610c8e0890f49bfd8a321\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
+MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f7045f605b28842124ef07ea9eed084\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:5:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f7045f605b28842124ef07ea9eed084\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:5:5-20
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3ea900f13dc816333114383b4061a8dc\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3ea900f13dc816333114383b4061a8dc\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:20:5-24:19
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:21:5-29:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:25:5-33:19
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:25:5-33:19
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:23:5-37:19
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:23:5-37:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\efd7b060305b08c1a75d1eac9a713bc2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\efd7b060305b08c1a75d1eac9a713bc2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:12:9-35
+	android:label
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:11:9-34
+	android:icon
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:10:9-57
+	android:allowBackup
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:9:9-36
+	android:theme
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:13:9-47
+	android:usesCleartextTraffic
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:14:9-57
+manifest
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:2:1-50:12
+MERGED from [androidx.navigation:navigation-runtime-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f56a3694e27ca03b1f9d814bc031e40\transformed\navigation-runtime-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-common-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ade6bac60a565613152163f00a923b58\transformed\navigation-common-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-compose-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\40b8fcbbd52e50d091692153f5954255\transformed\navigation-compose-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:17:1-52:12
+MERGED from [com.google.android.libraries.identity.googleid:googleid:1.2.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\996a0c19815c9564677343197183a2d8\transformed\googleid-1.2.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.credentials:credentials:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d5f340bd58f21efd39d9c89df6a113c7\transformed\credentials-1.6.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:17:1-29:12
+MERGED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:17:1-40:12
+MERGED from [com.google.android.gms:play-services-location:21.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\581e81c006e58e655a44dd0edf560c85\transformed\play-services-location-21.4.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-auth-blockstore:16.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192f09fc36b154044bee3db80da43721\transformed\play-services-auth-blockstore-16.4.0\AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-fido:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7c9c551704d700aa0f7c34d824c6aa38\transformed\play-services-fido-21.0.0\AndroidManifest.xml:2:1-10:12
+MERGED from [com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\922563593832d48966f55b0012b34dd7\transformed\play-services-identity-credentials-16.0.0-alpha08\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:17:1-66:12
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e7430621dbb0a484975afa2e74a35083\transformed\play-services-auth-api-phone-18.0.2\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.10] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\923a3c64579477d805d53233e6fcf286\transformed\play-services-auth-base-18.0.10\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:2:1-13:12
+MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:16:1-24:12
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\731f26431890f42f733a31782f8fc0b0\transformed\play-services-stats-17.0.2\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\046f4bd42d421b856bb4a716520bb0bd\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3043dfe294a977baf7019cdb6d731027\transformed\loader-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [io.coil-kt.coil3:coil-compose-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7283718f716b670d20220dee37512865\transformed\coil-compose\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt.coil3:coil-compose-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\402ad0ba09f2d2d2c1b5464c6f9eb000\transformed\coil-compose-core\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\36ed55e0ca28ffd008057fee2ccc4416\transformed\animation-core\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3b94f9de909f69820f028fa9a7addb44\transformed\animation\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2ae2d3ac3d0e33dbf3794ac265dda9f7\transformed\foundation-layout\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\495fa66f1c329dee237b9f3998acbf38\transformed\foundation\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\19a90b08097db7b69b4a5925ac25cef2\transformed\ui-unit\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\aae582406143b496829bae41796b89cf\transformed\ui-graphics\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8eb5ff12b892e49f980ea3a00c8889a1\transformed\ui-geometry\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5fb3cee1f6840ced22f8a303700e3258\transformed\ui-util\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\83c5ca0527a1734ec0aeb6cf3608bfe5\transformed\ui-text\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fee049db69344cb9f8f77f1f3ff7a0a\transformed\ui\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0730c25e93b5dbb38ba1d4e12b272315\transformed\navigationevent\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c2e1e9c8056de1237f7b03d1b2c9ac7f\transformed\navigationevent-compose\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-ktx:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f0ce4db6e0bd953da7602934c9501935\transformed\activity-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6be0b97dd11c519ebb92a291143a8c3f\transformed\autofill-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.window:window-core-android:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\62ffa1dd332e8192368e9646cdbbc87e\transformed\window-core\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:17:1-31:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ea77ad4cc45aefb9c313928938ee04bd\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [io.coil-kt.coil3:coil-network-okhttp-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0f48d4ccbc5642e2901cbe1065d3d7d9\transformed\coil-network-okhttp\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt.coil3:coil-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2722c1a5b57d7decb385c6e1ca322477\transformed\coil\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt.coil3:coil-network-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\baf58e6b04619d4820bd17b3da89b0ee\transformed\coil-network-core\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt.coil3:coil-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9ae163cf43eecac3ab9c9de3bec631c0\transformed\coil-core\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\399952c25d0c35191b60625e8a5356e4\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\85257f50887dcdfadb41af5883697911\transformed\appcompat-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9a69b5e61ae3147f33e1c1c987ae408c\transformed\drawerlayout-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f51690b2aacd2f8c085ae137d82a45e\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\78c974f1c79a261dcef37779f38680d4\transformed\emoji2-views-helper-1.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-ripple-android:1.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ece6eca9e75d168bf143ab6eef177c4\transformed\material-ripple\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0996eb5e3c313bd3ca99074332a1e54f\transformed\animation-core\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07cf5949b579e17f478d90e51acc3749\transformed\animation\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\094509862102a4bc17342963ceff0406\transformed\foundation-layout\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ddfe2132f89c3fc68d678635d81a714\transformed\foundation\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\96f3597e085a907d78abaacd1e44176a\transformed\ui-tooling-data\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bbaa221d2fbc03434e8527987e683a98\transformed\ui-tooling-preview\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bd1891acf82a4a0be78315ef57d0b442\transformed\ui-unit\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\af4c1c86ed69260448771b0e7b0a6141\transformed\ui-graphics\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cca20455e99f62664133a49179998831\transformed\ui-geometry\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:17:1-29:12
+MERGED from [androidx.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cbf5a5bea03c1e41a75fa63ed80ab668\transformed\ui-util\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\63e9d00ced9674ad9a1d948d90fe9748\transformed\ui-text\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c8257c3d4b77439afc79d29fc877c5ba\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192a87d3e8fdab0ba967a19136173ca6\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\58e102202a135a3749f373c50c4cb77a\transformed\graphics-path-1.0.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e497aff9f309be44980bf4f762fe3b73\transformed\lifecycle-viewmodel-savedstate\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ba44834bceb707c011801b7bcbf24529\transformed\lifecycle-viewmodel-2.10.0\AndroidManifest.xml:2:1-5:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f3571c773251c93f09ddfc034e489bb\transformed\lifecycle-viewmodel\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2d3d8aec35aed82a2428f461ab4e51e2\transformed\runtime-saveable\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\b9d9d99eb2aac2b4a0374826ea935847\transformed\runtime-annotation\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-retain-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\258212da62e0885924711b2e82aef373\transformed\runtime-retain\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1b12a91791ee8bee1c720fa87857ba3\transformed\runtime\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f529e8e24eb8756b3893394114925d15\transformed\runtime\AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\011abdeedc624fd058d9b1e62bf7462a\transformed\runtime-saveable\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\804877cb9407159eaa04faee71cac773\transformed\savedstate-compose\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8d207de34c9395d14d3157792062af42\transformed\savedstate-ktx-1.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.savedstate:savedstate-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0ce5f1475fe833a1e474d5c420656fad\transformed\savedstate\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\31bc93e5eaa1c65fc4b619dbf6944fb2\transformed\lifecycle-runtime\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\280ba13e59abd3c5558089b82b62eade\transformed\lifecycle-viewmodel-ktx-2.10.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\27965db210c0476d758b0cb12518c7da\transformed\lifecycle-viewmodel-compose\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ff63b02148ee68c03e548a2b271b737\transformed\material-icons-extended-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a05f4c988ec3e5adf7eb5c41b0a51037\transformed\material-icons-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.37.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\53b476b3ccba8096218eb79b05ba7686\transformed\accompanist-drawablepainter-0.37.3\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\59823f05a6b887bcc92e0c940bf21f44\transformed\ui\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:17:1-28:12
+MERGED from [androidx.compose.material3:material3-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e01da750520c6e17ce9665cce524cd73\transformed\material3\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5e5e9171343b50ad3fe47895d92d9503\transformed\lifecycle-livedata-core-2.10.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e4654771d6af3d8af6caf2a64dbfe392\transformed\lifecycle-runtime-compose\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2a0197967b70d67861f5abd98078a0d9\transformed\lifecycle-runtime-ktx\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:2:1-24:12
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:15:1-41:12
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e80c264b433d3893b04f57cded123eee\transformed\datastore-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1159954f3f489440257c7e758e988319\transformed\datastore-preferences-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9573927eef7c60a7c09b6e3cbf747e42\transformed\datastore-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\91c67f3398c5631d92c76015d5141b60\transformed\datastore-preferences-release\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\05122464c31610c8e0890f49bfd8a321\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:2:1-10:12
+MERGED from [com.google.firebase:firebase-installations-interop:18.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ec41b8df7ac58e6ea911c2ff18b34e2\transformed\firebase-installations-interop-18.0.0\AndroidManifest.xml:15:1-19:12
+MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f7045f605b28842124ef07ea9eed084\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:2:1-6:12
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3ea900f13dc816333114383b4061a8dc\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:17:1-25:12
+MERGED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:16:1-26:12
+MERGED from [androidx.fragment:fragment:1.5.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae7dda83b117c60b33b05b53b0cbe6a2\transformed\fragment-1.5.7\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\25d8ecbded68404c444b70e3ddd028de\transformed\activity-1.12.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity-compose:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a18b207a2f1dc9004ca0864107a910c5\transformed\activity-compose-1.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e9ffea57ced7edaf8e89163f0518a008\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.core:core-ktx:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dc49e71b8ab8947f6afc6aa85b5ca29d\transformed\core-ktx-1.17.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ac69f505c6355e6c3c2723bcf2db752e\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ed225876e4ef0753b5f3efb382c52b3a\transformed\core-viewtree-1.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:15:1-31:12
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:15:1-35:12
+MERGED from [com.google.firebase:firebase-encoders-json:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1cd68ed5ed0110a41753fe583535fb53\transformed\firebase-encoders-json-19.0.0\AndroidManifest.xml:15:1-20:12
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:15:1-39:12
+MERGED from [com.google.firebase:firebase-components:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fc3278bad5567e8160e3296f514d19c\transformed\firebase-components-20.0.0\AndroidManifest.xml:15:1-20:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\efd7b060305b08c1a75d1eac9a713bc2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0c49c026fb4e85010d69f7f1f044d84a\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\332c97a79c181c21953b26e1ba5004ec\transformed\tracing-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [com.google.android.datatransport:transport-api:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f1ea2f5f7e5d35f35d08820465c5867a\transformed\transport-api-5.0.0\AndroidManifest.xml:15:1-20:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\803ff2161a6820f58686cd695e2b2509\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5a3d1dae6f7404f337fe60a819e2f79f\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5750fab9799776a7f43c81af6b9b18ed\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f409c5636696529b9959a6be14c52ac7\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.exifinterface:exifinterface:1.4.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bab820c81e6639ee3c093f6fccaf3b08\transformed\exifinterface-1.4.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\74a6dfba892f630fcf5e00a9c4ed3b54\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+	package
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:3:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:23:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:23:5-67
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:3:22-64
+uses-permission#android.permission.ACCESS_COARSE_LOCATION
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:4:5-81
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:4:22-78
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:5:5-79
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:5:22-76
+uses-permission#android.permission.POST_NOTIFICATIONS
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:6:5-77
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:23:5-77
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:23:5-77
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:6:22-74
+activity#com.candyland.mobile.MainActivity
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:15:9-40:20
+	android:launchMode
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:18:13-43
+	android:exported
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:17:13-36
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:16:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:19:13-22:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:20:17-69
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:20:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:21:17-77
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:21:27-74
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:oauth+data:path:/facebook+data:scheme:com.candyland.mobile
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:23:13-31:29
+action#android.intent.action.VIEW
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:17-69
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:25-66
+category#android.intent.category.DEFAULT
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:17-76
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:27-73
+category#android.intent.category.BROWSABLE
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:17-78
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:27-75
+data
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:27:17-30:48
+	android:path
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:30:21-45
+	android:host
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:29:21-41
+	android:scheme
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:28:21-58
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:payment+data:scheme:com.candyland.mobile
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:32:13-39:29
+service#com.candyland.mobile.push.CandyLandFirebaseMessagingService
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:42:9-48:19
+	android:exported
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:44:13-37
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:43:13-67
+intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:45:13-47:29
+action#com.google.firebase.MESSAGING_EVENT
+ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:17-78
+	android:name
+		ADDED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:25-75
+uses-sdk
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+MERGED from [androidx.navigation:navigation-runtime-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f56a3694e27ca03b1f9d814bc031e40\transformed\navigation-runtime-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-runtime-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f56a3694e27ca03b1f9d814bc031e40\transformed\navigation-runtime-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ade6bac60a565613152163f00a923b58\transformed\navigation-common-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ade6bac60a565613152163f00a923b58\transformed\navigation-common-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-compose-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\40b8fcbbd52e50d091692153f5954255\transformed\navigation-compose-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-compose-android:2.9.6] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\40b8fcbbd52e50d091692153f5954255\transformed\navigation-compose-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:21:5-44
+MERGED from [com.google.android.libraries.identity.googleid:googleid:1.2.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\996a0c19815c9564677343197183a2d8\transformed\googleid-1.2.1\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.libraries.identity.googleid:googleid:1.2.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\996a0c19815c9564677343197183a2d8\transformed\googleid-1.2.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.credentials:credentials:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d5f340bd58f21efd39d9c89df6a113c7\transformed\credentials-1.6.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.credentials:credentials:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d5f340bd58f21efd39d9c89df6a113c7\transformed\credentials-1.6.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-location:21.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\581e81c006e58e655a44dd0edf560c85\transformed\play-services-location-21.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\581e81c006e58e655a44dd0edf560c85\transformed\play-services-location-21.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-blockstore:16.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192f09fc36b154044bee3db80da43721\transformed\play-services-auth-blockstore-16.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-blockstore:16.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192f09fc36b154044bee3db80da43721\transformed\play-services-auth-blockstore-16.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-fido:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7c9c551704d700aa0f7c34d824c6aa38\transformed\play-services-fido-21.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-fido:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7c9c551704d700aa0f7c34d824c6aa38\transformed\play-services-fido-21.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\922563593832d48966f55b0012b34dd7\transformed\play-services-identity-credentials-16.0.0-alpha08\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\922563593832d48966f55b0012b34dd7\transformed\play-services-identity-credentials-16.0.0-alpha08\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e7430621dbb0a484975afa2e74a35083\transformed\play-services-auth-api-phone-18.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-api-phone:18.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e7430621dbb0a484975afa2e74a35083\transformed\play-services-auth-api-phone-18.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.10] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\923a3c64579477d805d53233e6fcf286\transformed\play-services-auth-base-18.0.10\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-auth-base:18.0.10] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\923a3c64579477d805d53233e6fcf286\transformed\play-services-auth-base-18.0.10\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\731f26431890f42f733a31782f8fc0b0\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\731f26431890f42f733a31782f8fc0b0\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\046f4bd42d421b856bb4a716520bb0bd\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\046f4bd42d421b856bb4a716520bb0bd\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3043dfe294a977baf7019cdb6d731027\transformed\loader-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.loader:loader:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3043dfe294a977baf7019cdb6d731027\transformed\loader-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [io.coil-kt.coil3:coil-compose-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7283718f716b670d20220dee37512865\transformed\coil-compose\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-compose-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7283718f716b670d20220dee37512865\transformed\coil-compose\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-compose-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\402ad0ba09f2d2d2c1b5464c6f9eb000\transformed\coil-compose-core\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-compose-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\402ad0ba09f2d2d2c1b5464c6f9eb000\transformed\coil-compose-core\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\36ed55e0ca28ffd008057fee2ccc4416\transformed\animation-core\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\36ed55e0ca28ffd008057fee2ccc4416\transformed\animation-core\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3b94f9de909f69820f028fa9a7addb44\transformed\animation\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3b94f9de909f69820f028fa9a7addb44\transformed\animation\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2ae2d3ac3d0e33dbf3794ac265dda9f7\transformed\foundation-layout\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2ae2d3ac3d0e33dbf3794ac265dda9f7\transformed\foundation-layout\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\495fa66f1c329dee237b9f3998acbf38\transformed\foundation\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\495fa66f1c329dee237b9f3998acbf38\transformed\foundation\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\19a90b08097db7b69b4a5925ac25cef2\transformed\ui-unit\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\19a90b08097db7b69b4a5925ac25cef2\transformed\ui-unit\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\aae582406143b496829bae41796b89cf\transformed\ui-graphics\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\aae582406143b496829bae41796b89cf\transformed\ui-graphics\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8eb5ff12b892e49f980ea3a00c8889a1\transformed\ui-geometry\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8eb5ff12b892e49f980ea3a00c8889a1\transformed\ui-geometry\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5fb3cee1f6840ced22f8a303700e3258\transformed\ui-util\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5fb3cee1f6840ced22f8a303700e3258\transformed\ui-util\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\83c5ca0527a1734ec0aeb6cf3608bfe5\transformed\ui-text\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\83c5ca0527a1734ec0aeb6cf3608bfe5\transformed\ui-text\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fee049db69344cb9f8f77f1f3ff7a0a\transformed\ui\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fee049db69344cb9f8f77f1f3ff7a0a\transformed\ui\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0730c25e93b5dbb38ba1d4e12b272315\transformed\navigationevent\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigationevent:navigationevent-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0730c25e93b5dbb38ba1d4e12b272315\transformed\navigationevent\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c2e1e9c8056de1237f7b03d1b2c9ac7f\transformed\navigationevent-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigationevent:navigationevent-compose-android:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c2e1e9c8056de1237f7b03d1b2c9ac7f\transformed\navigationevent-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f0ce4db6e0bd953da7602934c9501935\transformed\activity-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f0ce4db6e0bd953da7602934c9501935\transformed\activity-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6be0b97dd11c519ebb92a291143a8c3f\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6be0b97dd11c519ebb92a291143a8c3f\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.window:window-core-android:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\62ffa1dd332e8192368e9646cdbbc87e\transformed\window-core\AndroidManifest.xml:5:5-44
+MERGED from [androidx.window:window-core-android:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\62ffa1dd332e8192368e9646cdbbc87e\transformed\window-core\AndroidManifest.xml:5:5-44
+MERGED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ea77ad4cc45aefb9c313928938ee04bd\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ea77ad4cc45aefb9c313928938ee04bd\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [io.coil-kt.coil3:coil-network-okhttp-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0f48d4ccbc5642e2901cbe1065d3d7d9\transformed\coil-network-okhttp\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-network-okhttp-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0f48d4ccbc5642e2901cbe1065d3d7d9\transformed\coil-network-okhttp\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2722c1a5b57d7decb385c6e1ca322477\transformed\coil\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2722c1a5b57d7decb385c6e1ca322477\transformed\coil\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-network-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\baf58e6b04619d4820bd17b3da89b0ee\transformed\coil-network-core\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-network-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\baf58e6b04619d4820bd17b3da89b0ee\transformed\coil-network-core\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9ae163cf43eecac3ab9c9de3bec631c0\transformed\coil-core\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt.coil3:coil-core-android:3.6.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9ae163cf43eecac3ab9c9de3bec631c0\transformed\coil-core\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\399952c25d0c35191b60625e8a5356e4\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\399952c25d0c35191b60625e8a5356e4\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\85257f50887dcdfadb41af5883697911\transformed\appcompat-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\85257f50887dcdfadb41af5883697911\transformed\appcompat-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9a69b5e61ae3147f33e1c1c987ae408c\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9a69b5e61ae3147f33e1c1c987ae408c\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f51690b2aacd2f8c085ae137d82a45e\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f51690b2aacd2f8c085ae137d82a45e\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\78c974f1c79a261dcef37779f38680d4\transformed\emoji2-views-helper-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\78c974f1c79a261dcef37779f38680d4\transformed\emoji2-views-helper-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ece6eca9e75d168bf143ab6eef177c4\transformed\material-ripple\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ece6eca9e75d168bf143ab6eef177c4\transformed\material-ripple\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0996eb5e3c313bd3ca99074332a1e54f\transformed\animation-core\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0996eb5e3c313bd3ca99074332a1e54f\transformed\animation-core\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07cf5949b579e17f478d90e51acc3749\transformed\animation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07cf5949b579e17f478d90e51acc3749\transformed\animation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\094509862102a4bc17342963ceff0406\transformed\foundation-layout\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\094509862102a4bc17342963ceff0406\transformed\foundation-layout\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ddfe2132f89c3fc68d678635d81a714\transformed\foundation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ddfe2132f89c3fc68d678635d81a714\transformed\foundation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\96f3597e085a907d78abaacd1e44176a\transformed\ui-tooling-data\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-data-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\96f3597e085a907d78abaacd1e44176a\transformed\ui-tooling-data\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bbaa221d2fbc03434e8527987e683a98\transformed\ui-tooling-preview\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bbaa221d2fbc03434e8527987e683a98\transformed\ui-tooling-preview\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bd1891acf82a4a0be78315ef57d0b442\transformed\ui-unit\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bd1891acf82a4a0be78315ef57d0b442\transformed\ui-unit\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\af4c1c86ed69260448771b0e7b0a6141\transformed\ui-graphics\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\af4c1c86ed69260448771b0e7b0a6141\transformed\ui-graphics\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cca20455e99f62664133a49179998831\transformed\ui-geometry\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cca20455e99f62664133a49179998831\transformed\ui-geometry\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cbf5a5bea03c1e41a75fa63ed80ab668\transformed\ui-util\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\cbf5a5bea03c1e41a75fa63ed80ab668\transformed\ui-util\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\63e9d00ced9674ad9a1d948d90fe9748\transformed\ui-text\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\63e9d00ced9674ad9a1d948d90fe9748\transformed\ui-text\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c8257c3d4b77439afc79d29fc877c5ba\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c8257c3d4b77439afc79d29fc877c5ba\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192a87d3e8fdab0ba967a19136173ca6\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\192a87d3e8fdab0ba967a19136173ca6\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\58e102202a135a3749f373c50c4cb77a\transformed\graphics-path-1.0.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\58e102202a135a3749f373c50c4cb77a\transformed\graphics-path-1.0.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e497aff9f309be44980bf4f762fe3b73\transformed\lifecycle-viewmodel-savedstate\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e497aff9f309be44980bf4f762fe3b73\transformed\lifecycle-viewmodel-savedstate\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ba44834bceb707c011801b7bcbf24529\transformed\lifecycle-viewmodel-2.10.0\AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ba44834bceb707c011801b7bcbf24529\transformed\lifecycle-viewmodel-2.10.0\AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f3571c773251c93f09ddfc034e489bb\transformed\lifecycle-viewmodel\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5f3571c773251c93f09ddfc034e489bb\transformed\lifecycle-viewmodel\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2d3d8aec35aed82a2428f461ab4e51e2\transformed\runtime-saveable\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2d3d8aec35aed82a2428f461ab4e51e2\transformed\runtime-saveable\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\b9d9d99eb2aac2b4a0374826ea935847\transformed\runtime-annotation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-annotation-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\b9d9d99eb2aac2b4a0374826ea935847\transformed\runtime-annotation\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-retain-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\258212da62e0885924711b2e82aef373\transformed\runtime-retain\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-retain-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\258212da62e0885924711b2e82aef373\transformed\runtime-retain\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1b12a91791ee8bee1c720fa87857ba3\transformed\runtime\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1b12a91791ee8bee1c720fa87857ba3\transformed\runtime\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f529e8e24eb8756b3893394114925d15\transformed\runtime\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.runtime:runtime-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f529e8e24eb8756b3893394114925d15\transformed\runtime\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\011abdeedc624fd058d9b1e62bf7462a\transformed\runtime-saveable\AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.runtime:runtime-saveable-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\011abdeedc624fd058d9b1e62bf7462a\transformed\runtime-saveable\AndroidManifest.xml:5:5-44
+MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\804877cb9407159eaa04faee71cac773\transformed\savedstate-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.savedstate:savedstate-compose-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\804877cb9407159eaa04faee71cac773\transformed\savedstate-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8d207de34c9395d14d3157792062af42\transformed\savedstate-ktx-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\8d207de34c9395d14d3157792062af42\transformed\savedstate-ktx-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.savedstate:savedstate-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0ce5f1475fe833a1e474d5c420656fad\transformed\savedstate\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0ce5f1475fe833a1e474d5c420656fad\transformed\savedstate\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\31bc93e5eaa1c65fc4b619dbf6944fb2\transformed\lifecycle-runtime\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\31bc93e5eaa1c65fc4b619dbf6944fb2\transformed\lifecycle-runtime\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\280ba13e59abd3c5558089b82b62eade\transformed\lifecycle-viewmodel-ktx-2.10.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\280ba13e59abd3c5558089b82b62eade\transformed\lifecycle-viewmodel-ktx-2.10.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\27965db210c0476d758b0cb12518c7da\transformed\lifecycle-viewmodel-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\27965db210c0476d758b0cb12518c7da\transformed\lifecycle-viewmodel-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ff63b02148ee68c03e548a2b271b737\transformed\material-icons-extended-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\6ff63b02148ee68c03e548a2b271b737\transformed\material-icons-extended-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a05f4c988ec3e5adf7eb5c41b0a51037\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.8] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a05f4c988ec3e5adf7eb5c41b0a51037\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.37.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\53b476b3ccba8096218eb79b05ba7686\transformed\accompanist-drawablepainter-0.37.3\AndroidManifest.xml:21:5-44
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.37.3] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\53b476b3ccba8096218eb79b05ba7686\transformed\accompanist-drawablepainter-0.37.3\AndroidManifest.xml:21:5-44
+MERGED from [androidx.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\59823f05a6b887bcc92e0c940bf21f44\transformed\ui\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\59823f05a6b887bcc92e0c940bf21f44\transformed\ui\AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material3:material3-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e01da750520c6e17ce9665cce524cd73\transformed\material3\AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material3:material3-android:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e01da750520c6e17ce9665cce524cd73\transformed\material3\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5e5e9171343b50ad3fe47895d92d9503\transformed\lifecycle-livedata-core-2.10.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5e5e9171343b50ad3fe47895d92d9503\transformed\lifecycle-livedata-core-2.10.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e4654771d6af3d8af6caf2a64dbfe392\transformed\lifecycle-runtime-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e4654771d6af3d8af6caf2a64dbfe392\transformed\lifecycle-runtime-compose\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2a0197967b70d67861f5abd98078a0d9\transformed\lifecycle-runtime-ktx\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2a0197967b70d67861f5abd98078a0d9\transformed\lifecycle-runtime-ktx\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:19:5-44
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:19:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e80c264b433d3893b04f57cded123eee\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e80c264b433d3893b04f57cded123eee\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1159954f3f489440257c7e758e988319\transformed\datastore-preferences-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1159954f3f489440257c7e758e988319\transformed\datastore-preferences-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9573927eef7c60a7c09b6e3cbf747e42\transformed\datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\9573927eef7c60a7c09b6e3cbf747e42\transformed\datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\91c67f3398c5631d92c76015d5141b60\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\91c67f3398c5631d92c76015d5141b60\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\05122464c31610c8e0890f49bfd8a321\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\05122464c31610c8e0890f49bfd8a321\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:18.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ec41b8df7ac58e6ea911c2ff18b34e2\transformed\firebase-installations-interop-18.0.0\AndroidManifest.xml:17:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:18.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\7ec41b8df7ac58e6ea911c2ff18b34e2\transformed\firebase-installations-interop-18.0.0\AndroidManifest.xml:17:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f7045f605b28842124ef07ea9eed084\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:4:5-43
+MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1f7045f605b28842124ef07ea9eed084\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:4:5-43
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3ea900f13dc816333114383b4061a8dc\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\3ea900f13dc816333114383b4061a8dc\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.fragment:fragment:1.5.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae7dda83b117c60b33b05b53b0cbe6a2\transformed\fragment-1.5.7\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.7] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae7dda83b117c60b33b05b53b0cbe6a2\transformed\fragment-1.5.7\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\25d8ecbded68404c444b70e3ddd028de\transformed\activity-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\25d8ecbded68404c444b70e3ddd028de\transformed\activity-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity-compose:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a18b207a2f1dc9004ca0864107a910c5\transformed\activity-compose-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-compose:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a18b207a2f1dc9004ca0864107a910c5\transformed\activity-compose-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e9ffea57ced7edaf8e89163f0518a008\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e9ffea57ced7edaf8e89163f0518a008\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.core:core-ktx:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dc49e71b8ab8947f6afc6aa85b5ca29d\transformed\core-ktx-1.17.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dc49e71b8ab8947f6afc6aa85b5ca29d\transformed\core-ktx-1.17.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ac69f505c6355e6c3c2723bcf2db752e\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ac69f505c6355e6c3c2723bcf2db752e\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ed225876e4ef0753b5f3efb382c52b3a\transformed\core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-viewtree:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ed225876e4ef0753b5f3efb382c52b3a\transformed\core-viewtree-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-encoders-json:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1cd68ed5ed0110a41753fe583535fb53\transformed\firebase-encoders-json-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-encoders-json:19.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1cd68ed5ed0110a41753fe583535fb53\transformed\firebase-encoders-json-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-components:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fc3278bad5567e8160e3296f514d19c\transformed\firebase-components-20.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-components:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2fc3278bad5567e8160e3296f514d19c\transformed\firebase-components-20.0.0\AndroidManifest.xml:18:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\efd7b060305b08c1a75d1eac9a713bc2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\efd7b060305b08c1a75d1eac9a713bc2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0c49c026fb4e85010d69f7f1f044d84a\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\0c49c026fb4e85010d69f7f1f044d84a\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\332c97a79c181c21953b26e1ba5004ec\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\332c97a79c181c21953b26e1ba5004ec\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.datatransport:transport-api:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f1ea2f5f7e5d35f35d08820465c5867a\transformed\transport-api-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-api:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f1ea2f5f7e5d35f35d08820465c5867a\transformed\transport-api-5.0.0\AndroidManifest.xml:18:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\803ff2161a6820f58686cd695e2b2509\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\803ff2161a6820f58686cd695e2b2509\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5a3d1dae6f7404f337fe60a819e2f79f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5a3d1dae6f7404f337fe60a819e2f79f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5750fab9799776a7f43c81af6b9b18ed\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\5750fab9799776a7f43c81af6b9b18ed\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f409c5636696529b9959a6be14c52ac7\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f409c5636696529b9959a6be14c52ac7\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.4.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bab820c81e6639ee3c093f6fccaf3b08\transformed\exifinterface-1.4.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.4.2] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\bab820c81e6639ee3c093f6fccaf3b08\transformed\exifinterface-1.4.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\74a6dfba892f630fcf5e00a9c4ed3b54\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\74a6dfba892f630fcf5e00a9c4ed3b54\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+	android:targetSdkVersion
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml
+service#androidx.credentials.playservices.CredentialProviderMetadataHolder
+ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:24:9-32:19
+	android:enabled
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:26:13-35
+	android:exported
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:28:13-60
+	android:name
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:25:13-94
+meta-data#androidx.credentials.CREDENTIAL_PROVIDER_KEY
+ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:29:13-31:104
+	android:value
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:31:17-101
+	android:name
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:30:17-76
+activity#androidx.credentials.playservices.controllers.identityauth.HiddenActivity
+ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:34:9-41:20
+	android:fitsSystemWindows
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:39:13-45
+	android:enabled
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:38:13-37
+	android:configChanges
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:36:13-87
+	android:theme
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:40:13-48
+	android:name
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:35:13-101
+activity#androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity
+ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:42:9-49:20
+	android:fitsSystemWindows
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:47:13-45
+	android:enabled
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:45:13-35
+	android:exported
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:46:13-37
+	android:configChanges
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:44:13-87
+	android:theme
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:48:13-48
+	android:name
+		ADDED from [androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:43:13-129
+uses-permission#android.permission.USE_BIOMETRIC
+ADDED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:24:5-72
+	android:name
+		ADDED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:24:22-69
+uses-permission#android.permission.USE_FINGERPRINT
+ADDED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:27:5-74
+	android:name
+		ADDED from [androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:27:22-71
+activity#com.google.android.gms.auth.api.signin.internal.SignInHubActivity
+ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:23:9-27:75
+	android:excludeFromRecents
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:25:13-46
+	android:exported
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:26:13-37
+	android:theme
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:27:13-72
+	android:name
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:24:13-93
+service#com.google.android.gms.auth.api.signin.RevocationBoundService
+ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:33:9-37:51
+	android:exported
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:35:13-36
+	android:visibleToInstantApps
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:37:13-48
+	android:permission
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:36:13-107
+	android:name
+		ADDED from [com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:34:13-89
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:20:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:20:5-79
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:22:22-76
+uses-permission#android.permission.WAKE_LOCK
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:24:5-68
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:9:5-68
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:9:5-68
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:24:22-65
+uses-permission#com.google.android.c2dm.permission.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:26:5-82
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:11:5-82
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a3529329aa18b1db2de9f922df4886d5\transformed\play-services-cloud-messaging-17.4.0\AndroidManifest.xml:11:5-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:26:22-79
+receiver#com.google.firebase.iid.FirebaseInstanceIdReceiver
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:29:9-40:20
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:31:13-36
+	android:permission
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:32:13-73
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:30:13-78
+intent-filter#action:name:com.google.android.c2dm.intent.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:33:13-35:29
+action#com.google.android.c2dm.intent.RECEIVE
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:34:17-81
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:34:25-78
+meta-data#com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:37:13-39:40
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:39:17-37
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:38:17-92
+service#com.google.firebase.messaging.FirebaseMessagingService
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:46:9-53:19
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:49:13-37
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:48:13-43
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:47:13-82
+service#com.google.firebase.components.ComponentDiscoveryService
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:54:9-63:19
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:30:9-38:19
+MERGED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:30:9-38:19
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:22:9-28:19
+MERGED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:22:9-28:19
+	android:exported
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:56:13-37
+	tools:targetApi
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:34:13-32
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:32:13-43
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:55:13-84
+meta-data#com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:57:13-59:85
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:59:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:58:17-122
+meta-data#com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar
+ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:60:13-62:85
+	android:value
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:62:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:61:17-119
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:9-22:45
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:22:19-43
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:21:19-78
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:19-85
+uses-library#androidx.window.extensions
+ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:23:9-25:40
+	android:required
+		ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:25:13-37
+	android:name
+		ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:24:13-54
+uses-library#androidx.window.sidecar
+ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:26:9-28:40
+	android:required
+		ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:27:13-51
+activity#androidx.activity.ComponentActivity
+ADDED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:23:9-26:79
+	android:exported
+		ADDED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:25:13-36
+	android:theme
+		ADDED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:26:13-76
+	android:name
+		ADDED from [androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:24:13-63
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\56f15a847d30763da623ab8b80b1b092\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:30:17-75
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
+permission#com.candyland.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
+uses-permission#com.candyland.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:30:17-78
+activity#androidx.compose.ui.tooling.PreviewActivity
+ADDED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:23:9-25:39
+	android:exported
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:25:13-36
+	android:name
+		ADDED from [androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:24:13-71
+meta-data#com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar
+ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:15:13-17:85
+	android:value
+		ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:17:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:16:17-130
+meta-data#com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar
+ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:18:13-20:85
+	android:value
+		ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:20:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:19:17-127
+provider#com.google.firebase.provider.FirebaseInitProvider
+ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:23:9-28:39
+	android:authorities
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:25:13-72
+	android:exported
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:27:13-37
+	android:directBootAware
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:26:13-43
+	android:initOrder
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:28:13-36
+	android:name
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:24:13-77
+meta-data#com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar
+ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:35:13-37:85
+	android:value
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:37:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:36:17-109
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:21:9-23:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:23:13-66
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:22:13-58
+meta-data#com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar
+ADDED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:25:13-27:85
+	android:value
+		ADDED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:27:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:26:17-115
+service#com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:26:9-32:19
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:34:9-36:40
+MERGED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:34:9-36:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:27:13-103
+meta-data#backend:com.google.android.datatransport.cct.CctBackendFactory
+ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:29:13-31:39
+	android:value
+		ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:31:17-36
+	android:name
+		ADDED from [com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:30:17-94
+service#com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:24:9-28:19
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:26:13-37
+	android:permission
+		ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:27:13-69
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:25:13-117
+receiver#com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:30:9-32:40
+	android:exported
+		ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:32:13-37
+	android:name
+		ADDED from [com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:31:13-132
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:25-92

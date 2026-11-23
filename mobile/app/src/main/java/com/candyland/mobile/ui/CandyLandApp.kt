@@ -997,6 +997,9 @@ private fun ShopScreen(
     var paymentInfo by remember { mutableStateOf<PaymentDto?>(null) }
     var createdOrder by remember { mutableStateOf<OrderDto?>(null) }
     var paymentIdempotencyKey by remember { mutableStateOf<String?>(null) }
+    var selectedPaymentMethod by remember { mutableStateOf("PIX") }
+    var paymentStatusChecked by remember { mutableStateOf(false) }
+    var paymentStatusError by remember { mutableStateOf<String?>(null) }
     var actionBusy by remember { mutableStateOf(false) }
     var cancellingOrderId by remember { mutableStateOf<Int?>(null) }
     var receiptCodes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
@@ -1038,23 +1041,140 @@ private fun ShopScreen(
         }
     }
 
+    fun openExternalPayment(url: String) {
+        val uri = runCatching { Uri.parse(url) }.getOrNull()
+        if (uri == null || uri.scheme != "https" || uri.host.isNullOrBlank()) {
+            checkoutMessage = "O provedor retornou um endereço de pagamento inválido. Atualize o pedido e tente novamente."
+            return
+        }
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        }.onFailure { error ->
+            checkoutMessage = error.message
+                ?: "Não foi possível abrir o checkout externo. Tente novamente pelo botão Abrir checkout."
+        }
+    }
+
+    suspend fun consultarTentativaPagamento(orderId: Int): PaymentDto? {
+        val response = ApiProvider.api.getPayment(orderId)
+        return when {
+            response.isSuccessful -> response.body()?.pagamento
+                ?: throw IllegalStateException("O servidor não retornou os dados da tentativa de pagamento.")
+            response.code() == 404 -> null
+            else -> throw IllegalStateException(
+                "Não foi possível verificar a tentativa de pagamento (HTTP ${response.code()})."
+            )
+        }
+    }
+
     suspend fun initiatePayment(orderId: Int) {
         val idempotencyKey = paymentIdempotencyKey
             ?: "candyland-android-$orderId-${UUID.randomUUID()}".also { paymentIdempotencyKey = it }
-        val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey, "ANDROID")).pagamento            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
+        val payment = ApiProvider.unwrap(
+            ApiProvider.api.createPayment(orderId, idempotencyKey, "ANDROID")
+        ).pagamento ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
+
         paymentInfo = payment
+        paymentStatusChecked = true
+        paymentStatusError = null
         when {
             !payment.pix_copy_paste.isNullOrBlank() -> {
-                checkoutMessage = "Pix gerado. Escaneie o QR Code ou copie o código e pague no app do seu banco/Mercado Pago."
+                checkoutMessage = "Pix gerado. Pague pelo QR Code ou copie e cole o código. O pedido continua em Meus pedidos."
             }
             !payment.approval_url.isNullOrBlank() -> {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(payment.approval_url)))
-                checkoutMessage = "A autorização segura do PayPal foi aberta. Ao concluir, você retornará ao CandyLand."
+                checkoutMessage = "Checkout externo iniciado. Ao concluir ou cancelar, você retornará ao CandyLand."
+                openExternalPayment(payment.approval_url)
             }
             else -> {
                 checkoutMessage = payment.message ?: "Pedido criado. Aguardando instruções do provedor de pagamento."
             }
         }
+    }
+
+    suspend fun confirmarPagamentoPendente(order: OrderDto, requestedMethod: String) {
+        val current = ApiProvider.unwrap(ApiProvider.api.order(order.id)).pedido
+            ?: throw IllegalStateException("Não foi possível atualizar o pedido antes do pagamento.")
+        if (current.status != "PENDENTE_PAGAMENTO") {
+            createdOrder = current
+            loadOrders()
+            throw IllegalStateException("Este pedido não está mais aguardando pagamento.")
+        }
+        if (current.restaurant_id <= 0 || current.items.isEmpty()) {
+            throw IllegalStateException("O pedido não retornou os itens e a doceria necessários para continuar.")
+        }
+
+        val currentMethod = current.payment_method ?: "PIX"
+        val existingAttempt = consultarTentativaPagamento(current.id)
+        val attemptFinalized = existingAttempt?.status == "CANCELLED" || existingAttempt?.status == "REJECTED"
+
+        if (existingAttempt != null && !attemptFinalized) {
+            if (requestedMethod != currentMethod) {
+                paymentInfo = existingAttempt
+                throw IllegalStateException(
+                    "Já existe uma tentativa de pagamento ativa. Para evitar cobrança duplicada, só será possível escolher outro método depois que ela for cancelada ou recusada."
+                )
+            }
+            paymentInfo = existingAttempt
+            paymentStatusChecked = true
+            if (!existingAttempt.approval_url.isNullOrBlank()) {
+                checkoutMessage = "A tentativa de pagamento já existe. Reabrindo o checkout."
+                openExternalPayment(existingAttempt.approval_url)
+            } else {
+                checkoutMessage = "A tentativa de pagamento já existe. Use o QR Code ou atualize o status abaixo."
+            }
+            return
+        }
+
+        val targetOrder = if (requestedMethod == currentMethod && existingAttempt == null) {
+            current
+        } else {
+            val replacementRequest = CreateOrderRequest(
+                restaurant_id = current.restaurant_id,
+                order_type = current.order_type,
+                payment_method = requestedMethod,
+                items = current.items.map { OrderItemRequest(it.productId, it.quantidade) },
+                delivery_address_id = current.delivery_address_id,
+                pickup_address_id = current.pickup_address_id
+            )
+            val replacement = ApiProvider.unwrap(
+                ApiProvider.api.createOrder(replacementRequest)
+            ).pedido ?: throw IllegalStateException("O servidor não retornou o novo pedido.")
+
+            try {
+                ApiProvider.unwrap(ApiProvider.api.cancelOrder(current.id))
+            } catch (cancelError: Throwable) {
+                val rollback = runCatching {
+                    ApiProvider.unwrap(ApiProvider.api.cancelOrder(replacement.id))
+                }
+                if (rollback.isFailure) {
+                    throw IllegalStateException(
+                        "O novo pedido ${replacement.order_code} foi criado, mas o pedido anterior não foi cancelado. Confira Meus pedidos antes de tentar novamente.",
+                        cancelError
+                    )
+                }
+                throw IllegalStateException(
+                    "Não foi possível trocar a forma de pagamento. O novo pedido foi cancelado e o anterior foi mantido.",
+                    cancelError
+                )
+            }
+
+            createdOrder = replacement
+            selectedPaymentMethod = requestedMethod
+            paymentInfo = null
+            paymentIdempotencyKey = null
+            paymentStatusChecked = true
+            paymentStatusError = null
+            loadOrders()
+            replacement
+        }
+
+        createdOrder = targetOrder
+        selectedPaymentMethod = requestedMethod
+        paymentInfo = null
+        paymentIdempotencyKey = null
+        paymentStatusChecked = true
+        paymentStatusError = null
+        initiatePayment(targetOrder.id)
     }
 
     LaunchedEffect(session.id) {
@@ -1071,8 +1191,10 @@ private fun ShopScreen(
     LaunchedEffect(paymentUri) {
         val returnedUri = paymentUri ?: return@LaunchedEffect
         val orderId = returnedUri.getQueryParameter("order_id")?.toIntOrNull()
-        tab = 1
+        tab = 2
         paymentInfo = null
+        paymentStatusChecked = false
+        paymentStatusError = null
         checkoutMessage = "Retorno do pagamento recebido. Conferindo seu pedido..."
 
         if (orderId == null) {
@@ -1105,6 +1227,9 @@ private fun ShopScreen(
                     ?: createdOrder
                     ?: throw IllegalStateException("O servidor não retornou o pedido após o pagamento.")
                 createdOrder = pedidoAtualizado
+                selectedPaymentMethod = pedidoAtualizado.payment_method ?: selectedPaymentMethod
+                paymentStatusChecked = true
+                paymentStatusError = null
                 loadOrders()
                 checkoutMessage = when {
                     pedidoAtualizado.status in RECEIPT_CODE_ELIGIBLE_STATUSES ->
@@ -1121,7 +1246,11 @@ private fun ShopScreen(
             }.onFailure { error ->
                 checkoutMessage = error.message ?: "Não foi possível consultar o resultado do pagamento. Atualize Meus pedidos."
                 runCatching { ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido }
-                    .onSuccess { createdOrder = it }
+                    .onSuccess {
+                        createdOrder = it
+                        selectedPaymentMethod = it?.payment_method ?: selectedPaymentMethod
+                        paymentStatusChecked = true
+                    }
                 loadOrders()
             }
         }
@@ -1179,13 +1308,7 @@ private fun ShopScreen(
                 session = session,
                 cart = cart,
                 orderBusy = actionBusy,
-                createdOrder = createdOrder,
                 checkoutMessage = checkoutMessage,
-                paymentInfo = paymentInfo,
-                receiptCode = createdOrder?.let { receiptCodes[it.id] },
-                receiptCodeLoading = createdOrder?.let { receiptCodeLoadingOrderId == it.id } ?: false,
-                receiptCodeError = createdOrder?.let { receiptCodeErrors[it.id] },
-                onGenerateReceiptCode = { generateReceiptCode(it) },
                 onQuantity = { productId, quantity -> cart = if (quantity <= 0) cart.filterNot { it.product.id == productId } else cart.map { if (it.product.id == productId) it.copy(quantity = quantity) else it } },
                 onCheckout = { orderType, addressId, paymentMethod ->
                     if (cart.isEmpty() || cart.firstOrNull() == null) return@CartScreen
@@ -1213,47 +1336,34 @@ private fun ShopScreen(
                                 )
                             ).pedido ?: throw IllegalStateException("O backend não retornou o pedido criado.")
                             createdOrder = newOrder
-                            paymentIdempotencyKey = "candyland-android-${newOrder.id}-${UUID.randomUUID()}"
+                            selectedPaymentMethod = paymentMethod
+                            paymentInfo = null
+                            paymentIdempotencyKey = null
+                            paymentStatusChecked = true
+                            paymentStatusError = null
                             cart = emptyList()
+                            showPendingOnly = false
                             loadOrders()
-                            checkoutMessage = "Confira o frete e o total acima. Nenhuma cobrança foi iniciada ainda. Toque em 'Confirmar e pagar' para continuar."
+                            tab = 2
+                            checkoutMessage = "Pedido confirmado e movido para Meus pedidos. O carrinho foi esvaziado; continue o pagamento pelo próprio pedido."
                         }.onFailure {
                             checkoutMessage = it.message ?: "Não foi possível finalizar o pedido."
                         }
                         actionBusy = false
                     }
                 },
-                onRetryPayment = { orderId ->
-                    scope.launch {
-                        actionBusy = true
-                        runCatching { initiatePayment(orderId) }
-                            .onFailure { checkoutMessage = it.message ?: "Não foi possível iniciar o pagamento." }
-                        actionBusy = false
-                    }
-                },
-                onRefreshPayment = { orderId ->
-                    scope.launch {
-                        actionBusy = true
-                        runCatching {
-                            paymentInfo = ApiProvider.unwrap(ApiProvider.api.getPayment(orderId)).pagamento
-                            createdOrder = ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido
-                            loadOrders()
-                        }.onSuccess {
-                            checkoutMessage = if (createdOrder?.status?.let { it in RECEIPT_CODE_ELIGIBLE_STATUSES } == true) {
-                                "Pagamento confirmado pelo provedor. Seu pedido foi atualizado."
-                            } else "Ainda aguardando confirmação do pagamento. Confira novamente em instantes."
-                        }.onFailure { checkoutMessage = it.message ?: "Não foi possível consultar o pagamento." }
-                        actionBusy = false
-                    }
-                },
                 onManageAddresses = { tab = 3 },
-                onNewOrder = {
-                    createdOrder = null; checkoutMessage = null; paymentInfo = null; paymentIdempotencyKey = null
-                },
                 modifier = Modifier.padding(innerPadding)
             )
             2 -> OrderHistoryScreen(
                 orders = if (showPendingOnly) orders.filter { it.status == "PENDENTE_PAGAMENTO" } else orders,
+                activePaymentOrder = createdOrder,
+                selectedPaymentMethod = selectedPaymentMethod,
+                paymentInfo = paymentInfo,
+                checkoutMessage = checkoutMessage,
+                paymentStatusChecked = paymentStatusChecked,
+                paymentStatusError = paymentStatusError,
+                orderBusy = actionBusy,
                 receiptCodes = receiptCodes,
                 receiptCodeErrors = receiptCodeErrors,
                 receiptCodeLoadingOrderId = receiptCodeLoadingOrderId,
@@ -1261,12 +1371,76 @@ private fun ShopScreen(
                 error = orderError,
                 onRefresh = { scope.launch { loadOrders() } },
                 onGenerateReceiptCode = { orderId -> generateReceiptCode(orderId) },
+                onPaymentMethodChange = { selectedPaymentMethod = it },
                 onContinuePayment = { order ->
-                    createdOrder = order
-                    paymentInfo = null
-                    paymentIdempotencyKey = null
-                    checkoutMessage = "Pedido pendente. Confira os dados e toque em Confirmar e pagar para retomar a compra."
-                    tab = 1
+                    if (createdOrder?.id == order.id) {
+                        createdOrder = null
+                        paymentInfo = null
+                        paymentIdempotencyKey = null
+                        paymentStatusChecked = false
+                        paymentStatusError = null
+                        checkoutMessage = null
+                    } else {
+                        createdOrder = order
+                        selectedPaymentMethod = order.payment_method ?: "PIX"
+                        paymentInfo = null
+                        paymentIdempotencyKey = null
+                        paymentStatusChecked = false
+                        paymentStatusError = null
+                        checkoutMessage = "Verificando se já existe uma tentativa de pagamento..."
+                        scope.launch {
+                            actionBusy = true
+                            runCatching { consultarTentativaPagamento(order.id) }
+                                .onSuccess { attempt ->
+                                    paymentInfo = attempt
+                                    paymentStatusChecked = true
+                                    checkoutMessage = when {
+                                        attempt == null ->
+                                            "Pedido pendente. Escolha Pix, Mercado Pago ou PayPal e confirme o pagamento."
+                                        attempt.status in setOf("CANCELLED", "REJECTED") ->
+                                            "A tentativa anterior foi encerrada. Você pode tentar novamente ou escolher outro meio."
+                                        else ->
+                                            "Encontramos uma tentativa de pagamento. Continue pelo QR Code ou checkout exibido abaixo."
+                                    }
+                                }
+                                .onFailure { error ->
+                                    paymentStatusError = error.message ?: "Não foi possível consultar a tentativa de pagamento."
+                                    checkoutMessage = paymentStatusError
+                                }
+                            actionBusy = false
+                        }
+                    }
+                },
+                onConfirmPayment = { order, method ->
+                    scope.launch {
+                        actionBusy = true
+                        checkoutMessage = null
+                        runCatching { confirmarPagamentoPendente(order, method) }
+                            .onFailure { checkoutMessage = it.message ?: "Não foi possível iniciar o pagamento." }
+                        actionBusy = false
+                    }
+                },
+                onOpenPayment = { url -> openExternalPayment(url) },
+                onRefreshPayment = { orderId ->
+                    scope.launch {
+                        actionBusy = true
+                        runCatching {
+                            paymentInfo = consultarTentativaPagamento(orderId)
+                            createdOrder = ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido
+                            selectedPaymentMethod = createdOrder?.payment_method ?: selectedPaymentMethod
+                            paymentStatusChecked = true
+                            paymentStatusError = null
+                            loadOrders()
+                        }.onSuccess {
+                            checkoutMessage = if (createdOrder?.status?.let { it in RECEIPT_CODE_ELIGIBLE_STATUSES } == true) {
+                                "Pagamento confirmado pelo provedor. Seu pedido foi atualizado."
+                            } else "Ainda aguardando confirmação do pagamento. Confira novamente em instantes."
+                        }.onFailure { error ->
+                            paymentStatusError = error.message ?: "Não foi possível consultar o pagamento."
+                            checkoutMessage = paymentStatusError
+                        }
+                        actionBusy = false
+                    }
                 },
                 onCancelOrder = { orderId ->
                     if (cancellingOrderId == null) scope.launch {
@@ -1274,8 +1448,11 @@ private fun ShopScreen(
                         runCatching { ApiProvider.unwrap(ApiProvider.api.cancelOrder(orderId)) }
                             .onSuccess {
                                 if (createdOrder?.id == orderId) {
-                                    createdOrder = createdOrder?.copy(status = "CANCELADO")
+                                    createdOrder = null
                                     paymentInfo = null
+                                    paymentIdempotencyKey = null
+                                    paymentStatusChecked = false
+                                    paymentStatusError = null
                                 }
                                 loadOrders()
                             }
@@ -1385,26 +1562,41 @@ private fun ProductListScreen(
 }
 
 @Composable
+private fun PaymentMethodSelector(
+    selectedMethod: String,
+    onMethodChange: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        listOf(
+            "PIX" to "Pix",
+            "MERCADO_PAGO" to "Mercado Pago",
+            "PAYPAL" to "PayPal"
+        ).forEach { (method, label) ->
+            Row(
+                Modifier.fillMaxWidth().selectable(
+                    selected = selectedMethod == method,
+                    onClick = { onMethodChange(method) }
+                ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(selected = selectedMethod == method, onClick = null)
+                Text(label)
+            }
+        }
+    }
+}
+
+@Composable
 private fun CartScreen(
     session: SessionManager.Session,
     cart: List<CartEntry>,
     orderBusy: Boolean,
-    createdOrder: OrderDto?,
     checkoutMessage: String?,
-    paymentInfo: PaymentDto?,
-    receiptCode: String?,
-    receiptCodeLoading: Boolean,
-    receiptCodeError: String?,
-    onGenerateReceiptCode: (Int) -> Unit,
     onQuantity: (Int, Int) -> Unit,
     onCheckout: (String, Int?, String) -> Unit,
-    onRetryPayment: (Int) -> Unit,
-    onRefreshPayment: (Int) -> Unit,
     onManageAddresses: () -> Unit,
-    onNewOrder: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var addresses by remember { mutableStateOf<List<AddressDto>>(emptyList()) }
     var addressError by remember { mutableStateOf<String?>(null) }
     var orderType by remember { mutableStateOf("PICKUP") }
@@ -1413,90 +1605,16 @@ private fun CartScreen(
 
     LaunchedEffect(session.id) {
         runCatching { ApiProvider.unwrap(ApiProvider.api.addresses(session.id)) }
-            .onSuccess { list -> addresses = list.dados; selectedAddress = list.dados.firstOrNull { it.principal }?.id ?: list.dados.firstOrNull()?.id }
+            .onSuccess { list ->
+                addresses = list.dados
+                selectedAddress = list.dados.firstOrNull { it.principal }?.id
+                    ?: list.dados.firstOrNull()?.id
+            }
             .onFailure { addressError = it.message }
     }
 
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("Seu carrinho", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        if (createdOrder != null) {
-            Card(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text("Pedido criado!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(createdOrder.order_code)
-                    Text("Status: ${createdOrder.status}")
-                    Text("Produtos: ${money(createdOrder.subtotal)}")
-                    if (createdOrder.discount > 0.0) Text("Desconto: -${money(createdOrder.discount)}")
-                    val freightLabel = if (createdOrder.delivery_fee <= 0.0) "Grátis" else money(createdOrder.delivery_fee)
-                    Text("Frete: $freightLabel", fontWeight = FontWeight.SemiBold)
-                    createdOrder.delivery_quote?.let { quote ->
-                        val distance = quote.distance_km
-                        val eta = quote.tempo_estimado
-                        if (distance != null) {
-                            val distanceLabel = if (quote.source == "GOOGLE_ROUTES_ESSENTIALS") "Distância pela rota" else "Distância aproximada (linha reta)"
-                            Text("$distanceLabel: ${String.format(java.util.Locale("pt", "BR"), "%.1f", distance)} km")
-                        }
-                        if (eta != null) Text("Previsão aproximada: ${eta.minimo}–${eta.maximo} min")
-                        if (quote.source == "GOOGLE_ROUTES_ESSENTIALS") {
-                            // Atribuição textual da Routes API quando o conteúdo é mostrado fora de um Google Map.
-                            Text("Google Maps", color = Color(0xFF5E5E5E), fontSize = 12.sp)
-                        }
-                    }
-                    Text("Total a pagar: ${money(createdOrder.total)}", fontWeight = FontWeight.Bold)
-                    checkoutMessage?.let { Text(it) }
-                    if (createdOrder.status in RECEIPT_CODE_ELIGIBLE_STATUSES) {
-                        Divider()
-                        Text("Código de recebimento", fontWeight = FontWeight.SemiBold)
-                        if (receiptCode == null) {
-                            OutlinedButton(
-                                onClick = { onGenerateReceiptCode(createdOrder.id) },
-                                enabled = !receiptCodeLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text(if (receiptCodeLoading) "Gerando código..." else "Gerar código de recebimento") }
-                        } else {
-                            Text(receiptCode, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Text("Apresente este código ao restaurante quando receber ou retirar o pedido.", style = MaterialTheme.typography.bodySmall)
-                            OutlinedButton(
-                                onClick = {
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Código de recebimento", receiptCode))
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text("Copiar código de recebimento") }
-                        }
-                        receiptCodeError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    }
-                    paymentInfo?.takeIf { !it.pix_copy_paste.isNullOrBlank() }?.let { pixPayment ->
-                        val pixCopyPaste = pixPayment.pix_copy_paste.orEmpty()
-                        Divider()
-                        Text("Pague com Pix", fontWeight = FontWeight.SemiBold)
-                        Text("Escaneie o QR Code com o app do seu banco ou do Mercado Pago. Confira o destinatário e o valor antes de confirmar.")
-                        PixQrCode(pixPayment)
-                        Text("Pix copia e cola", fontWeight = FontWeight.SemiBold)
-                        androidx.compose.foundation.text.selection.SelectionContainer { Text(pixCopyPaste, style = MaterialTheme.typography.bodySmall) }
-                        OutlinedButton(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("Pix CandyLand", pixCopyPaste))
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Copiar código Pix") }
-                        OutlinedButton(
-                            onClick = { onRefreshPayment(createdOrder.id) }, enabled = !orderBusy,
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(if (orderBusy) "Consultando..." else "Já paguei — atualizar status") }
-                    }
-                    if (paymentInfo == null && createdOrder.status == "PENDENTE_PAGAMENTO") {
-                        OutlinedButton(
-                            onClick = { onRetryPayment(createdOrder.id) },
-                            enabled = !orderBusy,
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(if (orderBusy) "Iniciando pagamento..." else if (paymentInfo == null) "Confirmar e pagar" else "Tentar iniciar pagamento novamente") }
-                    }
-                    OutlinedButton(onClick = onNewOrder, modifier = Modifier.fillMaxWidth()) { Text("Voltar ao carrinho") }
-                }
-            }
-        }
         if (cart.isEmpty()) {
             Text("Seu carrinho está vazio. Escolha uma doceria e adicione produtos.")
             return@Column
@@ -1528,16 +1646,19 @@ private fun CartScreen(
             addressError?.let { Text("Endereços indisponíveis: $it", color = MaterialTheme.colorScheme.error) }
             if (addresses.isEmpty()) Text("Cadastre um endereço no seu perfil antes de solicitar entrega.")
             addresses.forEach { address ->
-                Row(Modifier.fillMaxWidth().selectable(selectedAddress == address.id, onClick = { selectedAddress = address.id }), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth().selectable(selectedAddress == address.id, onClick = { selectedAddress = address.id }),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     RadioButton(selectedAddress == address.id, onClick = { selectedAddress = address.id })
                     Text(address.label(), style = MaterialTheme.typography.bodySmall)
                 }
             }
-            addresses.firstOrNull { it.id == selectedAddress }?.let { destino ->
+            addresses.firstOrNull { it.id == selectedAddress }?.let { destination ->
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
                         Text("Endereço de entrega selecionado", fontWeight = FontWeight.SemiBold)
-                        Text(destino.label(), style = MaterialTheme.typography.bodySmall)
+                        Text(destination.label(), style = MaterialTheme.typography.bodySmall)
                         TextButton(onClick = onManageAddresses) { Text("Alterar ou cadastrar endereço") }
                     }
                 }
@@ -1545,23 +1666,27 @@ private fun CartScreen(
         }
         Spacer(Modifier.height(10.dp))
         Text("Forma de pagamento", fontWeight = FontWeight.SemiBold)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(paymentMethod == "PIX", onClick = { paymentMethod = "PIX" })
-            Text("Pix")
-            Spacer(Modifier.width(18.dp))
-            RadioButton(paymentMethod == "MERCADO_PAGO", onClick = { paymentMethod = "MERCADO_PAGO" })
-            Text("Mercado Pago")
-            Spacer(Modifier.width(18.dp))
-            RadioButton(paymentMethod == "PAYPAL", onClick = { paymentMethod = "PAYPAL" })
-            Text("PayPal")
-        }
+        PaymentMethodSelector(
+            selectedMethod = paymentMethod,
+            onMethodChange = { paymentMethod = it }
+        )
         Spacer(Modifier.height(12.dp))
         Button(
             onClick = { onCheckout(orderType, if (orderType == "DELIVERY") selectedAddress else null, paymentMethod) },
             enabled = !orderBusy && !(orderType == "DELIVERY" && selectedAddress == null),
             modifier = Modifier.fillMaxWidth()
-        ) { if (orderBusy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Criar pedido e iniciar pagamento") }
-        checkoutMessage?.takeIf { createdOrder == null }?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 10.dp)) }
+        ) {
+            if (orderBusy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            else Text("Confirmar pedido")
+        }
+        checkoutMessage?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 10.dp))
+        }
+        Text(
+            "Ao confirmar, o carrinho será esvaziado e o pedido ficará em Meus pedidos. Você poderá iniciar o pagamento por lá.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Text("O valor final, a taxa e o estoque são validados pelo backend.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -1569,6 +1694,13 @@ private fun CartScreen(
 @Composable
 private fun OrderHistoryScreen(
     orders: List<OrderDto>,
+    activePaymentOrder: OrderDto?,
+    selectedPaymentMethod: String,
+    paymentInfo: PaymentDto?,
+    checkoutMessage: String?,
+    paymentStatusChecked: Boolean,
+    paymentStatusError: String?,
+    orderBusy: Boolean,
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
@@ -1576,12 +1708,18 @@ private fun OrderHistoryScreen(
     receiptCodeErrors: Map<Int, String>,
     receiptCodeLoadingOrderId: Int?,
     onGenerateReceiptCode: (Int) -> Unit,
+    onPaymentMethodChange: (String) -> Unit,
     onContinuePayment: (OrderDto) -> Unit,
+    onConfirmPayment: (OrderDto, String) -> Unit,
+    onOpenPayment: (String) -> Unit,
+    onRefreshPayment: (Int) -> Unit,
     onCancelOrder: (Int) -> Unit,
     cancellingOrderId: Int?,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var orderAwaitingCancellation by remember { mutableStateOf<OrderDto?>(null) }
+
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Meus pedidos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -1590,7 +1728,10 @@ private fun OrderHistoryScreen(
         if (loading) Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         if (!loading && orders.isEmpty() && error == null) Text("Você ainda não realizou pedidos.")
+
         orders.forEach { order ->
+            val expandedOrder = activePaymentOrder?.takeIf { it.id == order.id }
+            val paymentExpanded = expandedOrder != null
             Card(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(order.restaurant_name ?: "Pedido CandyLand", fontWeight = FontWeight.SemiBold)
@@ -1599,6 +1740,7 @@ private fun OrderHistoryScreen(
                     Text(if (order.order_type == "PICKUP") "Retirada" else "Entrega")
                     Text(money(order.total), fontWeight = FontWeight.Bold)
                     order.created_at?.let { Text(it.replace("T", " ").take(16), style = MaterialTheme.typography.bodySmall) }
+
                     val code = receiptCodes[order.id]
                     if (code != null) {
                         Text("Código de recebimento: $code", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
@@ -1612,16 +1754,107 @@ private fun OrderHistoryScreen(
                             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                     }
+
                     if (order.status == "PENDENTE_PAGAMENTO") {
                         Spacer(Modifier.height(6.dp))
                         OutlinedButton(
                             onClick = { onContinuePayment(order) },
-                            enabled = cancellingOrderId == null,
+                            enabled = cancellingOrderId == null && !orderBusy,
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text("Continuar pagamento") }
+                        ) { Text(if (paymentExpanded) "Fechar pagamento" else "Continuar pagamento / alterar método") }
+
+                        if (expandedOrder != null) {
+                            Divider()
+                            Text("Resumo do pedido", fontWeight = FontWeight.SemiBold)
+                            Text("Produtos: ${money(expandedOrder.subtotal)}")
+                            if (expandedOrder.discount > 0.0) Text("Desconto: -${money(expandedOrder.discount)}")
+                            Text("Frete: ${if (expandedOrder.delivery_fee <= 0.0) "Grátis" else money(expandedOrder.delivery_fee)}")
+                            Text("Total: ${money(expandedOrder.total)}", fontWeight = FontWeight.Bold)
+
+                            checkoutMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            paymentStatusError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                            if (!paymentStatusChecked && paymentStatusError == null) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                                    Text(" Verificando tentativa de pagamento...")
+                                }
+                            } else {
+                                val currentPayment = paymentInfo
+                                val attemptClosed = currentPayment?.status == "CANCELLED" || currentPayment?.status == "REJECTED"
+                                if (currentPayment == null || attemptClosed) {
+                                    Text("Forma de pagamento", fontWeight = FontWeight.SemiBold)
+                                    PaymentMethodSelector(
+                                        selectedMethod = selectedPaymentMethod,
+                                        onMethodChange = onPaymentMethodChange
+                                    )
+                                    if (attemptClosed) {
+                                        Text(
+                                            "A tentativa anterior foi encerrada. Ao confirmar, um novo pedido será criado com a opção escolhida e o pedido anterior será cancelado.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        Text(
+                                            "Você pode trocar entre Pix, Mercado Pago e PayPal antes de iniciar a cobrança.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Button(
+                                        onClick = { onConfirmPayment(activePaymentOrder, selectedPaymentMethod) },
+                                        enabled = !orderBusy && paymentStatusError == null,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            when {
+                                                orderBusy -> "Processando..."
+                                                attemptClosed -> "Tentar novamente com este método"
+                                                else -> "Confirmar forma de pagamento"
+                                            }
+                                        )
+                                    }
+                                } else {
+                                    Text("Tentativa: ${currentPayment.status}", fontWeight = FontWeight.SemiBold)
+                                    if (!currentPayment.pix_copy_paste.isNullOrBlank()) {
+                                        Text("Pague com Pix", fontWeight = FontWeight.SemiBold)
+                                        PixQrCode(currentPayment)
+                                        Text("Pix copia e cola", fontWeight = FontWeight.SemiBold)
+                                        androidx.compose.foundation.text.selection.SelectionContainer {
+                                            Text(currentPayment.pix_copy_paste.orEmpty(), style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        OutlinedButton(
+                                            onClick = {
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                clipboard.setPrimaryClip(ClipData.newPlainText("Pix CandyLand", currentPayment.pix_copy_paste.orEmpty()))
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { Text("Copiar código Pix") }
+                                    }
+                                    if (!currentPayment.approval_url.isNullOrBlank()) {
+                                        OutlinedButton(
+                                            onClick = { onOpenPayment(currentPayment.approval_url) },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(if (selectedPaymentMethod == "PAYPAL") "Abrir PayPal" else "Abrir checkout do Mercado Pago")
+                                        }
+                                    }
+                                    OutlinedButton(
+                                        onClick = { onRefreshPayment(activePaymentOrder.id) },
+                                        enabled = !orderBusy,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) { Text(if (orderBusy) "Consultando..." else "Já paguei — atualizar status") }
+                                    Text(
+                                        "A troca de método fica bloqueada enquanto houver uma cobrança ativa.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
                         TextButton(
                             onClick = { orderAwaitingCancellation = order },
-                            enabled = cancellingOrderId == null,
+                            enabled = cancellingOrderId == null && !orderBusy,
                             modifier = Modifier.fillMaxWidth()
                         ) { Text(if (cancellingOrderId == order.id) "Cancelando..." else "Cancelar pedido") }
                     }
@@ -1629,6 +1862,7 @@ private fun OrderHistoryScreen(
             }
         }
     }
+
     orderAwaitingCancellation?.let { order ->
         AlertDialog(
             onDismissRequest = { if (cancellingOrderId == null) orderAwaitingCancellation = null },
@@ -1649,6 +1883,7 @@ private fun OrderHistoryScreen(
         )
     }
 }
+
 
 private fun mobileStoreStatusLabel(status: String?): String = when (status) {
     "ABERTO" -> "Aberta"

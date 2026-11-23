@@ -1,7 +1,5 @@
 package com.candyland.mobile.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,9 +40,6 @@ import com.candyland.mobile.model.AddressDto
 import com.candyland.mobile.model.AddressUpsertRequest
 import com.candyland.mobile.model.UserProfileUpdateRequest
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
 
 @Composable
 fun CustomerSettingsScreen(
@@ -56,7 +50,6 @@ fun CustomerSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     var name by remember { mutableStateOf(session.name) }
     var birthDate by remember { mutableStateOf("") }
     var email by remember { mutableStateOf(session.email) }
@@ -80,30 +73,6 @@ fun CustomerSettingsScreen(
     var state by remember { mutableStateOf("") }
     var reference by remember { mutableStateOf("") }
     var principal by remember { mutableStateOf(false) }
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            scope.launch {
-                busy = true; error = null; message = null
-                runCatching {
-                    val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                        ?: throw IllegalStateException("Não foi possível ler a foto selecionada.")
-                    if (bytes.size > 2 * 1024 * 1024) throw IllegalStateException("A foto deve ter no máximo 2 MB.")
-                    val extension = mime.substringAfter("/", "jpg").substringBefore(";").lowercase()
-                        .let { if (it in setOf("jpeg", "png", "webp")) it else "jpg" }
-                    val part = MultipartBody.Part.createFormData("foto", "perfil.$extension", bytes.toRequestBody(mime.toMediaType()))
-                    ApiProvider.unwrap(ApiProvider.api.uploadProfilePhoto(session.id, part)).dados
-                        ?: throw IllegalStateException("O servidor não retornou o perfil atualizado.")
-                }.onSuccess { profile ->
-                    profilePhotoUrl = profile.foto_perfil_url
-                    onSessionUpdated(session.copy(fotoPerfilUrl = profilePhotoUrl))
-                    message = "Foto de perfil atualizada."
-                }.onFailure { error = it.message ?: "Não foi possível enviar sua foto." }
-                busy = false
-            }
-        }
-    }
-
     suspend fun refreshAddresses() {
         addresses = ApiProvider.unwrap(ApiProvider.api.addresses(session.id)).dados
     }
@@ -256,8 +225,11 @@ fun CustomerSettingsScreen(
                 } else Text("👤", fontSize = 42.sp)
                 Column(Modifier.weight(1f)) {
                     Text("Foto de perfil", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("Aparecerá no topo do aplicativo.", style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = { photoPicker.launch("image/*") }, enabled = !busy) { Text("Escolher foto") }
+                    Text(
+                        "O envio de novas fotos ficará disponível quando a API do servidor oferecer suporte a essa operação.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
