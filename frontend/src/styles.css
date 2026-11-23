@@ -5889,3 +5889,54 @@ select:focus-visible {
   .rs-info { grid-template-columns: 1fr; }
   .rs-topo h1 { font-size: 1.5rem; }
 }
+
+/* ===== RELATORIOS CANDYLAND ===== */
+.rl-sobretitulo { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: #d6336c; }
+.rl-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rl-periodo { background: #fff; border: 1px solid #f1d3dd; border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+.rl-abas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+.rl-aba { display: flex; align-items: center; gap: 12px; text-align: left; background: #fff; border: 2px solid #f1d3dd; border-radius: 16px; padding: 14px 16px; cursor: pointer; font: inherit; color: inherit; }
+.rl-aba strong { display: block; font-size: 15px; }
+.rl-aba small { color: #777; font-size: 12px; }
+.rl-aba-icone { font-size: 26px; }
+.rl-aba:hover { border-color: #e98aa8; }
+.rl-aba-ativa { border-color: #d6336c; background: #fff0f5; }
+.rl-titulo-impressao { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rl-titulo-impressao h3 { margin: 0; font-size: 20px; }
+.rl-demo { background: #fff3cd; color: #8a6d00; border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+.rl-atualizando { opacity: 0.6; }
+.rl-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+.rl-cards-4 { grid-template-columns: repeat(4, 1fr); }
+.rl-cards-5 { grid-template-columns: repeat(5, 1fr); }
+.rl-card { background: #fff; border: 1px solid #f1d3dd; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.rl-card-destaque { background: linear-gradient(135deg, #d6336c, #f06595); border: 0; color: #fff; }
+.rl-card-rotulo { font-size: 13px; opacity: 0.85; }
+.rl-card-valor { font-size: 24px; }
+.rl-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.rl-bloco { background: #fff; border: 1px solid #f1d3dd; border-radius: 16px; padding: 18px; margin-bottom: 18px; }
+.rl-grade .rl-bloco { margin-bottom: 0; }
+.rl-bloco h3 { margin: 0 0 14px; font-size: 16px; }
+.rl-barras { display: flex; align-items: flex-end; gap: 8px; height: 190px; }
+.rl-barra-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; gap: 4px; min-width: 0; }
+.rl-barra-valor { font-size: 10px; color: #555; height: 14px; white-space: nowrap; }
+.rl-barra-trilho { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.rl-barra { width: 70%; min-height: 3px; background: linear-gradient(180deg, #f06595, #d6336c); border-radius: 6px 6px 0 0; }
+.rl-barra-dia { font-size: 12px; color: #777; }
+.rl-ranking, .rl-alertas, .rl-resumo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rl-ranking li { display: flex; align-items: center; gap: 10px; }
+.rl-posicao { width: 32px; height: 32px; border-radius: 50%; background: #fff0f5; color: #d6336c; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.rl-ranking-nome { flex: 1; font-weight: 600; }
+.rl-ranking-detalhe { color: #777; font-size: 13px; }
+.rl-alertas li, .rl-resumo li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f6e3ea; }
+.rl-selo { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.rl-selo-aviso { background: #fff3cd; color: #8a6d00; }
+.rl-selo-erro { background: #fde2e2; color: #b42318; }
+.rl-vazio { color: #777; margin: 0; }
+@media (max-width: 900px) {
+  .rl-abas, .rl-cards, .rl-cards-4, .rl-cards-5, .rl-grade { grid-template-columns: 1fr; }
+}
+@media print {
+  .dashboard-sidebar, .rl-no-print { display: none !important; }
+  .dashboard-layout { display: block; }
+  .rl-card, .rl-bloco { break-inside: avoid; }
+}
