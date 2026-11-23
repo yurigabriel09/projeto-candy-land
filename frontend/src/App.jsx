@@ -29,6 +29,8 @@ import RegistrationGuard from "./components/RegistrationGuard";
 import DadosPessoais from "./pages/DadosPessoais";
 import PendingPayments from "./pages/PendingPayments";
 import PurchaseHistory from "./pages/PurchaseHistory";
+import CustomerReport from "./pages/CustomerReport";
+import AdminReport from "./pages/AdminReport";
 
 function App() {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -120,6 +122,15 @@ function App() {
                                 }
                             />
 
+                            <Route
+                                path="/minha-conta/relatorio"
+                                element={
+                                    <ProtectedRoute tipoConta="PERSONAL">
+                                        <CustomerReport />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route path="/admin/relatorios" element={<AdminReport />} />
                             <Route
                                 path="/minha-conta/pagamentos-pendentes"
                                 element={

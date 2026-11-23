@@ -5940,3 +5940,13 @@ select:focus-visible {
   .dashboard-layout { display: block; }
   .rl-card, .rl-bloco { break-inside: avoid; }
 }
+
+/* ===== RELATORIOS PAGINAS ===== */
+.rl-pagina { max-width: 1000px; margin: 0 auto; padding: 28px 16px 60px; }
+.rl-pagina-larga { max-width: 1200px; }
+.rl-pagina-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.rl-pagina-topo h1 { margin: 0 0 4px; }
+.rl-pagina-topo p { margin: 0; color: #777; }
+@media print {
+  .site-header { display: none !important; }
+}
