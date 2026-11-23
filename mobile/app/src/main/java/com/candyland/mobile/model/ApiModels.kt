@@ -160,7 +160,8 @@ data class UserProfileDto(
     val email: String = "",
     val telefone: String = "",
     val cpf: String = "",
-    val data_nascimento: String? = null
+    val data_nascimento: String? = null,
+    val foto_perfil_url: String? = null
 )
 data class UserProfileUpdateRequest(
     val nome_completo: String,

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -140,7 +141,7 @@ fun CandyLandApp(
             onBackground = Color(0xFF4A2420)
         )
     ) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Surface(modifier = Modifier.fillMaxSize().safeDrawingPadding(), color = MaterialTheme.colorScheme.background) {
             if (session == null) {
                 if (showAuthentication) {
                     AuthenticationScreen(
@@ -205,7 +206,8 @@ private fun WelcomeScreen(
     cart: List<StoredCartItem>,
     onCartChanged: (List<StoredCartItem>) -> Unit,
     onLogin: () -> Unit,
-    onCheckout: () -> Unit
+    onCheckout: () -> Unit,
+    profilePhotoUrl: String? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -219,29 +221,46 @@ private fun WelcomeScreen(
     var storeProducts by remember { mutableStateOf<List<ProductDto>>(emptyList()) }
     var cartVisible by remember { mutableStateOf(false) }
     var currentLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var locationLoading by remember { mutableStateOf(false) }
     var locationMessage by remember { mutableStateOf("Use sua localização para ver docerias próximas.") }
 
     fun atualizarLocalizacao() {
-        val client = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
         val hasFine = androidx.core.content.ContextCompat.checkSelfPermission(
             context, android.Manifest.permission.ACCESS_FINE_LOCATION
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
         val hasCoarse = androidx.core.content.ContextCompat.checkSelfPermission(
             context, android.Manifest.permission.ACCESS_COARSE_LOCATION
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (!hasFine && !hasCoarse) return
+        if (!hasFine && !hasCoarse) {
+            locationMessage = "Autorize o acesso à localização para continuar."
+            return
+        }
+
+        locationLoading = true
+        locationMessage = "Obtendo sua localização..."
+        val client = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+        fun aplicarLocalizacao(location: android.location.Location?) {
+            locationLoading = false
+            if (location != null) {
+                currentLocation = location.latitude to location.longitude
+                locationMessage = "Localização atualizada. Distâncias aproximadas em linha reta."
+            } else {
+                locationMessage = "Não recebemos uma posição do dispositivo. No emulador, abra os controles (⋮) > Location e defina uma localização."
+            }
+        }
         client.getCurrentLocation(
             com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
             com.google.android.gms.tasks.CancellationTokenSource().token
         ).addOnSuccessListener { location ->
             if (location != null) {
-                currentLocation = location.latitude to location.longitude
-                locationMessage = "Localização atualizada. Distâncias aproximadas em linha reta."
+                aplicarLocalizacao(location)
             } else {
-                locationMessage = "Não foi possível obter a localização agora. Tente novamente em um local aberto."
+                client.lastLocation
+                    .addOnSuccessListener { lastLocation -> aplicarLocalizacao(lastLocation) }
+                    .addOnFailureListener { aplicarLocalizacao(null) }
             }
         }.addOnFailureListener {
-            locationMessage = "Não foi possível obter sua localização. Você ainda pode navegar normalmente."
+            aplicarLocalizacao(null)
         }
     }
 
@@ -300,7 +319,15 @@ private fun WelcomeScreen(
                 Text("🍭 CandyLand", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 Text("Doces de todos os mundos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            TextButton(onClick = onLogin) { Text("👤") }
+            TextButton(onClick = onLogin) {
+                if (!profilePhotoUrl.isNullOrBlank()) {
+                    coil3.compose.AsyncImage(
+                        model = mobileImageUrl(profilePhotoUrl), contentDescription = "Minha conta",
+                        modifier = Modifier.size(38.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else Text("👤", fontSize = 25.sp)
+            }
             TextButton(onClick = { cartVisible = !cartVisible; selectedRestaurant = null }) {
                 Text("🛒 ${cart.sumOf { it.quantity }}")
             }
@@ -362,13 +389,14 @@ private fun WelcomeScreen(
                 leadingIcon = { Text("⌕") }
             )
             androidx.compose.material3.OutlinedButton(
+                enabled = !locationLoading,
                 onClick = {
                     val hasLocation = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
                         androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
                     if (hasLocation) atualizarLocalizacao()
                     else locationPermissionLauncher.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
                 }, modifier = Modifier.fillMaxWidth()
-            ) { Text("📍 ${if (currentLocation == null) "Usar minha localização" else "Atualizar localização"}") }
+            ) { Text(if (locationLoading) "Obtendo localização..." else "📍 ${if (currentLocation == null) "Usar minha localização" else "Atualizar localização"}") }
             Text(locationMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -449,10 +477,20 @@ private fun WelcomeScreen(
     }
 }
 
-private fun mobileImageUrl(path: String?): String? {
+internal fun mobileImageUrl(path: String?): String? {
     val value = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    if (value.startsWith("https://") || value.startsWith("http://")) return value
-    return BuildConfig.API_BASE_URL.trimEnd('/') + "/" + value.trimStart('/')
+    if (value.startsWith("https://", ignoreCase = true) || value.startsWith("http://", ignoreCase = true)) return value
+
+    // Uploads ficam na raiz do domínio; a API pode usar prefixo /api/.
+    val apiUri = Uri.parse(BuildConfig.API_BASE_URL)
+    val authority = apiUri.encodedAuthority ?: return null
+    val origin = "${apiUri.scheme}://$authority"
+    val normalized = value.trimStart('/')
+    return if (value.startsWith("/") || normalized.startsWith("uploads/")) {
+        "$origin/$normalized"
+    } else {
+        apiUri.buildUpon().appendEncodedPath(normalized).build().toString()
+    }
 }
 
 
@@ -960,6 +998,7 @@ private fun ShopScreen(
     var createdOrder by remember { mutableStateOf<OrderDto?>(null) }
     var paymentIdempotencyKey by remember { mutableStateOf<String?>(null) }
     var actionBusy by remember { mutableStateOf(false) }
+    var cancellingOrderId by remember { mutableStateOf<Int?>(null) }
     var receiptCodes by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var receiptCodeErrors by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var receiptCodeLoadingOrderId by remember { mutableStateOf<Int?>(null) }
@@ -1005,12 +1044,12 @@ private fun ShopScreen(
         val payment = ApiProvider.unwrap(ApiProvider.api.createPayment(orderId, idempotencyKey, "ANDROID")).pagamento            ?: throw IllegalStateException("O servidor não retornou os dados do pagamento.")
         paymentInfo = payment
         when {
+            !payment.pix_copy_paste.isNullOrBlank() -> {
+                checkoutMessage = "Pix gerado. Escaneie o QR Code ou copie o código e pague no app do seu banco/Mercado Pago."
+            }
             !payment.approval_url.isNullOrBlank() -> {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(payment.approval_url)))
-                checkoutMessage = "Pedido criado. A autorização do pagamento foi aberta no navegador."
-            }
-            !payment.pix_copy_paste.isNullOrBlank() -> {
-                checkoutMessage = "Pedido criado. Pix copia e cola disponível abaixo; aguarde a confirmação."
+                checkoutMessage = "A autorização segura do PayPal foi aberta. Ao concluir, você retornará ao CandyLand."
             }
             else -> {
                 checkoutMessage = payment.message ?: "Pedido criado. Aguardando instruções do provedor de pagamento."
@@ -1022,6 +1061,11 @@ private fun ShopScreen(
         loadRestaurants()
         loadOrders()
         runCatching { PushTokenManager.registerCurrentDevice(context) }
+        runCatching { ApiProvider.unwrap(ApiProvider.api.userProfile(session.id)).dados }
+            .onSuccess { profile ->
+                val foto = profile?.foto_perfil_url
+                if (foto != session.fotoPerfilUrl) onSessionUpdated(session.copy(fotoPerfilUrl = foto))
+            }
     }
 
     LaunchedEffect(paymentUri) {
@@ -1086,7 +1130,7 @@ private fun ShopScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            if (tab != 0) TopAppBar(
                 title = {
                     Column {
                         Text("CandyLand", fontWeight = FontWeight.Bold)
@@ -1094,7 +1138,15 @@ private fun ShopScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { settingsExpanded = true }) { Text("⚙") }
+                    TextButton(onClick = { settingsExpanded = true }) {
+                        if (!session.fotoPerfilUrl.isNullOrBlank()) {
+                            coil3.compose.AsyncImage(
+                                model = mobileImageUrl(session.fotoPerfilUrl), contentDescription = "Foto do perfil",
+                                modifier = Modifier.size(38.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else Text("👤", fontSize = 25.sp)
+                    }
                     DropdownMenu(expanded = settingsExpanded, onDismissRequest = { settingsExpanded = false }) {
                         DropdownMenuItem(text = { Text("Minha conta e endereços") }, onClick = { settingsExpanded = false; tab = 3 })
                         DropdownMenuItem(text = { Text("Histórico de pedidos") }, onClick = { settingsExpanded = false; showPendingOnly = false; tab = 2; scope.launch { loadOrders() } })
@@ -1114,47 +1166,14 @@ private fun ShopScreen(
         }
     ) { innerPadding ->
         when (tab) {
-            0 -> {
-                if (selectedRestaurant == null) {
-                    RestaurantListScreen(
-                        restaurants = restaurants,
-                        loading = restaurantLoading,
-                        error = restaurantError,
-                        onRefresh = { scope.launch { loadRestaurants() } },
-                        onSelect = { restaurant ->
-                            selectedRestaurant = restaurant
-                            productLoading = true; productsError = null
-                            scope.launch {
-                                runCatching { ApiProvider.unwrap(ApiProvider.api.products(restaurant.id)) }
-                                    .onSuccess { products = it.dados }
-                                    .onFailure { productsError = it.message ?: "Não foi possível carregar os produtos." }
-                                productLoading = false
-                            }
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                } else {
-                    ProductListScreen(
-                        restaurant = selectedRestaurant!!,
-                        restaurantCanReceiveOrders = selectedRestaurant?.status == "ABERTO",
-                        products = products,
-                        loading = productLoading,
-                        error = productsError,
-                        onBack = { selectedRestaurant = null; scope.launch { loadRestaurants() } },
-                        onAdd = { product ->
-                            if (selectedRestaurant?.ativo != true || selectedRestaurant?.status != "ABERTO") {
-                                productsError = "Esta doceria não está aberta para novos pedidos. Atualize a lista de docerias."
-                            } else {
-                                val base = if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) emptyList() else cart
-                                val existing = base.firstOrNull { it.product.id == product.id }
-                                cart = if (existing == null) base + CartEntry(product, 1)
-                                else base.map { if (it.product.id == product.id) it.copy(quantity = it.quantity + 1) else it }
-                                productsError = null
-                            }
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            0 -> Box(Modifier.padding(innerPadding)) {
+                WelcomeScreen(
+                    cart = cart.map { StoredCartItem(it.product, it.quantity) },
+                    onCartChanged = { updated -> cart = updated.map { CartEntry(it.product, it.quantity) } },
+                    onLogin = { tab = 3 },
+                    onCheckout = { tab = 1 },
+                    profilePhotoUrl = session.fotoPerfilUrl
+                )
             }
             1 -> CartScreen(
                 session = session,
@@ -1212,6 +1231,22 @@ private fun ShopScreen(
                         actionBusy = false
                     }
                 },
+                onRefreshPayment = { orderId ->
+                    scope.launch {
+                        actionBusy = true
+                        runCatching {
+                            paymentInfo = ApiProvider.unwrap(ApiProvider.api.getPayment(orderId)).pagamento
+                            createdOrder = ApiProvider.unwrap(ApiProvider.api.order(orderId)).pedido
+                            loadOrders()
+                        }.onSuccess {
+                            checkoutMessage = if (createdOrder?.status?.let { it in RECEIPT_CODE_ELIGIBLE_STATUSES } == true) {
+                                "Pagamento confirmado pelo provedor. Seu pedido foi atualizado."
+                            } else "Ainda aguardando confirmação do pagamento. Confira novamente em instantes."
+                        }.onFailure { checkoutMessage = it.message ?: "Não foi possível consultar o pagamento." }
+                        actionBusy = false
+                    }
+                },
+                onManageAddresses = { tab = 3 },
                 onNewOrder = {
                     createdOrder = null; checkoutMessage = null; paymentInfo = null; paymentIdempotencyKey = null
                 },
@@ -1226,6 +1261,29 @@ private fun ShopScreen(
                 error = orderError,
                 onRefresh = { scope.launch { loadOrders() } },
                 onGenerateReceiptCode = { orderId -> generateReceiptCode(orderId) },
+                onContinuePayment = { order ->
+                    createdOrder = order
+                    paymentInfo = null
+                    paymentIdempotencyKey = null
+                    checkoutMessage = "Pedido pendente. Confira os dados e toque em Confirmar e pagar para retomar a compra."
+                    tab = 1
+                },
+                onCancelOrder = { orderId ->
+                    if (cancellingOrderId == null) scope.launch {
+                        cancellingOrderId = orderId
+                        runCatching { ApiProvider.unwrap(ApiProvider.api.cancelOrder(orderId)) }
+                            .onSuccess {
+                                if (createdOrder?.id == orderId) {
+                                    createdOrder = createdOrder?.copy(status = "CANCELADO")
+                                    paymentInfo = null
+                                }
+                                loadOrders()
+                            }
+                            .onFailure { orderError = it.message ?: "Não foi possível cancelar o pedido." }
+                        cancellingOrderId = null
+                    }
+                },
+                cancellingOrderId = cancellingOrderId,
                 modifier = Modifier.padding(innerPadding)
             )
             else -> CustomerSettingsScreen(
@@ -1341,6 +1399,8 @@ private fun CartScreen(
     onQuantity: (Int, Int) -> Unit,
     onCheckout: (String, Int?, String) -> Unit,
     onRetryPayment: (Int) -> Unit,
+    onRefreshPayment: (Int) -> Unit,
+    onManageAddresses: () -> Unit,
     onNewOrder: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1367,7 +1427,7 @@ private fun CartScreen(
                     Text("Status: ${createdOrder.status}")
                     Text("Produtos: ${money(createdOrder.subtotal)}")
                     if (createdOrder.discount > 0.0) Text("Desconto: -${money(createdOrder.discount)}")
-                    val freightLabel = if (createdOrder.order_type == "PICKUP") "Não se aplica (retirada)" else if (createdOrder.delivery_fee <= 0.0) "Grátis" else money(createdOrder.delivery_fee)
+                    val freightLabel = if (createdOrder.delivery_fee <= 0.0) "Grátis" else money(createdOrder.delivery_fee)
                     Text("Frete: $freightLabel", fontWeight = FontWeight.SemiBold)
                     createdOrder.delivery_quote?.let { quote ->
                         val distance = quote.distance_km
@@ -1406,17 +1466,25 @@ private fun CartScreen(
                         }
                         receiptCodeError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     }
-                    paymentInfo?.pix_copy_paste?.let {
+                    paymentInfo?.takeIf { !it.pix_copy_paste.isNullOrBlank() }?.let { pixPayment ->
+                        val pixCopyPaste = pixPayment.pix_copy_paste.orEmpty()
                         Divider()
+                        Text("Pague com Pix", fontWeight = FontWeight.SemiBold)
+                        Text("Escaneie o QR Code com o app do seu banco ou do Mercado Pago. Confira o destinatário e o valor antes de confirmar.")
+                        PixQrCode(pixPayment)
                         Text("Pix copia e cola", fontWeight = FontWeight.SemiBold)
-                        androidx.compose.foundation.text.selection.SelectionContainer { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        androidx.compose.foundation.text.selection.SelectionContainer { Text(pixCopyPaste, style = MaterialTheme.typography.bodySmall) }
                         OutlinedButton(
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("Pix CandyLand", it))
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Pix CandyLand", pixCopyPaste))
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("Copiar código Pix") }
+                        OutlinedButton(
+                            onClick = { onRefreshPayment(createdOrder.id) }, enabled = !orderBusy,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(if (orderBusy) "Consultando..." else "Já paguei — atualizar status") }
                     }
                     if (paymentInfo == null && createdOrder.status == "PENDENTE_PAGAMENTO") {
                         OutlinedButton(
@@ -1465,6 +1533,15 @@ private fun CartScreen(
                     Text(address.label(), style = MaterialTheme.typography.bodySmall)
                 }
             }
+            addresses.firstOrNull { it.id == selectedAddress }?.let { destino ->
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Endereço de entrega selecionado", fontWeight = FontWeight.SemiBold)
+                        Text(destino.label(), style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = onManageAddresses) { Text("Alterar ou cadastrar endereço") }
+                    }
+                }
+            }
         }
         Spacer(Modifier.height(10.dp))
         Text("Forma de pagamento", fontWeight = FontWeight.SemiBold)
@@ -1499,9 +1576,13 @@ private fun OrderHistoryScreen(
     receiptCodeErrors: Map<Int, String>,
     receiptCodeLoadingOrderId: Int?,
     onGenerateReceiptCode: (Int) -> Unit,
+    onContinuePayment: (OrderDto) -> Unit,
+    onCancelOrder: (Int) -> Unit,
+    cancellingOrderId: Int?,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxSize().padding(16.dp)) {
+    var orderAwaitingCancellation by remember { mutableStateOf<OrderDto?>(null) }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Meus pedidos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             TextButton(onClick = onRefresh) { Text("Atualizar") }
@@ -1531,9 +1612,41 @@ private fun OrderHistoryScreen(
                             Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                     }
+                    if (order.status == "PENDENTE_PAGAMENTO") {
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedButton(
+                            onClick = { onContinuePayment(order) },
+                            enabled = cancellingOrderId == null,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Continuar pagamento") }
+                        TextButton(
+                            onClick = { orderAwaitingCancellation = order },
+                            enabled = cancellingOrderId == null,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(if (cancellingOrderId == order.id) "Cancelando..." else "Cancelar pedido") }
+                    }
                 }
             }
         }
+    }
+    orderAwaitingCancellation?.let { order ->
+        AlertDialog(
+            onDismissRequest = { if (cancellingOrderId == null) orderAwaitingCancellation = null },
+            title = { Text("Cancelar pedido?") },
+            text = { Text("O pedido ${order.order_code} ainda aguarda pagamento. Deseja realmente cancelá-lo?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        orderAwaitingCancellation = null
+                        onCancelOrder(order.id)
+                    },
+                    enabled = cancellingOrderId == null
+                ) { Text("Sim, cancelar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { orderAwaitingCancellation = null }) { Text("Manter pedido") }
+            }
+        )
     }
 }
 

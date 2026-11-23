@@ -84,6 +84,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.zxing:core:3.5.3")
 
     // Imagens remotas no Jetpack Compose; versão fixada para build reproduzível.
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")

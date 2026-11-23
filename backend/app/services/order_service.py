@@ -531,17 +531,26 @@ class OrderService:
                 )
 
             customer_address = OrderService._validate_address(user_id, address_id)
-            delivery_fee, distance_km = OrderService._calcular_taxa_entrega(
-                restaurant_id, customer_address
+
+            delivery_fee, straight_distance_km, quote = (
+                OrderService._calcular_taxa_entrega_detalhada(
+                    restaurant_id,
+                    customer_address,
+                    usar_routes=True,
+                )
             )
+            
             return {
                 "success": True,
                 "mensagem": "Taxa de entrega calculada.",
                 "dados": {
                     "order_type": "DELIVERY",
                     "taxa_entrega": float(delivery_fee),
-                    "distancia_km": float(distance_km),
-                    "tempo_estimado": OrderService._estimar_tempo_entrega(distance_km),
+                    "distancia_km": float(quote["distance_km"]),
+                    "distancia_linha_reta_km": float(straight_distance_km),
+                    "tempo_estimado": quote["tempo_estimado"],
+                    "duracao_segundos": quote["duration_seconds"],
+                    "source": quote["source"],
                 },
             }
         except (TypeError, ValueError) as exc:

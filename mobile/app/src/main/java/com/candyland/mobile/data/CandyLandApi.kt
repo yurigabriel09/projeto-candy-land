@@ -6,6 +6,7 @@ import android.os.Looper
 import com.candyland.mobile.BuildConfig
 import com.candyland.mobile.model.*
 import com.google.gson.Gson
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
@@ -18,6 +19,8 @@ import retrofit2.http.HTTP
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PATCH
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -46,6 +49,13 @@ interface CandyLandApi {
 
     @PUT("users/{userId}")
     suspend fun updateUserProfile(@Path("userId") userId: Int, @Body body: UserProfileUpdateRequest): Response<Map<String, Any?>>
+
+    @Multipart
+    @POST("users/{userId}/foto")
+    suspend fun uploadProfilePhoto(
+        @Path("userId") userId: Int,
+        @Part foto: MultipartBody.Part
+    ): Response<UserProfileResponse>
 
     @POST("users/{userId}/enderecos")
     suspend fun addUserAddress(@Path("userId") userId: Int, @Body body: AddressUpsertRequest): Response<Map<String, Any?>>
@@ -110,6 +120,9 @@ interface CandyLandApi {
 
     @GET("pedidos/{orderId}")
     suspend fun order(@Path("orderId") orderId: Int): Response<OrderDetailResponse>
+
+    @POST("pedidos/{orderId}/cancelar")
+    suspend fun cancelOrder(@Path("orderId") orderId: Int): Response<Map<String, Any?>>
 
     @GET("pedidos/{orderId}/pagamento")
     suspend fun getPayment(@Path("orderId") orderId: Int): Response<PaymentCreateResponse>

@@ -1,5 +1,7 @@
 package com.candyland.mobile.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -19,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,14 +31,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.candyland.mobile.data.ApiProvider
 import com.candyland.mobile.data.SessionManager
+import com.candyland.mobile.data.ViaCepClient
 import com.candyland.mobile.model.AddressDto
 import com.candyland.mobile.model.AddressUpsertRequest
 import com.candyland.mobile.model.UserProfileUpdateRequest
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @Composable
 fun CustomerSettingsScreen(
@@ -45,11 +56,14 @@ fun CustomerSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var name by remember { mutableStateOf(session.name) }
     var birthDate by remember { mutableStateOf("") }
     var email by remember { mutableStateOf(session.email) }
     var phone by remember { mutableStateOf("") }
     var cpf by remember { mutableStateOf("") }
+    var profilePhotoUrl by remember { mutableStateOf(session.fotoPerfilUrl) }
+    var cepBusy by remember { mutableStateOf(false) }
     var addresses by remember { mutableStateOf<List<AddressDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var busy by remember { mutableStateOf(false) }
@@ -66,6 +80,29 @@ fun CustomerSettingsScreen(
     var state by remember { mutableStateOf("") }
     var reference by remember { mutableStateOf("") }
     var principal by remember { mutableStateOf(false) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                busy = true; error = null; message = null
+                runCatching {
+                    val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        ?: throw IllegalStateException("Não foi possível ler a foto selecionada.")
+                    if (bytes.size > 2 * 1024 * 1024) throw IllegalStateException("A foto deve ter no máximo 2 MB.")
+                    val extension = mime.substringAfter("/", "jpg").substringBefore(";").lowercase()
+                        .let { if (it in setOf("jpeg", "png", "webp")) it else "jpg" }
+                    val part = MultipartBody.Part.createFormData("foto", "perfil.$extension", bytes.toRequestBody(mime.toMediaType()))
+                    ApiProvider.unwrap(ApiProvider.api.uploadProfilePhoto(session.id, part)).dados
+                        ?: throw IllegalStateException("O servidor não retornou o perfil atualizado.")
+                }.onSuccess { profile ->
+                    profilePhotoUrl = profile.foto_perfil_url
+                    onSessionUpdated(session.copy(fotoPerfilUrl = profilePhotoUrl))
+                    message = "Foto de perfil atualizada."
+                }.onFailure { error = it.message ?: "Não foi possível enviar sua foto." }
+                busy = false
+            }
+        }
+    }
 
     suspend fun refreshAddresses() {
         addresses = ApiProvider.unwrap(ApiProvider.api.addresses(session.id)).dados
@@ -81,6 +118,8 @@ fun CustomerSettingsScreen(
             email = profile.email
             phone = profile.telefone
             cpf = profile.cpf
+            profilePhotoUrl = profile.foto_perfil_url
+            onSessionUpdated(session.copy(fotoPerfilUrl = profile.foto_perfil_url))
             refreshAddresses()
         }.onFailure { error = it.message ?: "Não foi possível carregar seus dados." }
         loading = false
@@ -118,7 +157,27 @@ fun CustomerSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("Informe o endereço. O CandyLand localiza as coordenadas automaticamente.", style = MaterialTheme.typography.bodySmall)
-                    OutlinedTextField(cep, { cep = it }, label = { Text("CEP") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(cep, { cep = it.filter(Char::isDigit).take(8) }, label = { Text("CEP") }, singleLine = true, modifier = Modifier.weight(1f))
+                        OutlinedButton(
+                            enabled = !cepBusy && cep.filter(Char::isDigit).length == 8,
+                            onClick = {
+                                scope.launch {
+                                    cepBusy = true; error = null
+                                    runCatching { ViaCepClient.buscar(cep) }
+                                        .onSuccess { endereco ->
+                                            street = endereco.logradouro.orEmpty()
+                                            district = endereco.bairro.orEmpty()
+                                            city = endereco.localidade.orEmpty()
+                                            state = endereco.uf.orEmpty()
+                                            message = "Endereço preenchido pelo ViaCEP. Confira número e complemento."
+                                        }
+                                        .onFailure { error = it.message ?: "Não foi possível consultar o CEP." }
+                                    cepBusy = false
+                                }
+                            }
+                        ) { Text(if (cepBusy) "Buscando..." else "Buscar CEP") }
+                    }
                     OutlinedTextField(street, { street = it }, label = { Text("Rua / Avenida") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(number, { number = it }, label = { Text("Número") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(complement, { complement = it }, label = { Text("Complemento") }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -151,9 +210,16 @@ fun CustomerSettingsScreen(
                                     ApiProvider.unwrap(ApiProvider.api.updateUserAddress(session.id, editingAddressId!!, body))
                                 }
                                 refreshAddresses()
+                                val savedAddress = addresses.firstOrNull {
+                                    it.cep.orEmpty().filter(Char::isDigit) == cep.filter(Char::isDigit) && it.numero == number.trim()
+                                }
+                                if (savedAddress != null && (savedAddress.latitude == null || savedAddress.longitude == null)) {
+                                    runCatching { ApiProvider.unwrap(ApiProvider.api.geocodeAddress(session.id, savedAddress.id)) }
+                                    refreshAddresses()
+                                }
                             }.onSuccess {
                                 addressDialog = false
-                                message = "Endereço salvo. A localização foi calculada pelo servidor quando disponível."
+                                message = "Endereço salvo. O ViaCEP preencheu os dados e o servidor foi solicitado a geocodificar o endereço."
                             }.onFailure { error = it.message ?: "Não foi possível salvar o endereço." }
                             busy = false
                         }
@@ -178,6 +244,23 @@ fun CustomerSettingsScreen(
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+
+        Card(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (!profilePhotoUrl.isNullOrBlank()) {
+                    coil3.compose.AsyncImage(
+                        model = mobileImageUrl(profilePhotoUrl), contentDescription = "Foto de perfil",
+                        modifier = Modifier.size(76.dp).clip(androidx.compose.foundation.shape.CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else Text("👤", fontSize = 42.sp)
+                Column(Modifier.weight(1f)) {
+                    Text("Foto de perfil", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Aparecerá no topo do aplicativo.", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { photoPicker.launch("image/*") }, enabled = !busy) { Text("Escolher foto") }
+                }
+            }
+        }
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {

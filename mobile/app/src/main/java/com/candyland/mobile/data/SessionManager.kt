@@ -22,7 +22,8 @@ object SessionManager {
         val accountType: String,
         val token: String,
         val name: String,
-        val email: String
+        val email: String,
+        val fotoPerfilUrl: String? = null
     )
 
     private fun prefs(context: Context) =
