@@ -1,0 +1,459 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.candyland.mobile"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+7-->INJECTED
+8        android:minSdkVersion="26"
+8-->INJECTED
+9        android:targetSdkVersion="37" />
+9-->INJECTED
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:3:5-67
+11-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:3:22-64
+12    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+12-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:4:5-81
+12-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:4:22-78
+13    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+13-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:5:5-79
+13-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:5:22-76
+14    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+14-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:6:5-77
+14-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:6:22-74
+15    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
+15-->[androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:24:5-72
+15-->[androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:24:22-69
+16    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+16-->[androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:27:5-74
+16-->[androidx.biometric:biometric:1.1.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\e516b5f6f968c4ddbdcc257d34783ba6\transformed\biometric-1.1.0\AndroidManifest.xml:27:22-71
+17    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+17-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:22:5-79
+17-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:22:22-76
+18    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Required by older versions of Google Play services to create IID tokens -->
+18-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:24:5-68
+18-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:24:22-65
+19    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+19-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:26:5-82
+19-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:26:22-79
+20
+21    <permission
+21-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:22:5-24:47
+22        android:name="com.candyland.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+22-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:23:9-81
+23        android:protectionLevel="signature" />
+23-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:24:9-44
+24
+25    <uses-permission android:name="com.candyland.mobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+25-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:5-97
+25-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:26:22-94
+26
+27    <application
+27-->INJECTED
+28        android:allowBackup="false"
+28-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:9:9-36
+29        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+29-->[androidx.core:core:1.17.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f550ad71aea01375914b76c7bc0c8505\transformed\core-1.17.0\AndroidManifest.xml:28:18-86
+30        android:debuggable="true"
+31        android:extractNativeLibs="false"
+31-->INJECTED
+32        android:icon="@android:drawable/ic_menu_gallery"
+32-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:10:9-57
+33        android:label="CandyLand"
+33-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:11:9-34
+34        android:supportsRtl="true"
+34-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:12:9-35
+35        android:theme="@style/Theme.CandyLand"
+35-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:13:9-47
+36        android:usesCleartextTraffic="true" >
+36-->INJECTED
+37        <activity
+37-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:15:9-40:20
+38            android:name="com.candyland.mobile.MainActivity"
+38-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:16:13-41
+39            android:exported="true"
+39-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:17:13-36
+40            android:launchMode="singleTop" >
+40-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:18:13-43
+41            <intent-filter>
+41-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:19:13-22:29
+42                <action android:name="android.intent.action.MAIN" />
+42-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:20:17-69
+42-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:20:25-66
+43
+44                <category android:name="android.intent.category.LAUNCHER" />
+44-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:21:17-77
+44-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:21:27-74
+45            </intent-filter>
+46            <intent-filter>
+46-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:23:13-31:29
+47                <action android:name="android.intent.action.VIEW" />
+47-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:17-69
+47-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:25-66
+48
+49                <category android:name="android.intent.category.DEFAULT" />
+49-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:17-76
+49-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:27-73
+50                <category android:name="android.intent.category.BROWSABLE" />
+50-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:17-78
+50-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:27-75
+51
+52                <data
+52-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:27:17-30:48
+53                    android:host="oauth"
+53-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:29:21-41
+54                    android:path="/facebook"
+54-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:30:21-45
+55                    android:scheme="com.candyland.mobile" />
+55-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:28:21-58
+56            </intent-filter>
+57            <intent-filter>
+57-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:32:13-39:29
+58                <action android:name="android.intent.action.VIEW" />
+58-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:17-69
+58-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:24:25-66
+59
+60                <category android:name="android.intent.category.DEFAULT" />
+60-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:17-76
+60-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:25:27-73
+61                <category android:name="android.intent.category.BROWSABLE" />
+61-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:17-78
+61-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:26:27-75
+62
+63                <data
+63-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:27:17-30:48
+64                    android:host="payment"
+64-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:29:21-41
+65                    android:scheme="com.candyland.mobile" />
+65-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:28:21-58
+66            </intent-filter>
+67        </activity>
+68
+69        <service
+69-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:42:9-48:19
+70            android:name="com.candyland.mobile.push.CandyLandFirebaseMessagingService"
+70-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:43:13-67
+71            android:exported="false" >
+71-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:44:13-37
+72            <intent-filter>
+72-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:45:13-47:29
+73                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+73-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:17-78
+73-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:25-75
+74            </intent-filter>
+75        </service>
+76        <service
+76-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:24:9-32:19
+77            android:name="androidx.credentials.playservices.CredentialProviderMetadataHolder"
+77-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:25:13-94
+78            android:enabled="true"
+78-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:26:13-35
+79            android:exported="false" >
+79-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:27:13-37
+80            <meta-data
+80-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:29:13-31:104
+81                android:name="androidx.credentials.CREDENTIAL_PROVIDER_KEY"
+81-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:30:17-76
+82                android:value="androidx.credentials.playservices.CredentialProviderPlayServicesImpl" />
+82-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:31:17-101
+83        </service>
+84
+85        <activity
+85-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:34:9-41:20
+86            android:name="androidx.credentials.playservices.controllers.identityauth.HiddenActivity"
+86-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:35:13-101
+87            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+87-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:36:13-87
+88            android:enabled="true"
+88-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:37:13-35
+89            android:exported="false"
+89-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:38:13-37
+90            android:fitsSystemWindows="true"
+90-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:39:13-45
+91            android:theme="@style/Theme.Hidden" >
+91-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:40:13-48
+92        </activity>
+93        <activity
+93-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:42:9-49:20
+94            android:name="androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity"
+94-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:43:13-129
+95            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+95-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:44:13-87
+96            android:enabled="true"
+96-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:45:13-35
+97            android:exported="false"
+97-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:46:13-37
+98            android:fitsSystemWindows="true"
+98-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:47:13-45
+99            android:theme="@style/Theme.Hidden" >
+99-->[androidx.credentials:credentials-play-services-auth:1.6.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f38a4326e955ea7766d114b6fff6bc33\transformed\credentials-play-services-auth-1.6.0\AndroidManifest.xml:48:13-48
+100        </activity>
+101        <activity
+101-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:23:9-27:75
+102            android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
+102-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:24:13-93
+103            android:excludeFromRecents="true"
+103-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:25:13-46
+104            android:exported="false"
+104-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:26:13-37
+105            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+105-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:27:13-72
+106        <!--
+107            Service handling Google Sign-In user revocation. For apps that do not integrate with
+108            Google Sign-In, this service will never be started.
+109        -->
+110        <service
+110-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:33:9-37:51
+111            android:name="com.google.android.gms.auth.api.signin.RevocationBoundService"
+111-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:34:13-89
+112            android:exported="true"
+112-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:35:13-36
+113            android:permission="com.google.android.gms.auth.api.signin.permission.REVOCATION_NOTIFICATION"
+113-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:36:13-107
+114            android:visibleToInstantApps="true" />
+114-->[com.google.android.gms:play-services-auth:21.1.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\67d96558424e478200f42f5f0869416e\transformed\play-services-auth-21.1.1\AndroidManifest.xml:37:13-48
+115
+116        <receiver
+116-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:29:9-40:20
+117            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+117-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:30:13-78
+118            android:exported="true"
+118-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:31:13-36
+119            android:permission="com.google.android.c2dm.permission.SEND" >
+119-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:32:13-73
+120            <intent-filter>
+120-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:33:13-35:29
+121                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+121-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:34:17-81
+121-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:34:25-78
+122            </intent-filter>
+123
+124            <meta-data
+124-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:37:13-39:40
+125                android:name="com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED"
+125-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:38:17-92
+126                android:value="true" />
+126-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:39:17-37
+127        </receiver>
+128        <!--
+129             FirebaseMessagingService performs security checks at runtime,
+130             but set to not exported to explicitly avoid allowing another app to call it.
+131        -->
+132        <service
+132-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:46:9-53:19
+133            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+133-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:47:13-82
+134            android:directBootAware="true"
+134-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:48:13-43
+135            android:exported="false" >
+135-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:49:13-37
+136            <intent-filter android:priority="-500" >
+136-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:45:13-47:29
+137                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+137-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:17-78
+137-->C:\Users\theom\Documents\Theo\Programacao\Projetos\CandyLand_Project\CandyLand\candyland-mobile\app\src\main\AndroidManifest.xml:46:25-75
+138            </intent-filter>
+139        </service>
+140        <service
+140-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:54:9-63:19
+141            android:name="com.google.firebase.components.ComponentDiscoveryService"
+141-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:55:13-84
+142            android:directBootAware="true"
+142-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:32:13-43
+143            android:exported="false" >
+143-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:56:13-37
+144            <meta-data
+144-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:57:13-59:85
+145                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+145-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:58:17-122
+146                android:value="com.google.firebase.components.ComponentRegistrar" />
+146-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:59:17-82
+147            <meta-data
+147-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:60:13-62:85
+148                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+148-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:61:17-119
+149                android:value="com.google.firebase.components.ComponentRegistrar" />
+149-->[com.google.firebase:firebase-messaging:26.0.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\d1dbe622a66d039b4cd40731ca015f19\transformed\firebase-messaging-26.0.1\AndroidManifest.xml:62:17-82
+150            <meta-data
+150-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:15:13-17:85
+151                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+151-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:16:17-130
+152                android:value="com.google.firebase.components.ComponentRegistrar" />
+152-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:17:17-82
+153            <meta-data
+153-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:18:13-20:85
+154                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+154-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:19:17-127
+155                android:value="com.google.firebase.components.ComponentRegistrar" />
+155-->[com.google.firebase:firebase-installations:20.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\dde70919199c7bc23c1f31eddd4eccdd\transformed\firebase-installations-20.0.0\AndroidManifest.xml:20:17-82
+156            <meta-data
+156-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:35:13-37:85
+157                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+157-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:36:17-109
+158                android:value="com.google.firebase.components.ComponentRegistrar" />
+158-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:37:17-82
+159            <meta-data
+159-->[com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:25:13-27:85
+160                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+160-->[com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:26:17-115
+161                android:value="com.google.firebase.components.ComponentRegistrar" />
+161-->[com.google.firebase:firebase-datatransport:21.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\c6334c05808280ceb67a2c4451bf1d79\transformed\firebase-datatransport-21.0.0\AndroidManifest.xml:27:17-82
+162        </service>
+163
+164        <activity
+164-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:9-22:45
+165            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+165-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:20:19-85
+166            android:exported="false"
+166-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:22:19-43
+167            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+167-->[com.google.android.gms:play-services-base:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\32d2c0be445ac6437f4034335f02bc3f\transformed\play-services-base-18.9.0\AndroidManifest.xml:21:19-78
+168
+169        <uses-library
+169-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:23:9-25:40
+170            android:name="androidx.window.extensions"
+170-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:24:13-54
+171            android:required="false" />
+171-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:25:13-37
+172        <uses-library
+172-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:26:9-28:40
+173            android:name="androidx.window.sidecar"
+173-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:27:13-51
+174            android:required="false" />
+174-->[androidx.window:window:1.5.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\1fef218d5c42e0be3fb3560fac4051dd\transformed\window-1.5.0\AndroidManifest.xml:28:13-37
+175
+176        <activity
+176-->[androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:23:9-26:79
+177            android:name="androidx.activity.ComponentActivity"
+177-->[androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:24:13-63
+178            android:exported="true"
+178-->[androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:25:13-36
+179            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+179-->[androidx.compose.ui:ui-test-manifest:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\f4220c3a73e1f651c57ce97e551a46fc\transformed\ui-test-manifest-1.12.0\AndroidManifest.xml:26:13-76
+180
+181        <provider
+181-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
+182            android:name="androidx.startup.InitializationProvider"
+182-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:25:13-67
+183            android:authorities="com.candyland.mobile.androidx-startup"
+183-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:26:13-68
+184            android:exported="false" >
+184-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:27:13-37
+185            <meta-data
+185-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:29:13-31:52
+186                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+186-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:30:17-75
+187                android:value="androidx.startup" />
+187-->[androidx.emoji2:emoji2:1.4.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\07583c05bdd36c65247fd190762270aa\transformed\emoji2-1.4.0\AndroidManifest.xml:31:17-49
+188            <meta-data
+188-->[androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:29:13-31:52
+189                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+189-->[androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:30:17-78
+190                android:value="androidx.startup" />
+190-->[androidx.lifecycle:lifecycle-process:2.10.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\2dc859fdc8509f2cd9bb8fab9224a64e\transformed\lifecycle-process-2.10.0\AndroidManifest.xml:31:17-49
+191            <meta-data
+191-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:29:13-31:52
+192                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+192-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:30:17-85
+193                android:value="androidx.startup" />
+193-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:31:17-49
+194        </provider>
+195
+196        <activity
+196-->[androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:23:9-25:39
+197            android:name="androidx.compose.ui.tooling.PreviewActivity"
+197-->[androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:24:13-71
+198            android:exported="true" />
+198-->[androidx.compose.ui:ui-tooling-android:1.12.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\13bd0cace558f6894299e1d114173ef4\transformed\ui-tooling\AndroidManifest.xml:25:13-36
+199
+200        <provider
+200-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:23:9-28:39
+201            android:name="com.google.firebase.provider.FirebaseInitProvider"
+201-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:24:13-77
+202            android:authorities="com.candyland.mobile.firebaseinitprovider"
+202-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:25:13-72
+203            android:directBootAware="true"
+203-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:26:13-43
+204            android:exported="false"
+204-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:27:13-37
+205            android:initOrder="100" />
+205-->[com.google.firebase:firebase-common:23.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\ae26b875180a8bf590367e695cfca458\transformed\firebase-common-23.0.0\AndroidManifest.xml:28:13-36
+206
+207        <meta-data
+207-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:21:9-23:69
+208            android:name="com.google.android.gms.version"
+208-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:22:13-58
+209            android:value="@integer/google_play_services_version" />
+209-->[com.google.android.gms:play-services-basement:18.9.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\a6d837a8c44896ccaf3b065c0e6de6f1\transformed\play-services-basement-18.9.0\AndroidManifest.xml:23:13-66
+210
+211        <service
+211-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:26:9-32:19
+212            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+212-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:27:13-103
+213            android:exported="false" >
+213-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:28:13-37
+214            <meta-data
+214-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:29:13-31:39
+215                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+215-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:30:17-94
+216                android:value="cct" />
+216-->[com.google.android.datatransport:transport-backend-cct:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\827784804bbaca35818e30247a9c9d86\transformed\transport-backend-cct-5.0.0\AndroidManifest.xml:31:17-36
+217        </service>
+218        <service
+218-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:24:9-28:19
+219            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+219-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:25:13-117
+220            android:exported="false"
+220-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:26:13-37
+221            android:permission="android.permission.BIND_JOB_SERVICE" >
+221-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:27:13-69
+222        </service>
+223
+224        <receiver
+224-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:30:9-32:40
+225            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+225-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:31:13-132
+226            android:exported="false" />
+226-->[com.google.android.datatransport:transport-runtime:5.0.0] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\131498af89635931e4b14be4e8e6a341\transformed\transport-runtime-5.0.0\AndroidManifest.xml:32:13-37
+227        <receiver
+227-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:34:9-52:20
+228            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+228-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:35:13-76
+229            android:directBootAware="false"
+229-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:36:13-44
+230            android:enabled="true"
+230-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:37:13-35
+231            android:exported="true"
+231-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:38:13-36
+232            android:permission="android.permission.DUMP" >
+232-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:39:13-57
+233            <intent-filter>
+233-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:40:13-42:29
+234                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+234-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:17-91
+234-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:25-88
+235            </intent-filter>
+236            <intent-filter>
+236-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:43:13-45:29
+237                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+237-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:17-85
+237-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:25-82
+238            </intent-filter>
+239            <intent-filter>
+239-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:46:13-48:29
+240                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+240-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:17-88
+240-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:25-85
+241            </intent-filter>
+242            <intent-filter>
+242-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:49:13-51:29
+243                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+243-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:17-95
+243-->[androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\theom\Documents\Theo\CandyLand_Project\DevTools\Gradle\caches\9.6.0\transforms\174cd4066570a6ad1abc6b4a141fe9ca\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:25-92
+244            </intent-filter>
+245        </receiver>
+246    </application>
+247
+248</manifest>

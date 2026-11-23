@@ -162,7 +162,7 @@ def test_finalizacao_rejeita_email_vinculado_a_cliente_e_restaurante(app):
     [("testing", True), ("production", False)],
 )
 def test_cadastro_pessoal_com_celular_do_restaurante_respeita_ambiente(
-    app, ambiente, deve_criar
+    app, ambiente, deve_criar, monkeypatch
 ):
     with app.app_context():
         telefone = "+5511999990000"
@@ -176,6 +176,10 @@ def test_cadastro_pessoal_com_celular_do_restaurante_respeita_ambiente(
         app.config.update(APP_ENV=ambiente, ALLOW_DUPLICATE_PHONE=True)
         tentativa = _criar_tentativa("novo-cliente@example.com", telefone)
 
+        monkeypatch.setattr(
+            "app.services.user_service.GeocodingService.geocodificar",
+            lambda _endereco: {"success": True, "dados": {"latitude": -23.55052, "longitude": -46.633308}},
+        )
         resultado = UserService.criar_usuario(
             nome_completo="Novo Cliente",
             email="novo-cliente@example.com",
@@ -203,7 +207,7 @@ def test_cadastro_pessoal_com_celular_do_restaurante_respeita_ambiente(
     [("testing", True), ("production", False)],
 )
 def test_cadastro_de_restaurante_com_celular_do_cliente_respeita_ambiente(
-    app, ambiente, deve_criar
+    app, ambiente, deve_criar, monkeypatch
 ):
     with app.app_context():
         telefone = "+5511999990000"
@@ -221,6 +225,10 @@ def test_cadastro_de_restaurante_com_celular_do_cliente_respeita_ambiente(
         app.config.update(APP_ENV=ambiente, ALLOW_DUPLICATE_PHONE=True)
         tentativa = _criar_tentativa("nova-doceria@example.com", telefone)
 
+        monkeypatch.setattr(
+            "app.services.restaurant_service.GeocodingService.geocodificar",
+            lambda _endereco: {"success": True, "dados": {"latitude": -23.55052, "longitude": -46.633308}},
+        )
         resultado = RestauranteService.criar_restaurante(
             cnpj="98765432000155",
             razao_social="Nova Doceria LTDA",

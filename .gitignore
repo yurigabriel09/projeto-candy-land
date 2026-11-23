@@ -49,3 +49,6 @@ mobile/app/google-services.json
 
 # Relatorios de falha da JVM
 **/hs_err_pid*.log
+
+# Repositório Android independente (clone de trabalho)
+/candyland-mobile/

@@ -75,8 +75,12 @@ def test_configuracao_recupera_endereco_legado_sem_address_id(app):
         assert resultado["dados"]["endereco"]["rua"] == "Praça da Sé"
 
 
-def test_atualizar_configuracao_cria_endereco_antes_do_flush(app):
+def test_atualizar_configuracao_cria_endereco_antes_do_flush(app, monkeypatch):
     with app.app_context():
+        monkeypatch.setattr(
+            "app.services.restaurant_service.GeocodingService.geocodificar",
+            lambda _endereco: {"success": True, "dados": {"latitude": -23.55052, "longitude": -46.633308}},
+        )
         restaurante = _criar_restaurante()
 
         resultado = RestauranteService.atualizar_configuracao(

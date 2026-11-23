@@ -67,6 +67,7 @@ def _criar_cenario():
         cpf_responsavel="98765432100",
         email="restaurante-checkout@example.com",
         telefone="+551133334444",
+        status="ABERTO",
         taxa_entrega_base=Decimal("3.50"),
         taxa_entrega_por_km=Decimal("2.00"),
         raio_entrega_km=Decimal("20.00"),

@@ -7,6 +7,7 @@ from app.models.category import Categoria
 from app.models.delivery import EntregaPedido
 from app.models.device_token import DeviceToken
 from app.models.item_order import ItemPedido
+from app.models.google_maps_route_usage import GoogleMapsRouteUsage
 from app.models.order import Pedido
 from app.models.order_receipt_code import OrderReceiptCode
 from app.models.payment_attempt import PaymentAttempt
@@ -22,6 +23,7 @@ __all__ = [
     "Endereco",
     "EntregaPedido",
     "ItemPedido",
+    "GoogleMapsRouteUsage",
     "OrderReceiptCode",
     "PaymentAttempt",
     "Pedido",

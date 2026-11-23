@@ -19,6 +19,11 @@ def recomendar_produtos():
     return RecommendationController.recomendar(request.args)
 
 
+@produto_bp.route("/busca", methods=["GET"])
+def buscar_catalogo_publico():
+    return ProductController.buscar_catalogo_publico(request.args.get("q", ""))
+
+
 @produto_bp.route("/<int:produto_id>", methods=["GET"])
 @token_required
 def buscar_produto(produto_id):

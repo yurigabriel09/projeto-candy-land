@@ -298,27 +298,31 @@ def test_checkout_pro_rejeita_retorno_local_antes_de_criar_preferencia(monkeypat
     assert chamadas == []
 
 
-def test_create_pix_retorna_qr_code_e_copia_e_cola(monkeypatch):
+def test_create_pix_usa_orders_api_e_retorna_qr_code(monkeypatch):
     chamadas = []
-    pagamento = {
-        "id": 998877,
-        "status": "pending",
-        "status_detail": "pending_waiting_payment",
-        "transaction_amount": 35.50,
-        "currency_id": "BRL",
-        "payment_type_id": "bank_transfer",
-        "payment_method_id": "pix",
+    ordem = {
+        "id": "ORD-PIX-17",
         "external_reference": "17",
-        "point_of_interaction": {"transaction_data": {
-            "qr_code": "000201PIX-COPIA-E-COLA-TESTE",
-            "qr_code_base64": "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB",
-            "ticket_url": "https://www.mercadopago.com.br/pix/998877",
-        }},
+        "status": "action_required",
+        "status_detail": "waiting_transfer",
+        "total_amount": "35.50",
+        "transactions": {"payments": [{
+            "amount": "35.50",
+            "status": "action_required",
+            "status_detail": "waiting_transfer",
+            "payment_method": {
+                "id": "pix",
+                "type": "bank_transfer",
+                "qr_code": "000201PIX-COPIA-E-COLA-TESTE",
+                "qr_code_base64": "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB",
+                "ticket_url": "https://www.mercadopago.com.br/pix/17"
+            }
+        }]}
     }
 
     def fake_request(method, url, **kwargs):
         chamadas.append((method, url, kwargs))
-        return FakeResponse(pagamento)
+        return FakeResponse(ordem)
 
     monkeypatch.setattr("app.services.payment_providers.mercado_pago_adapter.requests.request", fake_request)
     provider = MercadoPagoPaymentProvider({
@@ -326,21 +330,23 @@ def test_create_pix_retorna_qr_code_e_copia_e_cola(monkeypatch):
         "MERCADO_PAGO_SANDBOX": True,
     })
     command = CreatePaymentCommand(
-        order_id="17",
-        idempotency_key="pedido-17-pix-v1",
-        amount=Decimal("35.50"),
-        method=PaymentMethod.PIX,
-        payer_email="cliente@example.com",
-        metadata={"order_code": "CL-ABC123"},
+        order_id="17", idempotency_key="pedido-17-pix-v1",
+        amount=Decimal("35.50"), method=PaymentMethod.PIX,
+        payer_email="cliente@example.com", metadata={"order_code": "CL-ABC123"},
     )
 
     result = provider.create_payment(command)
 
     assert chamadas[0][0] == "POST"
-    assert chamadas[0][1].endswith("/v1/payments")
+    assert chamadas[0][1].endswith("/v1/orders")
     assert chamadas[0][2]["headers"]["X-Idempotency-Key"] == "pedido-17-pix-v1"
-    assert chamadas[0][2]["json"]["payer"]["email"] == "cliente@example.com"
-    assert result.provider_payment_id == "998877"
+    payload = chamadas[0][2]["json"]
+    assert payload["type"] == "online"
+    assert payload["total_amount"] == "35.50"
+    assert payload["transactions"]["payments"][0]["payment_method"] == {"id": "pix", "type": "bank_transfer"}
+    assert payload["payer"]["email"] == "test_payer@example.com"
+    assert result.provider_payment_id == "ord:ORD-PIX-17"
     assert result.status is PaymentStatus.PENDING
     assert result.pix_copy_paste == "000201PIX-COPIA-E-COLA-TESTE"
     assert result.pix_qr_code_base64 == "aVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQUFB"
+    assert result.approval_url == "https://www.mercadopago.com.br/pix/17"

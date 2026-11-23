@@ -32,7 +32,6 @@ class Produto(db.Model):
             "preco_produto": float(self.price) if self.price is not None else None,
             "produto_disponivel": self.is_available,
             "produto_importado": self.is_imported,
-            "qtd_estoque": self.current_stock,
             "permite_personalizacao": self.allows_customization,
             "imagem_url": self.image_url,
         }

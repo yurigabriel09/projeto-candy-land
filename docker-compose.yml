@@ -1,3 +1,4 @@
+
 services:
   backend:
     build:
@@ -10,9 +11,15 @@ services:
         required: false
     environment:
       DATABASE_URL: sqlite:////app/instance/candyland.db
+      PYTHONUNBUFFERED: "1"
     volumes:
+      # Banco de dados persistente.
       - candyland-db:/app/instance
-      # Credencial FCM fica fora da imagem e somente leitura. Crie backend/secrets antes de ativar.
+
+      # Imagens de produtos e fotos de perfil persistentes.
+      - candyland-uploads:/app/uploads
+
+      # Credencial FCM externa à imagem e somente leitura.
       - ./backend/secrets:/app/secrets:ro
     healthcheck:
       test:
@@ -33,11 +40,11 @@ services:
       context: ./frontend
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
-        # Vazio faz o bundle chamar /auth, /users etc. na própria origem.
+        # Vazio faz o frontend chamar a API pela própria origem,
+        # utilizando o proxy reverso do Nginx.
         VITE_API_URL: ${VITE_API_URL:-}
     container_name: candyland-frontend
     ports:
-      # ngrok deve apontar para a porta 5173 no host.
       - "5173:80"
     depends_on:
       backend:
@@ -46,3 +53,4 @@ services:
 
 volumes:
   candyland-db:
+  candyland-uploads:
