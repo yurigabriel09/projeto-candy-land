@@ -12,6 +12,7 @@ from app.models.order import Pedido
 from app.models.product import Produto
 from app.models.restaurant import Restaurante
 from app.services.geocoding_service import GeocodingService
+from app.services.google_routes_service import GoogleRoutesService
 from app.services.order_workflow_service import (
     OrderTransitionError,
     validar_transicao_entrega,
@@ -181,7 +182,7 @@ class OrderService:
         return restaurant, address
 
     @staticmethod
-    def _calcular_taxa_entrega(restaurant_id, customer_address):
+    def _calcular_taxa_entrega_detalhada(restaurant_id, customer_address, usar_routes=True):
         restaurant, restaurant_address = OrderService._resolver_endereco_restaurante(
             restaurant_id
         )
@@ -189,7 +190,6 @@ class OrderService:
             raise ValueError(
                 "O restaurante precisa configurar o raio máximo de entrega em quilômetros."
             )
-
         try:
             radius_km = float(restaurant.raio_entrega_km)
         except (TypeError, ValueError):
@@ -200,7 +200,6 @@ class OrderService:
         customer_address = OrderService._garantir_coordenadas_endereco(
             customer_address, "o endereço de entrega do cliente"
         )
-
         restaurant_lat = OrderService._validar_coordenada(
             restaurant_address.latitude, "localização da doceria", -90, 90
         )
@@ -214,7 +213,8 @@ class OrderService:
             customer_address.longitude, "localização do endereço de entrega", -180, 180
         )
 
-        # Haversine: distância em linha reta sobre uma Terra aproximada como esfera.
+        # Distância em linha reta continua sendo o dado legado no banco. O dado de
+        # rota do Google é usado apenas em memória e nunca é persistido.
         lat1, lat2 = math.radians(restaurant_lat), math.radians(customer_lat)
         delta_lat = lat2 - lat1
         delta_lon = math.radians(customer_lon - restaurant_lon)
@@ -223,29 +223,70 @@ class OrderService:
             + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
         )
         haversine = min(1.0, max(0.0, haversine))
-        distance_raw = 2 * 6371.0088 * math.asin(math.sqrt(haversine))
-        if distance_raw > radius_km + 1e-9:
-            distance_display = Decimal(str(distance_raw)).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-            raise ValueError(
-                f"Endereço fora do raio de entrega. Distância estimada: {distance_display} km; "
-                f"limite do restaurante: {Decimal(str(radius_km)).quantize(Decimal('0.01'))} km."
-            )
-
-        distance_km = Decimal(str(distance_raw)).quantize(
+        straight_raw = 2 * 6371.0088 * math.asin(math.sqrt(haversine))
+        straight_km = Decimal(str(straight_raw)).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
+
+        route = (
+            GoogleRoutesService.calcular_distancia(
+                restaurant_lat, restaurant_lon, customer_lat, customer_lon
+            )
+            if usar_routes else None
+        )
+        if route:
+            fee_distance = Decimal(str(route["distance_km_raw"]))
+            distance_label = route["distance_km"]
+            duration_seconds = route["duration_seconds"]
+            source = route["source"]
+            if fee_distance > Decimal(str(radius_km)) + Decimal("0.000001"):
+                distance_display = fee_distance.quantize(Decimal("0.01"))
+                raise ValueError(
+                    f"Endereço fora do raio de entrega pela rota. Distância: {distance_display} km; "
+                    f"limite do restaurante: {Decimal(str(radius_km)).quantize(Decimal('0.01'))} km."
+                )
+            deslocamento = math.ceil(duration_seconds / 60)
+            minutos = OrderService.TEMPO_PREPARO_MIN + deslocamento
+            minimo = int(math.ceil(minutos / 5.0) * 5)
+            eta = {"minimo": minimo, "maximo": minimo + OrderService.MARGEM_TEMPO_MIN}
+        else:
+            if straight_raw > radius_km + 1e-9:
+                distance_display = straight_km
+                raise ValueError(
+                    f"Endereço fora do raio de entrega. Distância aproximada: {distance_display} km; "
+                    f"limite do restaurante: {Decimal(str(radius_km)).quantize(Decimal('0.01'))} km."
+                )
+            fee_distance = straight_km
+            distance_label = float(straight_km)
+            duration_seconds = None
+            source = "LINHA_RETA_APROXIMADA"
+            eta = OrderService._estimar_tempo_entrega(straight_km)
+
         base_fee = OrderService._money(
             restaurant.taxa_entrega_base or 0, "taxa_entrega_base"
         )
         per_km_fee = OrderService._money(
             restaurant.taxa_entrega_por_km or 0, "taxa_entrega_por_km"
         )
-        total_fee = (base_fee + distance_km * per_km_fee).quantize(
+        total_fee = (base_fee + fee_distance * per_km_fee).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        return total_fee, distance_km
+        quote = {
+            "distance_km": float(distance_label),
+            "duration_seconds": duration_seconds,
+            "tempo_estimado": eta,
+            "source": source,
+        }
+        return total_fee, straight_km, quote
+
+    @staticmethod
+    def _calcular_taxa_entrega(restaurant_id, customer_address):
+        # Compatibilidade com chamadas antigas e testes: retorna a taxa e a
+        # distância em linha reta legada. O resultado de rota não é persistido.
+        fee, straight_distance, _quote = OrderService._calcular_taxa_entrega_detalhada(
+            restaurant_id, customer_address, usar_routes=False
+        )
+        return fee, straight_distance
 
     @staticmethod
     def _build_items(restaurant_id, items):
@@ -348,15 +389,14 @@ class OrderService:
             if restaurante.status != "ABERTO":
                 raise ValueError("Esta doceria ainda não está aberta para receber pedidos.")
 
+            delivery_quote = None
+            customer_address = None
             if order_type == "DELIVERY":
                 if isinstance(address_id, bool) or not isinstance(address_id, int):
                     raise TypeError(
                         "delivery_address_id é obrigatório para entrega no endereço."
                     )
                 customer_address = OrderService._validate_address(user_id, address_id)
-                delivery_fee, delivery_distance_km = OrderService._calcular_taxa_entrega(
-                    restaurant_id, customer_address
-                )
             else:
                 # A coluna legado delivery_address_id é obrigatória no banco. Para
                 # retirada, ela referencia o endereço ativo do próprio restaurante.
@@ -377,6 +417,12 @@ class OrderService:
                 # Retirada nunca cobra taxa de entrega nem registra distância logística.
                 delivery_fee = Decimal("0.00")
                 delivery_distance_km = None
+            else:
+                # Só consulta a Routes depois de validar loja, endereço, itens, estoque e cupom.
+                # Uma tentativa inválida de checkout não consome a quota da API.
+                delivery_fee, delivery_distance_km, delivery_quote = OrderService._calcular_taxa_entrega_detalhada(
+                    restaurant_id, customer_address
+                )
             # Para DELIVERY, delivery_fee é calculado exclusivamente pelo servidor.
             # O campo que eventualmente chegue no payload é ignorado.
             platform_fee = Decimal("0.00")
@@ -419,10 +465,14 @@ class OrderService:
                 )
 
             db.session.commit()
+            dados_pedido = OrderService._to_dict(pedido)
+            if delivery_quote is not None:
+                # Dados de rota retornam somente nesta resposta; não são persistidos.
+                dados_pedido["delivery_quote"] = delivery_quote
             return {
                 "success": True,
                 "mensagem": "Pedido criado com sucesso!",
-                "dados": OrderService._to_dict(pedido),
+                "dados": dados_pedido,
             }
         except (TypeError, ValueError, SQLAlchemyError) as exc:
             db.session.rollback()
@@ -440,9 +490,11 @@ class OrderService:
     MARGEM_TEMPO_MIN = 10
 
     @staticmethod
-    def _estimar_tempo_entrega(distance_km):
+    def _estimar_tempo_entrega(distance_km, duration_seconds=None):
         minutos = OrderService.TEMPO_PREPARO_MIN
-        if distance_km is not None:
+        if duration_seconds is not None:
+            minutos += math.ceil(float(duration_seconds) / 60.0)
+        elif distance_km is not None:
             deslocamento = (float(distance_km) / OrderService.VELOCIDADE_MEDIA_KMH) * 60
             minutos += math.ceil(deslocamento)
         minimo = int(math.ceil(minutos / 5.0) * 5)

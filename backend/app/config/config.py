@@ -87,6 +87,14 @@ class Config:
     PAYPAL_RETURN_URL_BASE = os.getenv("PAYPAL_RETURN_URL_BASE", FRONTEND_URL).strip().rstrip("/")
     # Chave restrita à API Geocoding, mantida apenas no backend.
     GOOGLE_MAPS_GEOCODING_API_KEY = os.getenv("GOOGLE_MAPS_GEOCODING_API_KEY", "").strip()
+    # Routes usa a mesma chave de servidor por padrão, mas só é ativada quando a chave existe.
+    GOOGLE_MAPS_ROUTES_API_KEY = (os.getenv("GOOGLE_MAPS_ROUTES_API_KEY") or GOOGLE_MAPS_GEOCODING_API_KEY).strip()
+    GOOGLE_MAPS_ROUTES_ENABLED = _valor_verdadeiro(
+        os.getenv("GOOGLE_MAPS_ROUTES_ENABLED", "true" if GOOGLE_MAPS_ROUTES_API_KEY else "false")
+    )
+    # Limites internos conservadores; o serviço impõe hard caps de 4.000/mês e 100/dia.
+    GOOGLE_MAPS_ROUTES_MONTHLY_LIMIT = int(os.getenv("GOOGLE_MAPS_ROUTES_MONTHLY_LIMIT", "4000"))
+    GOOGLE_MAPS_ROUTES_DAILY_LIMIT = int(os.getenv("GOOGLE_MAPS_ROUTES_DAILY_LIMIT", "100"))
     # Firebase Cloud Messaging HTTP v1; a chave de serviço permanece somente no backend.
     FCM_PROJECT_ID = os.getenv("FCM_PROJECT_ID", "").strip()
     FCM_SERVICE_ACCOUNT_FILE = os.getenv("FCM_SERVICE_ACCOUNT_FILE", "").strip()

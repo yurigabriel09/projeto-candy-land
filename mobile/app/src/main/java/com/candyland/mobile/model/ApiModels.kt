@@ -108,6 +108,7 @@ data class ProductDto(
     @SerializedName("imagem_url") val imageUrl: String? = null
 )
 data class ProductListResponse(val dados: List<ProductDto> = emptyList())
+data class ProductSearchResponse(val dados: List<ProductDto> = emptyList())
 data class ProductUpsertRequest(
     val categoria_id: Int,
     val nome: String,
@@ -249,11 +250,23 @@ data class OrderDto(
     val restaurant_name: String? = null,
     val status: String = "",
     val order_type: String = "",
+    val subtotal: Double = 0.0,
+    val discount: Double = 0.0,
+    val delivery_fee: Double = 0.0,
+    val delivery_distance_km: Double? = null,
     val total: Double = 0.0,
+    val delivery_quote: DeliveryQuoteDto? = null,
     val created_at: String? = null,
     val items: List<OrderItemDto> = emptyList(),
     val entrega: DeliveryDto? = null
 )
+data class DeliveryQuoteDto(
+    val distance_km: Double? = null,
+    val duration_seconds: Int? = null,
+    val source: String? = null,
+    val tempo_estimado: DeliveryEtaDto? = null
+)
+data class DeliveryEtaDto(val minimo: Int = 0, val maximo: Int = 0)
 data class DeliveryDto(
     val id: Int? = null,
     val status: String? = null,

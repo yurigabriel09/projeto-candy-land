@@ -23,12 +23,12 @@ val escapedGoogleWebClientId = googleWebClientId.replace("\\", "\\\\").replace("
 
 android {
     namespace = "com.candyland.mobile"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.candyland.mobile"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0.0"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
@@ -84,6 +84,11 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-messaging")
+
+    // Imagens remotas no Jetpack Compose; versão fixada para build reproduzível.
+    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
+    implementation("com.google.android.gms:play-services-location:21.4.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

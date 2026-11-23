@@ -1,6 +1,8 @@
 package com.candyland.mobile.data
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.candyland.mobile.BuildConfig
 import com.candyland.mobile.model.*
 import com.google.gson.Gson
@@ -18,6 +20,7 @@ import retrofit2.http.POST
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface CandyLandApi {
     @POST("auth/login")
@@ -55,6 +58,9 @@ interface CandyLandApi {
 
     @GET("restaurantes")
     suspend fun restaurants(): Response<RestaurantListResponse>
+
+    @GET("produtos/busca")
+    suspend fun searchProducts(@Query("q") query: String): Response<ProductSearchResponse>
 
     @GET("restaurantes/{restaurantId}/produtos")
     suspend fun products(@Path("restaurantId") restaurantId: Int): Response<ProductListResponse>
@@ -149,6 +155,8 @@ object ApiProvider {
     lateinit var api: CandyLandApi
         private set
 
+    @Volatile var sessionExpiredHandler: (() -> Unit)? = null
+
     fun initialize(context: Context) {
         if (::api.isInitialized) return
         val logging = HttpLoggingInterceptor().apply {
@@ -157,9 +165,15 @@ object ApiProvider {
         }
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
+                val token = SessionManager.token(context)
                 val request = chain.request().newBuilder()
-                SessionManager.token(context)?.let { request.header("Authorization", "Bearer $it") }
-                chain.proceed(request.build())
+                token?.let { request.header("Authorization", "Bearer $it") }
+                val response = chain.proceed(request.build())
+                if (response.code == 401 && !token.isNullOrBlank()) {
+                    SessionManager.clear(context)
+                    Handler(Looper.getMainLooper()).post { sessionExpiredHandler?.invoke() }
+                }
+                response
             }
             .addInterceptor(logging)
             .build()

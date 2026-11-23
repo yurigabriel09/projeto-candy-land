@@ -3,6 +3,7 @@ from app.database.database import db
 from app.database.migrations import migrar_taxa_entrega_por_distancia
 from app.models.delivery import EntregaPedido
 from app.models.order import Pedido
+from app.models.google_maps_route_usage import GoogleMapsRouteUsage  # registra a tabela de quotas no create_all
 from app.routes.auth_routes import auth_bp
 from app.routes.category_routes import categoria_bp
 from app.routes.device_routes import device_bp

@@ -46,11 +46,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
@@ -61,6 +64,8 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.candyland.mobile.BuildConfig
 import com.candyland.mobile.data.ApiProvider
+import com.candyland.mobile.data.CartStorage
+import com.candyland.mobile.data.StoredCartItem
 import com.candyland.mobile.data.SessionManager
 import com.candyland.mobile.model.*
 import com.candyland.mobile.push.PushTokenManager
@@ -99,6 +104,17 @@ fun CandyLandApp(
     val appScope = rememberCoroutineScope()
     var session by remember { mutableStateOf(SessionManager.current(applicationContext)) }
     var showAuthentication by remember { mutableStateOf(oauthUri != null) }
+    var cart by remember { mutableStateOf(CartStorage.load(applicationContext)) }
+    var checkoutAfterLogin by remember { mutableStateOf(false) }
+
+    SideEffect {
+        ApiProvider.sessionExpiredHandler = {
+            SessionManager.clear(applicationContext)
+            session = null
+            showAuthentication = false
+            checkoutAfterLogin = false
+        }
+    }
 
     LaunchedEffect(oauthUri) {
         if (oauthUri != null) showAuthentication = true
@@ -134,10 +150,19 @@ fun CandyLandApp(
                         onAuthenticated = { newSession ->
                             SessionManager.save(applicationContext, newSession)
                             session = newSession
+                            showAuthentication = false
                         }
                     )
                 } else {
-                    WelcomeScreen(onLogin = { showAuthentication = true })
+                    WelcomeScreen(
+                        cart = cart,
+                        onCartChanged = { updated ->
+                            cart = updated
+                            CartStorage.save(applicationContext, updated)
+                        },
+                        onLogin = { checkoutAfterLogin = false; showAuthentication = true },
+                        onCheckout = { checkoutAfterLogin = true; showAuthentication = true }
+                    )
                 }
             } else {
                 val authenticatedSession = session!!
@@ -147,6 +172,7 @@ fun CandyLandApp(
                         SessionManager.clear(applicationContext)
                         session = null
                         showAuthentication = false
+                        checkoutAfterLogin = false
                     }
                 }
                 if (authenticatedSession.accountType == "BUSINESS") {
@@ -160,7 +186,13 @@ fun CandyLandApp(
                             session = updated
                         },
                         paymentUri = paymentUri,
-                        onPaymentUriConsumed = onPaymentUriConsumed
+                        onPaymentUriConsumed = onPaymentUriConsumed,
+                        initialCart = cart,
+                        onCartChanged = { updated ->
+                            cart = updated
+                            CartStorage.save(applicationContext, updated)
+                        },
+                        startInCart = checkoutAfterLogin
                     )
                 }
             }
@@ -169,71 +201,260 @@ fun CandyLandApp(
 }
 
 @Composable
-private fun WelcomeScreen(onLogin: () -> Unit) {
+private fun WelcomeScreen(
+    cart: List<StoredCartItem>,
+    onCartChanged: (List<StoredCartItem>) -> Unit,
+    onLogin: () -> Unit,
+    onCheckout: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var restaurants by remember { mutableStateOf<List<RestaurantDto>>(emptyList()) }
+    var products by remember { mutableStateOf<List<ProductDto>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
-    var loadError by remember { mutableStateOf<String?>(null) }
+    var searching by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var query by remember { mutableStateOf("") }
+    var selectedRestaurant by remember { mutableStateOf<RestaurantDto?>(null) }
+    var storeProducts by remember { mutableStateOf<List<ProductDto>>(emptyList()) }
+    var cartVisible by remember { mutableStateOf(false) }
+    var currentLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var locationMessage by remember { mutableStateOf("Use sua localização para ver docerias próximas.") }
+
+    fun atualizarLocalizacao() {
+        val client = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+        val hasFine = androidx.core.content.ContextCompat.checkSelfPermission(
+            context, android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasCoarse = androidx.core.content.ContextCompat.checkSelfPermission(
+            context, android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) return
+        client.getCurrentLocation(
+            com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+            com.google.android.gms.tasks.CancellationTokenSource().token
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                currentLocation = location.latitude to location.longitude
+                locationMessage = "Localização atualizada. Distâncias aproximadas em linha reta."
+            } else {
+                locationMessage = "Não foi possível obter a localização agora. Tente novamente em um local aberto."
+            }
+        }.addOnFailureListener {
+            locationMessage = "Não foi possível obter sua localização. Você ainda pode navegar normalmente."
+        }
+    }
+
+    val locationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.values.any { it }) atualizarLocalizacao()
+        else locationMessage = "Permissão de localização não concedida. Você pode continuar sem ela."
+    }
+
+    fun adicionarAoCarrinho(product: ProductDto) {
+        if (!product.available || product.restaurantId <= 0) return
+        if (cart.isNotEmpty() && cart.first().product.restaurantId != product.restaurantId) {
+            error = "O carrinho aceita produtos de uma doceria por vez. Finalize ou esvazie o carrinho atual primeiro."
+            return
+        }
+        val existing = cart.firstOrNull { it.product.id == product.id }
+        val updated = if (existing == null) cart + StoredCartItem(product, 1)
+        else cart.map { if (it.product.id == product.id) it.copy(quantity = (it.quantity + 1).coerceAtMost(99)) else it }
+        onCartChanged(updated)
+        error = null
+    }
 
     LaunchedEffect(Unit) {
         runCatching { ApiProvider.unwrap(ApiProvider.api.restaurants()) }
-            .onSuccess { response -> restaurants = response.dados.filter { it.ativo && it.status != "SUSPENSO" } }
-            .onFailure { loadError = it.message ?: "Não foi possível carregar as docerias agora." }
+            .onSuccess { restaurants = it.dados.filter { store -> store.ativo && store.status != "SUSPENSO" } }
+            .onFailure { error = it.message ?: "Não foi possível carregar as docerias." }
+    }
+
+    LaunchedEffect(query) {
+        kotlinx.coroutines.delay(350)
+        searching = true
+        runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.searchProducts(query.trim())) }
+            .onSuccess { products = it.dados; if (error?.contains("pesquisar") == true) error = null }
+            .onFailure { error = it.message ?: "Não foi possível pesquisar os produtos." }
+        searching = false
         loading = false
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(9.dp)
-            ) {
-                Text("🍭", style = MaterialTheme.typography.displayMedium)
-                Text(
-                    "CandyLand",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text("Doces de todos os mundos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "Encontre sua próxima doceria favorita, acompanhe pedidos e receba seus doces onde estiver.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Button(onClick = onLogin, modifier = Modifier.fillMaxWidth()) {
-                    Text("Entrar ou criar conta")
-                }
-                Text(
-                    "O acesso é validado por e-mail e WhatsApp. Parceiros entram com a conta empresarial.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+    fun distanciaAproximada(restaurant: RestaurantDto): Double? {
+        val user = currentLocation ?: return null
+        val lat = restaurant.latitude ?: return null
+        val lng = restaurant.longitude ?: return null
+        val earth = 6371.0088
+        val dLat = Math.toRadians(lat - user.first)
+        val dLng = Math.toRadians(lng - user.second)
+        val a = kotlin.math.sin(dLat / 2).let { it * it } +
+            kotlin.math.cos(Math.toRadians(user.first)) * kotlin.math.cos(Math.toRadians(lat)) *
+            kotlin.math.sin(dLng / 2).let { it * it }
+        return 2 * earth * kotlin.math.asin(kotlin.math.sqrt(a.coerceIn(0.0, 1.0)))
+    }
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("🍭 CandyLand", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                Text("Doces de todos os mundos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            TextButton(onClick = onLogin) { Text("👤") }
+            TextButton(onClick = { cartVisible = !cartVisible; selectedRestaurant = null }) {
+                Text("🛒 ${cart.sumOf { it.quantity }}")
             }
         }
-        Text("Docerias no CandyLand 🍰", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        when {
-            loading -> Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            loadError != null -> Text(loadError!!, color = MaterialTheme.colorScheme.error)
-            restaurants.isEmpty() -> Text("Ainda não há docerias cadastradas por aqui.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else -> restaurants.forEach { restaurant ->
+
+        if (cartVisible) {
+            Text("Seu carrinho", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (cart.isEmpty()) Text("Seu carrinho está vazio. Explore produtos e adicione seus doces favoritos.")
+            cart.forEach { entry ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                        Text(entry.product.name, fontWeight = FontWeight.SemiBold)
+                        Text("${entry.quantity} × ${money(entry.product.price)}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    TextButton(onClick = {
+                        val next = if (entry.quantity <= 1) cart.filterNot { it.product.id == entry.product.id }
+                        else cart.map { if (it.product.id == entry.product.id) it.copy(quantity = it.quantity - 1) else it }
+                        onCartChanged(next)
+                    }) { Text("−") }
+                    TextButton(onClick = { adicionarAoCarrinho(entry.product) }) { Text("+") }
+                }
+                Divider()
+            }
+            Text("Subtotal estimado: ${money(cart.sumOf { it.product.price * it.quantity })}", fontWeight = FontWeight.Bold)
+            Text("Frete e prazo serão calculados pelo servidor antes de abrir o pagamento.", style = MaterialTheme.typography.bodySmall)
+            Button(onClick = onCheckout, enabled = cart.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+                Text("Continuar para identificação e finalizar")
+            }
+            TextButton(onClick = { cartVisible = false }) { Text("Continuar comprando") }
+        } else if (selectedRestaurant != null) {
+            TextButton(onClick = { selectedRestaurant = null }) { Text("← Voltar ao catálogo") }
+            Text(selectedRestaurant!!.nome, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            selectedRestaurant!!.descricao?.let { Text(it) }
+            storeProducts.forEach { product ->
                 Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(restaurant.nome, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        restaurant.descricao?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Loja parceira CandyLand · ${mobileStoreStatusLabel(restaurant.status)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        coil3.compose.AsyncImage(
+                            model = mobileImageUrl(product.imageUrl),
+                            contentDescription = product.name,
+                            modifier = Modifier.size(92.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                        Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                            Text(product.name, fontWeight = FontWeight.SemiBold)
+                            product.description?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
+                            Text(money(product.price), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Button(onClick = { adicionarAoCarrinho(product) }, enabled = product.available && selectedRestaurant!!.status == "ABERTO") { Text("Adicionar") }
+                        }
+                    }
+                }
+            }
+        } else {
+            androidx.compose.material3.OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Buscar doces, produtos e docerias") },
+                leadingIcon = { Text("⌕") }
+            )
+            androidx.compose.material3.OutlinedButton(
+                onClick = {
+                    val hasLocation = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                        androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    if (hasLocation) atualizarLocalizacao()
+                    else locationPermissionLauncher.launch(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION))
+                }, modifier = Modifier.fillMaxWidth()
+            ) { Text("📍 ${if (currentLocation == null) "Usar minha localização" else "Atualizar localização"}") }
+            Text(locationMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (query.isBlank()) "Produtos para você 🍬" else "Resultados da pesquisa", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                if (searching || loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            }
+            if (products.isEmpty() && !searching && !loading) Text("Nenhum produto encontrado. Tente outro termo.")
+            products.forEach { product ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        coil3.compose.AsyncImage(
+                            model = mobileImageUrl(product.imageUrl),
+                            contentDescription = product.name,
+                            modifier = Modifier.size(92.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                        Column(Modifier.weight(1f).padding(start = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(product.name, fontWeight = FontWeight.SemiBold)
+                            product.description?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
+                            Text(money(product.price), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text(restaurants.firstOrNull { it.id == product.restaurantId }?.nome ?: "Doceria parceira", style = MaterialTheme.typography.labelSmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = {
+                                    val store = restaurants.firstOrNull { it.id == product.restaurantId }
+                                    if (store == null) error = "Doceria não encontrada. Atualize o catálogo."
+                                    else {
+                                        selectedRestaurant = store
+                                        searching = true
+                                        scope.launch {
+                                            runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.products(store.id)) }
+                                                .onSuccess { storeProducts = it.dados }
+                                                .onFailure { error = it.message ?: "Não foi possível abrir o cardápio." }
+                                            searching = false
+                                        }
+                                    }
+                                }) { Text("Ver loja") }
+                                Button(onClick = { adicionarAoCarrinho(product) }, enabled = product.available) { Text("Adicionar") }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text("Docerias próximas 🍰", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            restaurants.forEach { store ->
+                val distance = distanciaAproximada(store)
+                Card(onClick = {
+                    selectedRestaurant = store
+                    searching = true
+                    scope.launch {
+                        runCancellableCatching { ApiProvider.unwrap(ApiProvider.api.products(store.id)) }
+                            .onSuccess { storeProducts = it.dados }
+                            .onFailure { error = it.message ?: "Não foi possível abrir o cardápio." }
+                        searching = false
+                    }
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(store.nome, fontWeight = FontWeight.SemiBold)
+                        Text("Loja parceira CandyLand · ${mobileStoreStatusLabel(store.status)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        if (distance != null) {
+                            val distanceLabel = "A ${"%.1f".format(java.util.Locale("pt", "BR"), distance)} km em linha reta"
+                            val outsideRadius = store.raio_entrega_km?.let { distance > it } == true
+                            if (outsideRadius) {
+                                Text("$distanceLabel · fora do raio aproximado de entrega", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            } else {
+                                val min = kotlin.math.ceil((20 + distance / 25.0 * 60) / 5.0).toInt() * 5
+                                val estimatedFee = (store.taxa_entrega_base ?: 0.0) + distance * (store.taxa_entrega_por_km ?: 0.0)
+                                val feeText = if (estimatedFee <= 0.0) "Grátis" else "${money(estimatedFee)} aprox."
+                                Text("$distanceLabel · ${min}–${min + 10} min · frete $feeText", style = MaterialTheme.typography.bodySmall)
+                            }
+                        } else Text("Distância e frete disponíveis após informar um endereço.", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         }
+
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
+
+private fun mobileImageUrl(path: String?): String? {
+    val value = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    if (value.startsWith("https://") || value.startsWith("http://")) return value
+    return BuildConfig.API_BASE_URL.trimEnd('/') + "/" + value.trimStart('/')
+}
+
 
 @Composable
 private fun AuthenticationScreen(
@@ -713,11 +934,14 @@ private fun ShopScreen(
     onLogout: () -> Unit,
     onSessionUpdated: (SessionManager.Session) -> Unit,
     paymentUri: Uri?,
-    onPaymentUriConsumed: () -> Unit
+    onPaymentUriConsumed: () -> Unit,
+    initialCart: List<StoredCartItem>,
+    onCartChanged: (List<StoredCartItem>) -> Unit,
+    startInCart: Boolean
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var tab by remember { mutableStateOf(0) }
+    var tab by remember { mutableStateOf(if (startInCart) 1 else 0) }
     var restaurants by remember { mutableStateOf<List<RestaurantDto>>(emptyList()) }
     var restaurantLoading by remember { mutableStateOf(false) }
     var restaurantError by remember { mutableStateOf<String?>(null) }
@@ -725,7 +949,9 @@ private fun ShopScreen(
     var products by remember { mutableStateOf<List<ProductDto>>(emptyList()) }
     var productLoading by remember { mutableStateOf(false) }
     var productsError by remember { mutableStateOf<String?>(null) }
-    var cart by remember { mutableStateOf<List<CartEntry>>(emptyList()) }
+    var cart by remember { mutableStateOf(initialCart.map { CartEntry(it.product, it.quantity) }) }
+    LaunchedEffect(cart) { onCartChanged(cart.map { StoredCartItem(it.product, it.quantity) }) }
+    LaunchedEffect(session.id, startInCart) { if (startInCart) tab = 1 }
     var orders by remember { mutableStateOf<List<OrderDto>>(emptyList()) }
     var orderLoading by remember { mutableStateOf(false) }
     var orderError by remember { mutableStateOf<String?>(null) }
@@ -971,7 +1197,7 @@ private fun ShopScreen(
                             paymentIdempotencyKey = "candyland-android-${newOrder.id}-${UUID.randomUUID()}"
                             cart = emptyList()
                             loadOrders()
-                            initiatePayment(newOrder.id)
+                            checkoutMessage = "Confira o frete e o total acima. Nenhuma cobrança foi iniciada ainda. Toque em 'Confirmar e pagar' para continuar."
                         }.onFailure {
                             checkoutMessage = it.message ?: "Não foi possível finalizar o pedido."
                         }
@@ -1075,8 +1301,14 @@ private fun ProductListScreen(
         if (!loading && products.isEmpty() && error == null) Text("Esta doceria ainda não publicou produtos.")
         products.forEach { product ->
             Card(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
-                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
+                Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    coil3.compose.AsyncImage(
+                        model = mobileImageUrl(product.imageUrl),
+                        contentDescription = product.name,
+                        modifier = Modifier.size(88.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                    Column(Modifier.weight(1f).padding(start = 10.dp)) {
                         Text(product.name, fontWeight = FontWeight.SemiBold)
                         product.description?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text(money(product.price), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
@@ -1133,7 +1365,24 @@ private fun CartScreen(
                     Text("Pedido criado!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text(createdOrder.order_code)
                     Text("Status: ${createdOrder.status}")
-                    Text("Total calculado pelo servidor: ${money(createdOrder.total)}", fontWeight = FontWeight.Bold)
+                    Text("Produtos: ${money(createdOrder.subtotal)}")
+                    if (createdOrder.discount > 0.0) Text("Desconto: -${money(createdOrder.discount)}")
+                    val freightLabel = if (createdOrder.order_type == "PICKUP") "Não se aplica (retirada)" else if (createdOrder.delivery_fee <= 0.0) "Grátis" else money(createdOrder.delivery_fee)
+                    Text("Frete: $freightLabel", fontWeight = FontWeight.SemiBold)
+                    createdOrder.delivery_quote?.let { quote ->
+                        val distance = quote.distance_km
+                        val eta = quote.tempo_estimado
+                        if (distance != null) {
+                            val distanceLabel = if (quote.source == "GOOGLE_ROUTES_ESSENTIALS") "Distância pela rota" else "Distância aproximada (linha reta)"
+                            Text("$distanceLabel: ${String.format(java.util.Locale("pt", "BR"), "%.1f", distance)} km")
+                        }
+                        if (eta != null) Text("Previsão aproximada: ${eta.minimo}–${eta.maximo} min")
+                        if (quote.source == "GOOGLE_ROUTES_ESSENTIALS") {
+                            // Atribuição textual da Routes API quando o conteúdo é mostrado fora de um Google Map.
+                            Text("Google Maps", color = Color(0xFF5E5E5E), fontSize = 12.sp)
+                        }
+                    }
+                    Text("Total a pagar: ${money(createdOrder.total)}", fontWeight = FontWeight.Bold)
                     checkoutMessage?.let { Text(it) }
                     if (createdOrder.status in RECEIPT_CODE_ELIGIBLE_STATUSES) {
                         Divider()
@@ -1174,7 +1423,7 @@ private fun CartScreen(
                             onClick = { onRetryPayment(createdOrder.id) },
                             enabled = !orderBusy,
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text(if (orderBusy) "Iniciando pagamento..." else "Tentar iniciar pagamento novamente") }
+                        ) { Text(if (orderBusy) "Iniciando pagamento..." else if (paymentInfo == null) "Confirmar e pagar" else "Tentar iniciar pagamento novamente") }
                     }
                     OutlinedButton(onClick = onNewOrder, modifier = Modifier.fillMaxWidth()) { Text("Voltar ao carrinho") }
                 }

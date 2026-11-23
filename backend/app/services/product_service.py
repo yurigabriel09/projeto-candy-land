@@ -46,6 +46,47 @@ class ProductService:
             }
 
     @staticmethod
+    def buscar_catalogo_publico(termo=""):
+        """Pesquisa catálogo ativo sem expor estoque ou dados privados dos parceiros."""
+        try:
+            from sqlalchemy import or_
+            from app.models.restaurant import Restaurante
+
+            termo = str(termo or "").strip()
+            if len(termo) > 80:
+                return {"success": False, "erro": "A pesquisa deve possuir no máximo 80 caracteres.", "status_code": 400}
+
+            consulta = (
+                Produto.query
+                .join(Restaurante, Produto.restaurant_id == Restaurante.id)
+                .join(Categoria, Produto.category_id == Categoria.id)
+                .filter(
+                    Restaurante.ativo.is_(True),
+                    Restaurante.status == "ABERTO",
+                    Produto.is_available.is_(True),
+                    Produto.current_stock > 0,
+                    Categoria.ativa.is_(True),
+                )
+            )
+            if termo:
+                padrao = f"%{termo}%"
+                consulta = consulta.filter(or_(
+                    Produto.name.ilike(padrao),
+                    Produto.description.ilike(padrao),
+                    Categoria.nome.ilike(padrao),
+                    Restaurante.nome.ilike(padrao),
+                ))
+            produtos = consulta.order_by(Produto.created_at.desc(), Produto.id.desc()).limit(40).all()
+            dados = []
+            for produto in produtos:
+                item = produto.to_catalog_dict()
+                item.pop("qtd_estoque", None)
+                dados.append(item)
+            return {"success": True, "mensagem": "Catálogo consultado.", "dados": dados}
+        except SQLAlchemyError:
+            return {"success": False, "erro": "Falha ao pesquisar o catálogo.", "status_code": 500}
+
+    @staticmethod
     def buscar_produto(produto_id, restaurant_id):
         try:
             produto = Produto.query.filter_by(

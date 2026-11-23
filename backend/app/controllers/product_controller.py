@@ -18,6 +18,13 @@ class ProductController:
         )
 
     @staticmethod
+    def buscar_catalogo_publico(termo):
+        resultado = ProductService.buscar_catalogo_publico(termo)
+        if not resultado["success"]:
+            return make_response(jsonify({"erro": resultado["erro"]}), resultado["status_code"])
+        return make_response(jsonify({"dados": resultado["dados"]}), 200)
+
+    @staticmethod
     def buscar_produto(produto_id, restaurant_id, tipo_conta):
         if tipo_conta != "BUSINESS":
             return make_response(
